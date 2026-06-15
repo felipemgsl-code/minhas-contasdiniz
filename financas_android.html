@@ -130,7 +130,8 @@ input,select,textarea{-webkit-tap-highlight-color:transparent;font-size:16px!imp
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4.5 20L1 14l5.5-9.5h11L23 14l-3.5 6H4.5z" fill="#4285F4" opacity=".3"/><path d="M8.5 4.5L3 14h6l5.5-9.5H8.5z" fill="#0066DA"/><path d="M15.5 4.5H9L14.5 14H21L15.5 4.5z" fill="#00AC47"/><path d="M3 14l3.5 6h11l3.5-6H3z" fill="#FFBA00"/></svg>
         <span id="drive-btn-txt">Entrar</span>
       </button>
-      <button class="year-add-btn" id="local-export-btn" onclick="exportarDados()" title="Exportar local" style="color:var(--green);border-color:var(--green2);display:none">💾</button>
+      <button class="year-add-btn" onclick="importarDados()" title="Importar arquivo local">📂</button>
+      <button class="year-add-btn" id="local-export-btn" onclick="exportarDados()" title="Exportar local" style="color:var(--green);border-color:var(--green2)">💾</button>
     </div>
   </div>
   <div class="topbar-row2">
@@ -1391,7 +1392,6 @@ function driveLogin(){
       gdToken=resp.access_token;
       document.getElementById('drive-btn-txt').textContent='Drive ✓';
       document.getElementById('drive-btn').style.borderColor='var(--green)';
-      document.getElementById('local-export-btn').style.display='';
       toast('Google Drive conectado!','green');
       showDriveMenu();
     }
