@@ -140,6 +140,14 @@ th.ann-cur-col::after{display:none;}
 .dia-badge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;font-size:10px;font-weight:700;color:var(--text2);flex-shrink:0;padding:0 4px}
 .dia-inp{width:32px;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;font-size:10px;font-weight:700;color:var(--text2);text-align:center;padding:2px 3px;font-family:var(--font);outline:none}
 .dia-inp:focus{border-color:var(--blue);color:var(--text)}
+
+.juros-box{margin-top:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 10px}
+.juros-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.juros-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.juros-inp{width:62px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-size:11px;padding:3px 6px;font-family:var(--font);outline:none;text-align:right}
+.juros-inp:focus{border-color:var(--blue)}
+.juros-prev{font-size:12px;font-weight:700;color:var(--orange);margin-top:4px}
+.juros-aviso{font-size:10px;color:var(--text3);font-style:italic;margin-top:3px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -177,22 +185,38 @@ const CTAG={Nubank:'tnu','Mercado Pago':'tmp','Itaú':'tit',Outro:'tou'};
 const SK='fp_v5';
 
 const DEF={
-  anos:[2026],anoAtivo:2026,
-  config:{limiteReserva:3000,limiteParcMensal:800},
-  dados:{2026:{
-    entradas:[],
-    despesas:[],
-    pc:[],
-    pd:[],
-    cc:{nubank:0,itau:0,mp:0},
-  }},
-  res:[],
-  avisos:[],
-  obE:[],
-  obD:[],
-  _id:1,
-  chk:{},
+  "anos": [
+    2024
+  ],
+  "anoAtivo": 2024,
+  "config": {
+    "limiteReserva": 3000,
+    "limiteParcMensal": 800,
+    "_popupVisto": ""
+  },
+  "dados": {
+    "2024": {
+      "entradas": [],
+      "despesas": [],
+      "pc": [],
+      "pd": [],
+      "cc": {
+        "nubank": 0,
+        "itau": 0,
+        "mp": 0
+      },
+      "obE": [],
+      "obD": []
+    }
+  },
+  "res": [],
+  "avisos": [],
+  "obE": [],
+  "obD": [],
+  "_id": 1,
+  "chk": {}
 };
+
 let _mudou=false;
 let S=load();
 let tab='home',mes=new Date().getMonth(),charts={};
@@ -200,7 +224,16 @@ let tab='home',mes=new Date().getMonth(),charts={};
 function load(){try{return JSON.parse(JSON.stringify(DEF));}catch(e){return JSON.parse(JSON.stringify(DEF));}}
 function save(){_mudou=true; try{const b=document.getElementById('unsaved-banner'); if(b) b.style.display='flex';}catch(e){} }
 function nid(){return 'x'+(S._id++);}
-function D(){const d=S.dados[S.anoAtivo];if(!d){S.dados[S.anoAtivo]={entradas:[],despesas:[],pc:[],pd:[],cc:{nubank:0,itau:0,mp:0}};save();}return S.dados[S.anoAtivo];}
+function D(){
+  const d=S.dados[S.anoAtivo];
+  if(!d){S.dados[S.anoAtivo]={entradas:[],despesas:[],pc:[],pd:[],cc:{nubank:0,itau:0,mp:0},obE:[],obD:[]};save();}
+  if(!d.obE) d.obE=[];
+  if(!d.obD) d.obD=[];
+  return S.dados[S.anoAtivo];
+}
+// obE/obD do ano ativo
+function OBE(){return D().obE||[];}
+function OBD(){return D().obD||[];}
 function fmt(v){const s=Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});return(v<0?'-':'')+'R$ '+s;}
 function fabs(v){return Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function pv(s){if(typeof s!=='string')s=String(s||'');return Math.abs(parseFloat(s.replace(/R\$\s*/g,'').replace(/\s/g,'').replace(/\./g,'').replace(',','.'))||0);}
@@ -214,14 +247,77 @@ function dm(s){if(!s)return new Date().getMonth();return Math.max(0,parseInt(s.s
 function tE(i){return D().entradas.reduce((s,r)=>s+(r.vals[i]||0),0);}
 function tD(i){return D().despesas.reduce((s,r)=>s+(r.vals[i]||0),0)+tPDM(i);}
 function sal(i){return tE(i)-tD(i);}
-function tPCM(i){return D().pc.reduce((s,p)=>{const ef=p.n-(p.ant||0);return(i>=p.ini&&i<p.ini+ef)?s+p.vp:s;},0);}
-function tPDM(i){return D().pd.reduce((s,p)=>(i>=p.ini&&i<p.ini+p.n)?s+p.valor:s,0);}
+function tPCM(i){
+  // i = índice do mês (0-11) no ano ativo
+  // Para parcelados cross-year: calcular posição absoluta
+  const anoAtual=S.anoAtivo;
+  return D().pc.reduce((s,p)=>{
+    const anoIni=p.anoIni||anoAtual;
+    const mIniAbs=anoIni*12+p.ini; // mês absoluto de início
+    const ef=p.n-(p.ant||0);
+    const mFimAbs=mIniAbs+ef-1;
+    const mAbs=anoAtual*12+i; // mês absoluto atual
+    return(mAbs>=mIniAbs&&mAbs<=mFimAbs)?s+p.vp:s;
+  },0);
+}
+function tPDM(i){
+  const anoAtual=S.anoAtivo;
+  return D().pd.reduce((s,p)=>{
+    const anoIni=p.anoIni||anoAtual;
+    const mIniAbs=anoIni*12+p.ini;
+    const mFimAbs=mIniAbs+p.n-1;
+    const mAbs=anoAtual*12+i;
+    return(mAbs>=mIniAbs&&mAbs<=mFimAbs)?s+p.valor:s;
+  },0);
+}
 function tPM(i){return tPCM(i)+tPDM(i);}
 function tPA(){return MONTHS.reduce((s,_,i)=>s+tPM(i),0);}
-function rSaldo(r){return (r.si||0)+r.movs.reduce((s,m)=>s+(m.t==='e'?m.v:-m.v),0);}
-function rTot(){return S.res.reduce((s,r)=>s+(r.sr!=null?r.sr:rSaldo(r)),0);}
-function rE(r,i){return r.movs.filter(m=>dm(m.data)===i&&m.t==='e').reduce((s,m)=>s+m.v,0);}
-function rS(r,i){return r.movs.filter(m=>dm(m.data)===i&&m.t==='s').reduce((s,m)=>s+m.v,0);}
+function rSiAno(r,ano){
+  ano=ano||S.anoAtivo;
+  return rSiAnoCalc(r,ano);
+}
+function rSaldo(r,ano){
+  ano=ano||S.anoAtivo;
+  const si=rSiAno(r,ano);
+  const movsFiltrados=r.movs.filter(m=>(m.data||'').startsWith(String(ano)));
+  return si+movsFiltrados.reduce((s,m)=>s+(m.t==='e'?m.v:-m.v),0);
+}
+function rSaldoTotal(r){
+  // saldo considerando TODOS os movimentos (para exibição cross-year)
+  return (r.si||rSiAno(r,Math.min(...S.anos)))+r.movs.reduce((s,m)=>s+(m.t==='e'?m.v:-m.v),0);
+}
+function resDoAno(ano){
+  ano=ano||S.anoAtivo;
+  return S.res.filter(r=>{
+    const ini=r.anoInicio||Math.min(...S.anos);
+    const fim=r.anoFim||9999; // sem anoFim = continua para sempre
+    return ano>=ini&&ano<=fim;
+  });
+}
+// siPorAno: garante saldo inicial calculado para qualquer ano
+function rSiAnoCalc(r,ano){
+  // Se já tem registro direto, usa
+  if(r.siPorAno&&r.siPorAno[String(ano)]!=null) return r.siPorAno[String(ano)];
+  // Calcula acumulando desde o anoInicio
+  const anoIni=r.anoInicio||Math.min(...S.anos);
+  let saldo=r.siPorAno?( r.siPorAno[String(anoIni)]||r.si||0):(r.si||0);
+  for(let a=anoIni;a<ano;a++){
+    const movs=r.movs.filter(m=>(m.data||'').startsWith(String(a)));
+    saldo+=movs.reduce((s,m)=>s+(m.t==='e'?m.v:-m.v),0);
+    // Guardar cache
+    if(!r.siPorAno) r.siPorAno={};
+    r.siPorAno[String(a+1)]=saldo;
+  }
+  return saldo;
+}
+function rTot(ano){
+  return resDoAno(ano).reduce((s,r)=>{
+    const sr=r.sr!=null&&String(r.srd||'').startsWith(String(ano||S.anoAtivo))?r.sr:null;
+    return s+(sr!=null?sr:rSaldo(r,ano));
+  },0);
+}
+function rE(r,i,ano){ano=ano||S.anoAtivo;return r.movs.filter(m=>dm(m.data)===i&&(m.data||'').startsWith(String(ano))&&m.t==='e').reduce((s,m)=>s+m.v,0);}
+function rS(r,i,ano){ano=ano||S.anoAtivo;return r.movs.filter(m=>dm(m.data)===i&&(m.data||'').startsWith(String(ano))&&m.t==='s').reduce((s,m)=>s+m.v,0);}
 function tDA(i){return D().despesas.filter(d=>d.da).reduce((s,d)=>s+(d.vals[i]||0),0);}
 function tFR(i){return D().entradas.filter(e=>e.tag==='freela').reduce((s,e)=>s+(e.vals[i]||0),0);}
 
@@ -233,12 +329,37 @@ function addAno(){
   if(S.anos.includes(novo))return;
   S.anos.push(novo);
   if(!S.dados[novo]){
-    S.dados[novo]={entradas:[],despesas:[],pc:[],pd:[],cc:{nubank:0,itau:0,mp:0}};
+    const ant=S.dados[Math.max(...S.anos.filter(a=>a<novo))||S.anoAtivo]||{};
+    S.dados[novo]={entradas:[],despesas:[],pc:[],pd:[],cc:{nubank:0,itau:0,mp:0},obE:[...(ant.obE||[])],obD:[...(ant.obD||[])]};
     // propagar fixas
-    S.anos.slice(0,-1).forEach(a=>{
+    S.anos.filter(a=>a<novo).forEach(a=>{
       const d=S.dados[a];if(!d)return;
       d.entradas&&d.entradas.filter(e=>e.fixa&&(e.fixaScope==='always'||e.fixaScope===String(novo))).forEach(e=>S.dados[novo].entradas.push({...e,id:nid(),vals:[...e.vals]}));
       d.despesas&&d.despesas.filter(x=>x.fixa&&(x.fixaScope==='always'||x.fixaScope===String(novo))).forEach(x=>S.dados[novo].despesas.push({...x,id:nid(),vals:[...x.vals]}));
+    });
+    // propagar reservas sem anoFim para novo ano (garantir siPorAno)
+    S.res.filter(r=>!r.anoFim&&(r.anoInicio||0)<=novo).forEach(r=>{
+      if(!r.siPorAno) r.siPorAno={};
+      if(r.siPorAno[String(novo)]==null) rSiAnoCalc(r,novo);
+    });
+    // propagar parcelados cross-year
+    S.anos.filter(a=>a<novo).forEach(a=>{
+      const d=S.dados[a];if(!d)return;
+      (d.pc||[]).forEach(p=>{
+        const anoIni=p.anoIni||a;
+        const mesesTotais=p.n-(p.ant||0);
+        const mIniAbs=anoIni*12+p.ini;
+        const mFimAbs=mIniAbs+mesesTotais-1;
+        const mNovoIni=novo*12;
+        if(mFimAbs>=mNovoIni){
+          // parcela ainda ativa no novo ano — adicionar ao pc do novo ano
+          const jaPropagado=S.dados[novo].pc.some(x=>x._origemId===p.id);
+          if(!jaPropagado){
+            const antNovo=Math.max(0,mNovoIni-mIniAbs);
+            S.dados[novo].pc.push({...p,id:nid(),_origemId:p.id,anoIni,ant:antNovo});
+          }
+        }
+      });
     });
   }
   save();setupY();setAno(novo);
@@ -272,7 +393,11 @@ function render(){
 
 function checkAlerts(){
   const tr=rTot();const lr=S.config.limiteReserva||3000;const lp=S.config.limiteParcMensal||800;
-  const tpa=tPA();const m0=new Date().getMonth();const tpm=tPM(m0);
+  const tpa=tPA();
+  const anoHoje=new Date().getFullYear();
+  const anoEncerradoChk=S.anoAtivo<anoHoje;
+  const m0=anoEncerradoChk?11:new Date().getMonth();
+  const tpm=tPM(m0);
   const al=[];
   if(tr<lr) al.push(`🚨 Reservas (${fmt(tr)}) abaixo do limite crítico de ${fmt(lr)}!`);
   if(tpa>tr&&tr>0) al.push(`💸 Parcelamentos anuais (${fmt(tpa)}) superam suas reservas (${fmt(tr)}).`);
@@ -319,7 +444,9 @@ function mkTog(id,label,open=true){
 
 
 function genIns(){
-  const ins=[];const m0=new Date().getMonth();
+  const ins=[];
+  const anoHoje=new Date().getFullYear();
+  const m0=(S.anoAtivo<anoHoje)?11:new Date().getMonth();
   const tr=rTot();const lr=S.config.limiteReserva||3000;const lp=S.config.limiteParcMensal||800;
   if(tr<lr) ins.push({t:'bad',m:`🚨 Reservas (${fmt(tr)}) abaixo do limite crítico de ${fmt(lr)}. Recomponha antes de qualquer gasto extra.`});
   else if(tr>lr*3) ins.push({t:'good',m:`✅ Reservas (${fmt(tr)}) estão ${((tr/lr-1)*100).toFixed(0)}% acima do mínimo. Boa posição!`});
@@ -332,7 +459,7 @@ function genIns(){
   else if(sM>2000) ins.push({t:'good',m:`💰 ${MONTHS[m0]} com bom saldo (${fmt(sM)}). Considere aportar nas reservas.`});
   const totF=MONTHS.reduce((s,_,i)=>s+tFR(i),0);
   if(totF>0){const totE2=MONTHS.reduce((s,_,i)=>s+tE(i),0);ins.push({t:'good',m:`🎯 Freelas somam ${fmt(totF)} em ${S.anoAtivo} (${totE2>0?((totF/totE2)*100).toFixed(0):0}% das entradas).`});}
-  const crescR=S.res.map(r=>({nome:r.nome,liq:r.movs.filter(m=>m.t==='e').reduce((s,m)=>s+m.v,0)-r.movs.filter(m=>m.t==='s').reduce((s,m)=>s+m.v,0)})).sort((a,b)=>b.liq-a.liq);
+  const crescR=resDoAno().map(r=>{const ano=S.anoAtivo;const mv=r.movs.filter(m=>(m.data||'').startsWith(String(ano)));return{nome:r.nome,liq:mv.filter(m=>m.t==='e').reduce((s,m)=>s+m.v,0)-mv.filter(m=>m.t==='s').reduce((s,m)=>s+m.v,0)};}).sort((a,b)=>b.liq-a.liq);
   if(crescR[0]&&crescR[0].liq>0) ins.push({t:'good',m:`📈 Reserva "${crescR[0].nome}" teve o maior crescimento líquido este ano (${fmt(crescR[0].liq)}).`});
   if(!ins.length) ins.push({t:'good',m:`✅ Finanças em ordem. Continue monitorando e mantendo reservas acima de ${fmt(lr)}.`});
   return ins;
@@ -414,7 +541,7 @@ function editDiaContas(badge, tipo, idx){
     const d=+inp.value||null;
     item.dia=d;
     // propaga para o orçamento
-    const ob=(tipo==='e'?S.obE:S.obD).find(x=>x.nome===item.nome);
+    const ob=(tipo==='e'?OBE():OBD()).find(x=>x.nome===item.nome);
     if(ob) ob.dia=d;
     save();render();
   };
@@ -434,7 +561,7 @@ function editDiaPd(badge, pid){
 }
 function setDia(tipo,id,dia){
   // salva no orçamento
-  const ob=(tipo==='e'?S.obE:S.obD).find(x=>x.id===id);
+  const ob=(tipo==='e'?OBE():OBD()).find(x=>x.id===id);
   if(ob) ob.dia=dia;
   // propaga para os dados mensais do ano ativo
   const arr=tipo==='e'?D().entradas:D().despesas;
@@ -444,7 +571,7 @@ function setDia(tipo,id,dia){
 }
 function getDia(id, tipo){
   // busca dia no orçamento primeiro (fonte de verdade), depois no dado mensal
-  const ob=(tipo==='e'?S.obE:S.obD).find(x=>x.id===id);
+  const ob=(tipo==='e'?OBE():OBD()).find(x=>x.id===id);
   if(ob&&ob.dia) return ob.dia;
   const arr=tipo==='e'?D().entradas:D().despesas;
   const item=arr.find(x=>x.id===id);
@@ -507,6 +634,70 @@ function pagarAtrasado(id, meses){
   const qtd=meses.length;
   toast(`✓ Marcado como pago em ${qtd} ${qtd===1?'mês':'meses'}!`,'green');
 }
+
+// ── JUROS EM ATRASO ──
+function getJuros(id){ return (S.juros||{})[id]||{tipo:'mensal',taxa:0}; }
+function setJuros(id,campo,val){
+  if(!S.juros) S.juros={};
+  if(!S.juros[id]) S.juros[id]={tipo:'mensal',taxa:0};
+  S.juros[id][campo]=val;
+  save();
+  renderAtrasados();
+}
+
+function calcJurosAcumulado(g){
+  // Para cada mês em atraso, calcula quanto de juros compostos acumulou
+  // desde o dia de vencimento até hoje
+  const j=getJuros(g.id);
+  if(!j.taxa||j.taxa<=0) return null;
+
+  const hoje=new Date();
+  const taxaMensal=j.tipo==='anual'?Math.pow(1+j.taxa/100,1/12)-1:j.taxa/100;
+  const m0=hoje.getMonth();
+  const diaHoje=hoje.getDate();
+  let totalPrincipal=0, totalJuros=0;
+
+  g.meses.forEach(mi=>{
+    const vp=g.val; // valor da parcela
+    // meses de atraso: do mês de vencimento até hoje
+    const mesesAtraso=(m0-mi)+(diaHoje>=( g.dia||1)?0:0); // aproximação mensal
+    const fator=Math.pow(1+taxaMensal, mesesAtraso);
+    const comJuros=vp*fator;
+    totalPrincipal+=vp;
+    totalJuros+=(comJuros-vp);
+  });
+
+  return {principal:totalPrincipal, juros:totalJuros, total:totalPrincipal+totalJuros};
+}
+
+function jurosHtml(g){
+  const j=getJuros(g.id);
+  const calc=calcJurosAcumulado(g);
+  const prevHtml=calc&&calc.juros>0.01?`
+    <div class="juros-prev">Previsão de dívida: ${fmt(calc.total)}</div>
+    <div style="font-size:10px;color:var(--text2);margin-top:2px">
+      Principal: ${fmt(calc.principal)} + Juros estimados: <span style="color:var(--orange)">${fmt(calc.juros)}</span>
+    </div>
+    <div class="juros-aviso">⚠ Previsão estimada com juros compostos. Para o valor exato, tire um boleto atualizado.</div>
+  `:'';
+
+  return`<div class="juros-box">
+    <div class="juros-label">Juros em atraso (opcional)</div>
+    <div class="juros-row">
+      <select style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text2);font-size:11px;padding:3px 5px;outline:none" onchange="setJuros('${g.id}','tipo',this.value)">
+        <option value="mensal" ${j.tipo==='mensal'?'selected':''}>% ao mês</option>
+        <option value="anual" ${j.tipo==='anual'?'selected':''}>% ao ano</option>
+      </select>
+      <input class="juros-inp" type="number" step="0.01" min="0" max="999"
+        placeholder="0,00" value="${j.taxa||''}"
+        onblur="setJuros('${g.id}','taxa',+this.value||0)"
+        onkeydown="if(event.key==='Enter')this.blur()"
+      />
+      <span style="font-size:11px;color:var(--text2)">%</span>
+    </div>
+    ${prevHtml}
+  </div>`;
+}
 function renderAtrasados(){
   const el=document.getElementById('sec-atrasados');
   const card=document.getElementById('card-atrasados');
@@ -536,7 +727,9 @@ function renderAtrasados(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
       <div>
         <div style="font-size:13px;font-weight:700;color:var(--red)">${nItens} item(s) · ${nMeses} mês(es) em atraso</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">Total acumulado: <strong style="color:var(--red)">${fmt(totalAtrasado)}</strong></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Principal: <strong style="color:var(--red)">${fmt(totalAtrasado)}</strong>
+          ${(()=>{const tj=Object.values(grupos).reduce((s,g)=>{const c=calcJurosAcumulado(g);return s+(c?c.juros:0);},0);return tj>0.01?` · Juros est.: <strong style="color:var(--orange)">${fmt(tj)}</strong>`:'';})()}
+        </div>
       </div>
       <button class="btn bxs bgh" onclick="toggleSec('atrs-lista')">Ver detalhes</button>
     </div>
@@ -546,20 +739,28 @@ function renderAtrasados(){
         const mesesStr=g.meses.map(mi=>MONTHS[mi]).join(', ');
         const tagHtml=g.tag?`<span class="tag ${g.tag==='P'?'tpa':g.tag==='D.A.'?'tda':'tpa'}" style="font-size:9px;padding:1px 4px">${g.tag}</span>`:'';
         const mesesJson=JSON.stringify(g.meses);
-        return`<div class="atrs-row" style="align-items:flex-start">
-          <span class="atrs-ico" style="margin-top:2px">⚠️</span>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-              <span class="atrs-nome">${g.nome}</span>
-              ${tagHtml}
+        const jCalc=calcJurosAcumulado(g);
+        const jTotal=jCalc&&jCalc.juros>0.01?`<span style="font-size:10px;color:var(--orange);margin-left:4px">+${fmt(jCalc.juros)} juros → ${fmt(jCalc.total)}</span>`:'';
+        return`<div class="atrs-row" style="align-items:flex-start;flex-direction:column">
+          <div style="display:flex;align-items:flex-start;gap:8px;width:100%">
+            <span class="atrs-ico" style="margin-top:2px">⚠️</span>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+                <span class="atrs-nome">${g.nome}</span>
+                ${tagHtml}
+              </div>
+              <div style="font-size:10px;color:var(--text2);margin-top:3px">${mesesStr}${qtd>1?` <strong style="color:var(--red)">(${qtd} meses)</strong>`:''}</div>
+              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:2px">
+                <span style="font-size:11px;font-weight:700;color:var(--red)">${fmt(g.total)}${qtd>1?` <span style="font-size:9px;color:var(--text3);font-weight:400">(${fmt(g.total/qtd)}/mês)</span>`:''}</span>
+                ${jTotal}
+              </div>
             </div>
-            <div style="font-size:10px;color:var(--text2);margin-top:3px">${mesesStr}${qtd>1?` <strong style="color:var(--red)">(${qtd} meses)</strong>`:''}</div>
-            <div style="font-size:11px;font-weight:700;color:var(--red);margin-top:2px">${fmt(g.total)}${qtd>1?` <span style="font-size:9px;color:var(--text3);font-weight:400">(${fmt(g.total/qtd)}/mês)</span>`:''}</div>
+            <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;align-items:flex-end">
+              <button class="btn bxs bg" style="font-size:10px" onclick="pagarAtrasado('${g.id}',${mesesJson})">✓ Pago</button>
+              ${qtd>1?`<button class="btn bxs bgh" style="font-size:9px" onclick="pagarAtrasadoUm('${g.id}',${g.meses[0]})">✓ Só ${MONTHS[g.meses[0]]}</button>`:''}
+            </div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;align-items:flex-end">
-            <button class="btn bxs bg" style="font-size:10px" onclick="pagarAtrasado('${g.id}',${mesesJson})">✓ Pago</button>
-            ${qtd>1?`<button class="btn bxs bgh" style="font-size:9px" onclick="pagarAtrasadoUm('${g.id}',${g.meses[0]})">✓ Só ${MONTHS[g.meses[0]]}</button>`:''}
-          </div>
+          ${jurosHtml(g)}
         </div>`;
       }).join('')}
     </div>
@@ -694,7 +895,12 @@ function updateAnnTotals(){
 
 // ── HOME ──
 function rHome(mc){
-  const m0=new Date().getMonth();
+  const hoje=new Date();
+  const anoHoje=hoje.getFullYear();
+  const anoAtivo=S.anoAtivo;
+  const anoEncerrado=anoAtivo<anoHoje;
+  const m0=anoEncerrado?-1:hoje.getMonth(); // -1 = sem mês em destaque
+  const mesAtivo=anoEncerrado?11:m0; // para cálculos que precisam de mês válido
   const tr=rTot();const lr=S.config.limiteReserva||3000;
   const tpm=tPM(m0);const lp=S.config.limiteParcMensal||800;
   const eM=tE(m0);const dM=tD(m0);const sM=sal(m0);const daM=tDA(m0);
@@ -703,6 +909,7 @@ function rHome(mc){
   const disp=eM-despF-tpm;const pct=eM>0?Math.max(0,Math.min(100,disp/eM*100)):0;
 
   mc.innerHTML=`
+  ${anoEncerrado?`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">📅</span><div><div style="font-weight:600;color:var(--text2);font-size:13px">Ano ${anoAtivo} encerrado</div><div style="font-size:11px;color:var(--text3)">Visualizando dados históricos. Edição ainda disponível.</div></div></div>`:''}
   ${tr<lr?`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">🚨</span><div><div style="font-weight:600;color:var(--red)">Reservas em nível crítico!</div><div style="font-size:12px;color:var(--text2)">${fmt(tr)} — abaixo de ${fmt(lr)}</div></div><button class="btn bsm br" style="margin-left:auto" onclick="gt('res')">Ver Reservas</button></div>`:''}
   ${tpm>lp?`<div style="background:var(--orange3);border:1px solid var(--orange);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">⚠️</span><div><div style="font-weight:600;color:var(--orange)">Limite de parcelamentos atingido!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpm)} / limite ${fmt(lp)}</div></div><button class="btn bsm bo" style="margin-left:auto" onclick="gt('parc')">Ver Parcelados</button></div>`:''}
   ${tpa>tr&&tr>0?`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px"><span>💸</span><div><div style="font-weight:600;color:var(--red)">Parcelamentos anuais superam reservas!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpa)} em parcelas vs ${fmt(tr)} em reservas</div></div></div>`:''}
@@ -712,7 +919,6 @@ function rHome(mc){
     <button class="btn bg bsm" onclick="gdToken?driveSalvar():driveAction()">☁ Salvar no Drive</button><button class="btn bo bsm" onclick="exportarDados()" style="margin-left:4px">💾 Local</button>
   </div>
 
-  <!-- CONTAS ATRASADAS -->
   <div id="card-atrasados" class="card" style="margin-bottom:12px;border-color:var(--red2);display:none">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <span style="font-size:16px">🔴</span>
@@ -721,11 +927,10 @@ function rHome(mc){
     <div id="sec-atrasados"></div>
   </div>
 
-  <!-- CONTAS DESSE MÊS -->
-  <div class="card" style="margin-bottom:12px;border-color:var(--blue2)">
+  <div class="card" style="margin-bottom:12px;border-color:var(--blue2);${anoEncerrado?'opacity:0.6':''}">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div onclick="toggleSec('sec-chk')" style="cursor:pointer;flex:1">
-        <div class="ctit" style="margin:0;color:var(--blue)">📋 CONTAS DESSE MÊS — ${MONTHS[m0].toUpperCase()}/${S.anoAtivo}</div>
+        <div class="ctit" style="margin:0;color:var(--blue)">📋 CONTAS ${anoEncerrado?"DO ANO":"DESSE MÊS — "+MONTHS[m0].toUpperCase()}/${S.anoAtivo}</div>
         <div style="font-size:11px;color:var(--text2);margin-top:3px">Marque o que já recebeu e pagou</div>
       </div>
       <button class="btn bxs bgh" onclick="limparChkMes()">Limpar</button>
@@ -748,7 +953,7 @@ function rHome(mc){
     </div></div>
   </div>
   <div class="card" style="margin-bottom:12px">
-    <div class="sec-hdr" onclick="toggleSec('sec-met')"><div class="ctit" style="margin:0">📊 ESTE MÊS — ${MONTHS[m0].toUpperCase()}/${S.anoAtivo}</div><button class="sec-tog" data-tog="sec-met">−</button></div>
+    <div class="sec-hdr" onclick="toggleSec('sec-met')"><div class="ctit" style="margin:0">📊 ${anoEncerrado?"ANO "+S.anoAtivo:"ESTE MÊS — "+MONTHS[m0].toUpperCase()+"/"+S.anoAtivo}</div><button class="sec-tog" data-tog="sec-met">−</button></div>
     <div id="sec-met" style="display:block;margin-top:10px">
   <div class="g2">
     <div>
@@ -760,7 +965,7 @@ function rHome(mc){
           <div class="met b"><div class="mlbl">D.A. do mês</div><div class="mval">${fmt(daM)}</div><div class="msub">Precisa em caixa</div></div>
         </div>
       </div>
-      <div class="card"><div class="ctit">LIMITE DE CONSUMO — ${MONTHS[m0].toUpperCase()}/${S.anoAtivo}</div>
+      <div class="card"><div class="ctit">LIMITE DE CONSUMO — ${anoEncerrado?S.anoAtivo:MONTHS[m0].toUpperCase()+"/"+S.anoAtivo}</div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Após fixas + D.A. + parcelas</div>
         <div style="font-size:26px;font-weight:700;color:${disp>=0?'var(--green)':'var(--red)'};margin-bottom:6px">${fmt(disp)}</div>
         <div class="pw"><div class="pb" style="width:${pct.toFixed(0)}%;background:${pct>50?'var(--green)':pct>20?'var(--orange)':'var(--red)'}"></div></div>
@@ -774,7 +979,7 @@ function rHome(mc){
           <div class="msub">Limite crítico: ${fmt(lr)}</div>
           <div class="pw"><div class="pb" style="width:${Math.min(100,tr/lr*100).toFixed(0)}%;background:${tr>=lr?'var(--green)':'var(--red)'}"></div></div>
         </div>
-        ${S.res.map(r=>{const s=rSaldo(r);return`<div class="er"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div><span style="flex:1;font-size:12px">${r.nome}</span><span style="font-size:12px;font-weight:600;color:${s>0?'var(--green)':'var(--red)'}">${fmt(s)}</span></div>`;}).join('')}
+        ${resDoAno().map(r=>{const s=rSaldo(r);return`<div class="er"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div><span style="flex:1;font-size:12px">${r.nome}</span><span style="font-size:12px;font-weight:600;color:${s>0?'var(--green)':'var(--red)'}">${fmt(s)}</span></div>`;}).join('')}
       </div>
       <div class="card"><div class="ctit">Parcelamentos</div>
         <div class="g2" style="margin-bottom:10px">
@@ -799,13 +1004,13 @@ function rHome(mc){
       <table class="tbl" style="min-width:900px;font-size:11px">
         <thead><tr>
           <th style="min-width:140px"></th>
-          ${MONTHS.map((m,i)=>i===m0?`<th class="rv ann-cur-col" style="font-size:10px;padding:6px 6px">${m}<div style="font-size:8px;color:var(--blue);font-weight:400;margin-top:1px">atual</div></th>`:`<th class="rv" style="font-size:10px;padding:6px 6px">${m}</th>`).join('')}
+          ${MONTHS.map((m,i)=>(i===m0&&!anoEncerrado)?`<th class="rv ann-cur-col" style="font-size:10px;padding:6px 6px">${m}<div style="font-size:8px;color:var(--blue);font-weight:400;margin-top:1px">atual</div></th>`:`<th class="rv" style="font-size:10px;padding:6px 6px">${m}</th>`).join('')}
           <th class="rv" style="font-size:10px">Total</th>
         </tr></thead>
         <tbody>
           ${D().entradas.map((e,ei)=>`<tr>
             <td style="color:var(--text2);font-size:11px">${e.nome}${e.tag==='freela'?' <span class="tag tfr" style="font-size:9px;padding:1px 5px">F</span>':''}</td>
-            ${e.vals.map((v,mi)=>`<td class="rv${mi===m0?' ann-cur-col':''}" style="padding:3px 2px"><input class="ann-cell" style="color:${v>0?'var(--green)':'var(--text3)'}" value="${v>0?fabs(v):''}" placeholder="—" title="Editar ${e.nome} em ${MONTHS[mi]}" onfocus="this.select()" onblur="annEdit('e',${ei},${mi},this)"/></td>`).join('')}
+            ${e.vals.map((v,mi)=>`<td class="rv${(mi===m0&&!anoEncerrado)?' ann-cur-col':''}" style="padding:3px 2px"><input class="ann-cell" style="color:${v>0?'var(--green)':'var(--text3)'}" value="${v>0?fabs(v):''}" placeholder="—" title="Editar ${e.nome} em ${MONTHS[mi]}" onfocus="this.select()" onblur="annEdit('e',${ei},${mi},this)"/></td>`).join('')}
             <td class="rv" style="color:var(--green);font-weight:600;font-size:11px">${fabs(e.vals.reduce((a,b)=>a+b,0))}</td>
           </tr>`).join('')}
           <tr style="background:var(--green3);border-top:1px solid var(--green2)">
@@ -860,10 +1065,10 @@ function rHome(mc){
 
 
 function rOb(mc){
-  const tE2=S.obE.reduce((s,r)=>s+(r.fixa?r.v:0),0);
-  const tD2fixed=S.obD.reduce((s,r)=>s+(r.fixa?r.v:0),0);
-  const tD2extras=S.obD.filter(r=>r.parc&&!r.fixa);
-  const tDA2=S.obD.filter(d=>d.da&&d.fixa).reduce((s,d)=>s+d.v,0);
+  const tE2=OBE().reduce((s,r)=>s+(r.fixa?r.v:0),0);
+  const tD2fixed=OBD().reduce((s,r)=>s+(r.fixa?r.v:0),0);
+  const tD2extras=OBD().filter(r=>r.parc&&!r.fixa);
+  const tDA2=OBD().filter(d=>d.da&&d.fixa).reduce((s,d)=>s+d.v,0);
   const saldo=tE2-tD2fixed;
   mc.innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
@@ -882,11 +1087,11 @@ function rOb(mc){
   </div>
   <div class="card" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;margin-bottom:12px"><div class="ctit" style="margin:0">↓ Entradas</div><span style="font-size:13px;font-weight:600;color:var(--green)">${fmt(tE2)}/mês</span></div>
-    ${S.obE.map((r,i)=>obRE(r,i)).join('')}
+    ${OBE().map((r,i)=>obRE(r,i)).join('')}
   </div>
   <div class="card" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;margin-bottom:12px"><div class="ctit" style="margin:0">↑ Despesas Fixas</div><span style="font-size:13px;font-weight:600;color:var(--red)">${fmt(tD2fixed)}/mês</span></div>
-    ${S.obD.filter(r=>r.fixa).map((r,i)=>{const realIdx=S.obD.indexOf(r);return obRD(r,realIdx);}).join('')}
+    ${OBD().filter(r=>r.fixa).map((r,i)=>{const realIdx=OBD().indexOf(r);return obRD(r,realIdx);}).join('')}
   </div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;margin-bottom:6px">
@@ -923,17 +1128,17 @@ function obTagD(r){
   return tags.join('');
 }
 
-function obRE(r,i){return`<div class="er"><input class="dia-inp" title="Dia do recebimento" value="${r.dia||''}" placeholder="Dia" onblur="S.obE[${i}].dia=+this.value||null;setDia('e',S.obE[${i}].id,+this.value||null);render()" type="number" min="1" max="31"/><input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="S.obE[${i}].nome=this.value;save()"/><div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0">${obTagE(r)}</div><input class="ev gv" value="${fabs(r.v)}" onblur="S.obE[${i}].v=pv(this.value);this.value=fabs(S.obE[${i}].v);save()"/><button class="btn bxs bgh" onclick="mEditOE(${i})">⚙</button><button class="btn bxs" style="background:var(--red3);color:var(--red);border:1px solid var(--red2)" title="Remover daqui pra frente" onclick="mExcluirOb(${i},'e')">→✕</button></div>`;}
-function obRD(r,i){return`<div class="er"><input class="dia-inp" title="Dia do vencimento" value="${r.dia||''}" placeholder="Dia" onblur="S.obD[${i}].dia=+this.value||null;setDia('d',S.obD[${i}].id,+this.value||null);render()" type="number" min="1" max="31"/><input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="S.obD[${i}].nome=this.value;save()"/><div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0">${obTagD(r)}</div><input class="ev rv" value="${fabs(r.v)}" onblur="S.obD[${i}].v=pv(this.value);this.value=fabs(S.obD[${i}].v);save()"/><button class="btn bxs bgh" onclick="mEditOD(${i})">⚙</button><button class="btn bxs" style="background:var(--orange3);color:var(--orange);border:1px solid var(--orange2)" title="Pausar por meses" onclick="mPausarOb(${i})">⏸</button><button class="btn bxs" style="background:var(--red3);color:var(--red);border:1px solid var(--red2)" title="Remover daqui pra frente" onclick="mExcluirOb(${i},'d')">→✕</button></div>`;}
+function obRE(r,i){return`<div class="er"><input class="dia-inp" title="Dia do recebimento" value="${r.dia||''}" placeholder="Dia" onblur="OBE()[${i}].dia=+this.value||null;setDia('e',OBE()[${i}].id,+this.value||null);render()" type="number" min="1" max="31"/><input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="OBE()[${i}].nome=this.value;save()"/><div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0">${obTagE(r)}</div><input class="ev gv" value="${fabs(r.v)}" onblur="OBE()[${i}].v=pv(this.value);this.value=fabs(OBE()[${i}].v);save()"/><button class="btn bxs bgh" onclick="mEditOE(${i})">⚙</button><button class="btn bxs" style="background:var(--red3);color:var(--red);border:1px solid var(--red2)" title="Remover daqui pra frente" onclick="mExcluirOb(${i},'e')">→✕</button></div>`;}
+function obRD(r,i){return`<div class="er"><input class="dia-inp" title="Dia do vencimento" value="${r.dia||''}" placeholder="Dia" onblur="OBD()[${i}].dia=+this.value||null;setDia('d',OBD()[${i}].id,+this.value||null);render()" type="number" min="1" max="31"/><input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="OBD()[${i}].nome=this.value;save()"/><div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0">${obTagD(r)}</div><input class="ev rv" value="${fabs(r.v)}" onblur="OBD()[${i}].v=pv(this.value);this.value=fabs(OBD()[${i}].v);save()"/><button class="btn bxs bgh" onclick="mEditOD(${i})">⚙</button><button class="btn bxs" style="background:var(--orange3);color:var(--orange);border:1px solid var(--orange2)" title="Pausar por meses" onclick="mPausarOb(${i})">⏸</button><button class="btn bxs" style="background:var(--red3);color:var(--red);border:1px solid var(--red2)" title="Remover daqui pra frente" onclick="mExcluirOb(${i},'d')">→✕</button></div>`;}
 
 function apOb(){
   const d2=D();
-  S.obE.forEach(ob=>{
+  OBE().forEach(ob=>{
     const m=d2.entradas.find(e=>e.nome===ob.nome);if(!m)return;
     if(ob.fixa) m.vals=Array(12).fill(ob.v);
     else if(ob.parc&&ob.v>0){const nv=Array(12).fill(0);for(let i=ob.pi||0;i<Math.min((ob.pi||0)+(ob.pn||1),12);i++)nv[i]=ob.v;m.vals=nv;}
   });
-  S.obD.filter(ob=>ob.fixa).forEach(ob=>{
+  OBD().filter(ob=>ob.fixa).forEach(ob=>{
     const m=d2.despesas.find(e=>e.nome===ob.nome);if(!m)return;
     m.vals=Array(12).fill(ob.v);
   });
@@ -947,7 +1152,7 @@ function apObFuturo(){
   const d2=D();
   let criados=0,atualizados=0;
 
-  S.obE.forEach(ob=>{
+  OBE().forEach(ob=>{
     if(!ob.fixa&&!ob.parc)return;
     let m=d2.entradas.find(e=>e.nome===ob.nome);
     if(!m){
@@ -959,7 +1164,7 @@ function apObFuturo(){
     else if(ob.parc) for(let i=ob.pi||0;i<Math.min((ob.pi||0)+(ob.pn||1),12);i++) if(i>=m0) m.vals[i]=ob.v;
   });
 
-  S.obD.forEach(ob=>{
+  OBD().forEach(ob=>{
     if(!ob.fixa)return;
     let m=d2.despesas.find(e=>e.nome===ob.nome);
     if(!m){
@@ -973,12 +1178,12 @@ function apObFuturo(){
   const msg=[];
   if(criados) msg.push(`${criados} novo(s) criado(s)`);
   if(atualizados) msg.push(`${atualizados} atualizado(s)`);
-  toast(`✓ ${msg.join(', ')} — ${MONTHS[m0]} em diante!`,'green');
+  const _m0ap=(new Date().getFullYear()>S.anoAtivo)?11:new Date().getMonth();toast(`✓ ${msg.join(', ')} — ${MONTHS[_m0ap]} em diante!`,'green');
 }
 
 
 function mPausarOb(i){
-  const ob=S.obD[i];if(!ob)return;
+  const ob=OBD()[i];if(!ob)return;
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">⏸ Pausar "${ob.nome}"<button class="mclose" onclick="cm()">×</button></div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Pausar por quantos meses a partir de agora?</div>
@@ -994,7 +1199,7 @@ function mPausarOb(i){
 }
 
 function mExcluirOb(i,tipo){
-  const ob=tipo==='e'?S.obE[i]:S.obD[i];if(!ob)return;
+  const ob=tipo==='e'?OBE()[i]:OBD()[i];if(!ob)return;
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">Remover "${ob.nome}"<button class="mclose" onclick="cm()">×</button></div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
@@ -1009,7 +1214,7 @@ function mExcluirOb(i,tipo){
 }
 function pausarObD(i,meses){
   const m0=new Date().getMonth();
-  const ob=S.obD[i];
+  const ob=OBD()[i];
   if(!ob) return;
   const d2=D();
   const m=d2.despesas.find(e=>e.nome===ob.nome);
@@ -1020,13 +1225,13 @@ function pausarObD(i,meses){
 
 function excluirObFuturo(i,tipo){
   const m0=new Date().getMonth();
-  const ob=tipo==='e'?S.obE[i]:S.obD[i];
+  const ob=tipo==='e'?OBE()[i]:OBD()[i];
   if(!ob) return;
   const d2=D();
   const arr=tipo==='e'?d2.entradas:d2.despesas;
   const m=arr.find(e=>e.nome===ob.nome);
   if(m) for(let mi=m0;mi<12;mi++) m.vals[mi]=0;
-  if(tipo==='e') S.obE.splice(i,1); else S.obD.splice(i,1);
+  if(tipo==='e') OBE().splice(i,1); else OBD().splice(i,1);
   save();render();toast(`"${ob.nome}" removido daqui pra frente. Histórico preservado.`,'orange');
 }
 
@@ -1135,7 +1340,7 @@ function delContaItem(tipo,idx){
     },{
       desc:`Meses futuros também serão removidos`,
       tipo:'neutro',
-      detalhe:`${12-m0} meses de ${MONTHS[m0]} em diante`
+      detalhe:`${12-((new Date().getFullYear()>S.anoAtivo)?11:new Date().getMonth())} meses de ${MONTHS[(new Date().getFullYear()>S.anoAtivo)?11:new Date().getMonth()]} em diante`
     }], ()=>{arr.splice(idx,1);save();render();});
   } else {
     arr.splice(idx,1);save();render();
@@ -1178,7 +1383,38 @@ function rParc(mc){
   <div class="card" style="margin-bottom:12px">
     <div class="ctit">Compras Parceladas no Cartão</div>
     <table class="tbl"><thead><tr><th>Descrição</th><th>Cartão</th><th class="rv">Total</th><th class="cv">Parc.</th><th class="rv">Valor/mês</th><th class="cv">Status</th><th></th></tr></thead>
-    <tbody>${d2.pc.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px">Nenhum parcelado</td></tr>`:d2.pc.map((p,idx)=>{const ef=p.n-(p.ant||0);const rest=ef-Math.max(0,mes-p.ini);const sc=rest<=0?'var(--green)':rest<=3?'var(--orange)':'var(--text2)';return`<tr><td style="font-weight:500">${p.desc}</td><td><span class="tag ${CTAG[p.cartao]||'tou'}">${p.cartao}</span></td><td class="rv">${fmt(p.total)}</td><td class="cv">${p.n}×${p.ant?`<span style="color:var(--green);font-size:10px"> (${p.ant} ant.)</span>`:''}</td><td class="rv" style="color:var(--orange);font-weight:600">${fmt(p.vp)}</td><td class="cv" style="color:${sc};font-weight:500">${rest<=0?'✓ Quitado':rest+' rest.'}</td><td><button class="del" onclick="D().pc.splice(${idx},1);save();render()">✕</button></td></tr>`;}).join('')}</tbody>
+    <tbody>${(()=>{
+      const ativos=d2.pc.filter((p,idx)=>{
+        const anoIni=p.anoIni||S.anoAtivo;
+        const ef=p.n-(p.ant||0);
+        const mFimAbs=anoIni*12+p.ini+ef-1;
+        return mFimAbs>=S.anoAtivo*12;
+      });
+      const quitados=d2.pc.filter((p,idx)=>{
+        const anoIni=p.anoIni||S.anoAtivo;
+        const ef=p.n-(p.ant||0);
+        const mFimAbs=anoIni*12+p.ini+ef-1;
+        return mFimAbs<S.anoAtivo*12;
+      });
+      if(ativos.length===0&&quitados.length===0) return `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px">Nenhum parcelado</td></tr>`;
+      const rowP=(p,idx)=>{
+        const anoIni=p.anoIni||S.anoAtivo;
+        const mIniAbs=anoIni*12+p.ini;
+        const ef=p.n-(p.ant||0);
+        const mFimAbs=mIniAbs+ef-1;
+        const mAbs=S.anoAtivo*12+mes;
+        const rest=Math.max(0,mFimAbs-mAbs+1);
+        const sc=rest<=0?'var(--green)':rest<=3?'var(--orange)':'var(--text2)';
+        const realIdx=d2.pc.indexOf(p);
+        return`<tr><td style="font-weight:500">${p.desc}${anoIni!==S.anoAtivo?` <span style="font-size:9px;color:var(--text3)">${anoIni}</span>`:''}${p._origemId?` <span style="font-size:9px;color:var(--blue)">↩</span>`:''}</td><td><span class="tag ${CTAG[p.cartao]||'tou'}">${p.cartao||'—'}</span></td><td class="rv">${fmt(p.total||p.vp*p.n)}</td><td class="cv">${p.n}×${p.ant?`<span style="color:var(--green);font-size:10px"> (${p.ant} ant.)</span>`:''}</td><td class="rv" style="color:var(--orange);font-weight:600">${fmt(p.vp)}</td><td class="cv" style="color:${sc};font-weight:500">${rest<=0?'✓ Quitado':rest+' rest.'}</td><td><button class="del" onclick="D().pc.splice(${realIdx},1);save();render()">✕</button></td></tr>`;
+      };
+      let rows=ativos.map(p=>rowP(p,d2.pc.indexOf(p))).join('');
+      if(quitados.length>0){
+        rows+=`<tr><td colspan="7" style="padding:6px 10px"><button onclick="(function(){var el=document.getElementById('pc-hist-body');var tog=document.getElementById('pc-hist-tog');if(el){var open=el.style.display!=='none';el.style.display=open?'none':'table-row-group';tog.textContent=open?'+':'−';}})()" class="btn bxs bgh" style="width:100%;justify-content:space-between;font-size:11px">📦 Histórico quitados (${quitados.length}) <span id="pc-hist-tog" style="font-weight:700;font-size:13px">+</span></button></td></tr>`;
+        rows+=`<tr style="display:none"><td colspan="7" style="padding:0"><table style="width:100%;border-collapse:collapse"><tbody id="pc-hist-body" style="display:none">${quitados.map(p=>rowP(p,d2.pc.indexOf(p))).join('')}</tbody></table></td></tr>`;
+      }
+      return rows;
+    })()}</tbody>
     </table>
   </div>
   <div class="card">
@@ -1220,17 +1456,17 @@ function rRes(mc){
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-      ${S.res.map(r=>{const s=r.sr!=null?r.sr:rSaldo(r);return`<div style="background:var(--bg4);border-radius:var(--radius-sm);padding:8px 12px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text2);margin-bottom:2px">${r.nome}</div><div style="font-size:14px;font-weight:700;color:${s>0?'var(--green)':s===0?'var(--text2)':'var(--red)'}">${fmt(s)}</div>${r.sr!=null?`<div style="font-size:9px;color:var(--blue)">real·${fd(r.srd)}</div>`:''}</div>`;}).join('')}
+      ${resDoAno().map(r=>{const s=r.sr!=null&&String(r.srd||'').startsWith(String(S.anoAtivo))?r.sr:rSaldo(r);return`<div style="background:var(--bg4);border-radius:var(--radius-sm);padding:8px 12px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text2);margin-bottom:2px">${r.nome}</div><div style="font-size:14px;font-weight:700;color:${s>0?'var(--green)':s===0?'var(--text2)':'var(--red)'}">${fmt(s)}</div>${r.sr!=null&&String(r.srd||'').startsWith(String(S.anoAtivo))?`<div style="font-size:9px;color:var(--blue)">real·${fd(r.srd)}</div>`:''}</div>`;}).join('')}
     </div>
   </div>
-  ${S.res.map((r,ri)=>rCard(r,ri)).join('')}`;
+  ${resDoAno().map((r)=>{const ri=S.res.indexOf(r);return rCard(r,ri);}).join('')}`;
 }
 
 function rCard(r,ri){
-  const sa=rSaldo(r);const sr=r.sr;const hasR=sr!=null;const diff=hasR?sr-sa:null;
+  const sa=rSaldo(r,S.anoAtivo);const sr=r.sr!=null&&String(r.srd||'').startsWith(String(S.anoAtivo))?r.sr:null;const hasR=sr!=null;const diff=hasR?sr-sa:null;
   const cs=sa>=0?'var(--green)':'var(--red)';const pct=r.meta>0?Math.min(100,Math.round(sa/r.meta*100)):0;
   const cPct=pct>=100?'var(--green)':pct>=50?'var(--blue)':'var(--orange)';
-  const movs=[...r.movs].sort((a,b)=>a.data>b.data?1:-1);
+  const movs=[...r.movs].filter(m=>(m.data||'').startsWith(String(S.anoAtivo))).sort((a,b)=>a.data>b.data?1:-1);
   let db='';
   if(diff!=null){
     if(Math.abs(diff)<0.01)db='<span class="tag tfi">✓ Confere</span>';
@@ -1238,14 +1474,35 @@ function rCard(r,ri){
     else db=`<span class="tag" style="background:var(--red3);color:var(--red);border:1px solid var(--red2)">⚠️ ${fmt(diff)}</span>`;
   }
   return `<div class="card" style="margin-bottom:12px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-      <div style="font-size:15px;font-weight:600;flex:1">${r.nome}</div>
-      ${r.meta>0?`<span style="font-size:11px;color:var(--text2)">${pct}% de ${fmt(r.meta)}</span>`:''}
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+      <input class="ed" style="font-size:15px;font-weight:600;flex:1;min-width:120px" value="${r.nome.replace(/"/g,'&quot;')}" onblur="S.res[${ri}].nome=this.value;save()"/>
+      ${(()=>{if(r.anoFim)return '<span style=\"font-size:10px;background:var(--red3);color:var(--red);border:1px solid var(--red2);border-radius:10px;padding:1px 7px\">Encerrada '+r.anoFim+'</span>';if(r.anoInicio===S.anoAtivo)return '<span style=\"font-size:10px;background:var(--green3);color:var(--green);border:1px solid var(--green2);border-radius:10px;padding:1px 7px\">Nova '+r.anoInicio+'</span>';return '';})()}
       <span style="font-size:18px;font-weight:700;color:${cs}">${fmt(sa)}</span>
       <button class="btn bxs bgh" onclick="toggleSec('rmv${ri}')">Movimentos</button>
       <button class="del" onclick="if(confirm('Remover reserva?')){S.res.splice(${ri},1);save();render()}">✕</button>
     </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--text2)">Meta:</span>
+        <input class="inp isml" style="width:110px;text-align:right" placeholder="Sem meta" value="${r.meta>0?fabs(r.meta):''}" onblur="S.res[${ri}].meta=pv(this.value)||0;save();render()"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--text2)">Prazo:</span>
+        <input class="inp isml" style="width:70px;text-align:center" placeholder="—" value="${r.prazo||''}" onblur="S.res[${ri}].prazo=this.value.trim();save()"/>
+      </div>
+      ${r.meta>0?`<span style="font-size:11px;color:var(--text2)">${pct}% da meta</span>`:''}
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--text2)">Início:</span>
+        <input class="inp isml" type="number" style="width:70px;text-align:center" value="${r.anoInicio||''}" onblur="S.res[${ri}].anoInicio=+this.value||null;save()"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--text2)">Fim:</span>
+        <input class="inp isml" type="number" style="width:70px;text-align:center" placeholder="Ativa" value="${r.anoFim||''}" onblur="S.res[${ri}].anoFim=+this.value||null;save()"/>
+      </div>
+    </div>
     ${r.meta>0?`<div class="pw" style="margin-bottom:10px"><div class="pb" style="width:${pct}%;background:${cPct}"></div></div>`:''}
+    ${r.meta>0?`<div style="font-size:10px;color:var(--text2);margin-bottom:8px;margin-top:-6px">${fmt(sa)} de ${fmt(r.meta)}${r.prazo?' · prazo '+r.prazo:''}</div>`:''}
+
     <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;border:1px solid var(--border)">
       <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Conferência banco</div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -1280,7 +1537,7 @@ function rCard(r,ri){
 function setSR(ri,el){
   const v=el.value.trim();
   if(!v){S.res[ri].sr=null;S.res[ri].srd=null;save();render();return;}
-  const nv=pv(v);const sa=rSaldo(S.res[ri]);const diff=nv-sa;
+  const nv=pv(v);const sa=rSaldo(S.res[ri],S.anoAtivo);const diff=nv-sa;
   S.res[ri].sr=nv;S.res[ri].srd=td();
   if(Math.abs(diff)<0.01){save();render();return;}
   // Pergunta se quer registrar ajuste
@@ -1595,7 +1852,7 @@ function svAddC(){
 function mRet(){
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">📉 Retirada de Reserva<button class="mclose" onclick="cm()">×</button></div>
-    <div class="fr"><div><div class="fl">Reserva</div><select id="rr-r" class="inp">${S.res.map((r,i)=>`<option value="${i}">${r.nome} (${fmt(rSaldo(r))})</option>`).join('')}</select></div></div>
+    <div class="fr"><div><div class="fl">Reserva</div><select id="rr-r" class="inp">${resDoAno().map((r)=>{const i=S.res.indexOf(r);return`<option value="${i}">${r.nome} (${fmt(rSaldo(r))})</option>`;}).join('')}</select></div></div>
     <div class="fr c2"><div><div class="fl">Valor (R$)</div><input id="rr-v" class="inp" placeholder="0,00"/></div><div><div class="fl">Data</div><input id="rr-d" type="date" class="inp" value="${td()}"/></div></div>
     <div class="fr"><div><div class="fl">Observação</div><input id="rr-o" class="inp" placeholder="Motivo…"/></div></div>
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
@@ -1606,7 +1863,7 @@ function mRet(){
 function mAp(){
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">📈 Aporte em Reserva<button class="mclose" onclick="cm()">×</button></div>
-    <div class="fr"><div><div class="fl">Reserva</div><select id="ar-r" class="inp">${S.res.map((r,i)=>`<option value="${i}">${r.nome} (${fmt(rSaldo(r))})</option>`).join('')}</select></div></div>
+    <div class="fr"><div><div class="fl">Reserva</div><select id="ar-r" class="inp">${resDoAno().map((r)=>{const i=S.res.indexOf(r);return`<option value="${i}">${r.nome} (${fmt(rSaldo(r))})</option>`;}).join('')}</select></div></div>
     <div class="fr c2"><div><div class="fl">Valor (R$)</div><input id="ar-v" class="inp" placeholder="0,00"/></div><div><div class="fl">Data</div><input id="ar-d" type="date" class="inp" value="${td()}"/></div></div>
     <div class="fr"><div><div class="fl">Observação</div><input id="ar-o" class="inp" placeholder="Ex: aporte mensal"/></div></div>
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
@@ -1654,7 +1911,7 @@ function mUpd(){
       <div><div class="fl">Mercado Pago</div><input id="up-mp" class="inp" value="${fabs(cc.mp||0)}" placeholder="0,00"/></div>
     </div>
     <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 10px">Reservas</div>
-    ${S.res.map((r,ri)=>`<div class="fr c2" style="margin-bottom:8px"><div><div class="fl">${r.nome}</div><div style="font-size:11px;color:var(--text2);margin-bottom:3px">Calculado: ${fmt(rSaldo(r))}</div><input id="up-r${ri}" class="inp" value="${r.sr!=null?fabs(r.sr):''}" placeholder="Valor do banco…"/></div><div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:4px"><span style="font-size:11px;color:var(--text2)">${r.sr!=null?`Último: ${fmt(r.sr)}\n${fdf(r.srd)}`:'Não conferido'}</span></div></div>`).join('')}
+    ${resDoAno().map((r)=>{const ri=S.res.indexOf(r);return`<div class="fr c2" style="margin-bottom:8px"><div><div class="fl">${r.nome}</div><div style="font-size:11px;color:var(--text2);margin-bottom:3px">Calculado: ${fmt(rSaldo(r))}</div><input id="up-r${ri}" class="inp" value="${r.sr!=null&&String(r.srd||'').startsWith(String(S.anoAtivo))?fabs(r.sr):''}" placeholder="Valor do banco…"/></div><div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:4px"><span style="font-size:11px;color:var(--text2)">${r.sr!=null&&String(r.srd||'').startsWith(String(S.anoAtivo))?`Último: ${fmt(r.sr)} ${fdf(r.srd)}`:'Não conferido'}</span></div></div>`;}).join('')}
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
       <button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn bb" onclick="svUpd()">Salvar</button>
     </div>
@@ -1663,7 +1920,7 @@ function mUpd(){
 function svUpd(){
   D().cc={nubank:pv(document.getElementById('up-nu').value),itau:pv(document.getElementById('up-it').value),mp:pv(document.getElementById('up-mp').value)};
   const al=[];
-  S.res.forEach((r,ri)=>{
+  resDoAno().forEach((r)=>{const ri=S.res.indexOf(r);
     const el=document.getElementById('up-r'+ri);const v=el.value.trim();if(!v)return;
     const nv=pv(v);const sa=rSaldo(r);const diff=nv-sa;
     r.sr=nv;r.srd=td();
@@ -1780,7 +2037,7 @@ function mAddR(){
 }
 function svAddR(){
   const nome=document.getElementById('nr-n').value.trim();if(!nome){toast('Informe o nome','orange');return;}
-  S.res.push({id:nid(),nome,si:pv(document.getElementById('nr-s').value),meta:pv(document.getElementById('nr-m').value),prazo:document.getElementById('nr-p').value.trim(),sr:null,srd:null,movs:[]});
+  const siVal=pv(document.getElementById('nr-s').value);S.res.push({id:nid(),nome,siPorAno:{[S.anoAtivo]:siVal},anoInicio:S.anoAtivo,anoFim:null,meta:pv(document.getElementById('nr-m').value),prazo:document.getElementById('nr-p').value.trim(),sr:null,srd:null,movs:[]});
   save();cm();render();toast(`Reserva "${nome}" criada!`,'green');
 }
 
@@ -1817,7 +2074,7 @@ function mObE(){
 function svObE(){
   const nome=document.getElementById('oe-n').value.trim();const val=pv(document.getElementById('oe-v').value);const fr=document.getElementById('oe-fr').checked;const modo=document.getElementById('oe-m').value;
   if(!nome){toast('Informe o nome','orange');return;}
-  S.obE.push({id:nid(),nome,v:val,fixa:modo==='fixa',sc:'always',parc:modo==='parc',pi:0,pn:1,tag:fr?'freela':''});
+  OBE().push({id:nid(),nome,v:val,fixa:modo==='fixa',sc:'always',parc:modo==='parc',pi:0,pn:1,tag:fr?'freela':''});
   save();cm();render();toast('Entrada adicionada!','green');
 }
 
@@ -1835,7 +2092,7 @@ function mObD(){
 function svObD(){
   const nome=document.getElementById('od-n').value.trim();const val=pv(document.getElementById('od-v').value);const da=document.getElementById('od-da').checked;const modo=document.getElementById('od-m').value;
   if(!nome){toast('Informe o nome','orange');return;}
-  S.obD.push({id:nid(),nome,v:val,fixa:modo==='fixa',sc:'always',parc:modo==='parc',pi:0,pn:1,da});
+  OBD().push({id:nid(),nome,v:val,fixa:modo==='fixa',sc:'always',parc:modo==='parc',pi:0,pn:1,da});
   save();cm();render();toast('Despesa adicionada!','green');
 }
 
