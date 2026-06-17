@@ -167,6 +167,8 @@ body.desktop #hc-svg svg,body.desktop #ge-svg svg,body.desktop #gd-svg svg,body.
 .modo-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;letter-spacing:.04em}
 .modo-badge.desktop{background:var(--green3);color:var(--green);border:1px solid var(--green2)}
 .modo-badge.mobile{background:var(--blue3);color:var(--blue);border:1px solid var(--blue2)}
+.nbtn.div-tab{color:var(--red)!important;border-bottom-color:var(--red)!important;}
+.nbtn.div-tab.on{background:var(--red3)!important;color:var(--red)!important;border-bottom-color:var(--red)!important;}
 </style>
 </head>
 <body>
@@ -628,7 +630,21 @@ function addAno(){
 
 // nav
 const TABS=[{id:'home',l:'🏠 Home'},{id:'ob',l:'Orçamento'},{id:'contas',l:'Contas'},{id:'parc',l:'Parcelados'},{id:'res',l:'Reservas'},{id:'free',l:'Freelas'},{id:'graf',l:'Gráficos'},{id:'avi',l:'🔔 Avisos'}];
-function renderNav(){const nav=document.getElementById('NAV');if(!nav)return;nav.innerHTML=TABS.map(t=>`<button class="nbtn${tab===t.id?' on':''}" onclick="gt('${t.id}')">${t.l}</button>`).join('');}
+function hasDividas(){
+  if(!S.dividas) S.dividas=[];
+  const temAtivas=S.dividas.some(d=>!d.quitada);
+  return temAtivas||getAtrasados().length>0;
+}
+function renderNav(){
+  const nav=document.getElementById('NAV');if(!nav)return;
+  const showDiv=hasDividas();
+  const tabsOcultas=S.config.tabsOcultas||[];
+  const tabsCustom=S.config.tabsCustom||[];
+  let tabs=TABS.filter(t=>!tabsOcultas.includes(t.id));
+  if(showDiv) tabs.push({id:'div',l:'⚠️ Dívidas'});
+  tabsCustom.forEach(tc=>tabs.push({id:'custom_'+tc.id,l:tc.emoji+' '+tc.nome}));
+  nav.innerHTML=tabs.map(t=>`<button class="nbtn${tab===t.id?' on':''}${t.id==='div'?' div-tab':''}" onclick="gt('${t.id}')">${t.l}</button>`).join('');
+}
 function gt(id){
   tab=id;dc();renderNav();
   // limpa alerta ao sair de home/parc
@@ -650,6 +666,8 @@ function render(){
   else if(tab==='free')rFree(mc);
   else if(tab==='graf')rGraf(mc);
   else if(tab==='avi')rAvi(mc);
+  else if(tab==='div')rDiv(mc);
+  else if(tab.startsWith('custom_'))rCustomTab(mc,tab.replace('custom_',''));
 }
 
 function checkAlerts(){
@@ -1178,6 +1196,10 @@ function rHome(mc){
     if(tr<lr) avisos.push(`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">🚨</span><div><div style="font-weight:600;color:var(--red)">Reservas em nível crítico!</div><div style="font-size:12px;color:var(--text2)">${fmt(tr)} — abaixo de ${fmt(lr)}</div></div><button class="btn bsm br" style="margin-left:auto;flex-shrink:0" onclick="gt('res')">Ver</button></div>`);
     if(tpm>lp) avisos.push(`<div style="background:var(--orange3);border:1px solid var(--orange);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">⚠️</span><div><div style="font-weight:600;color:var(--orange)">Limite de parcelamentos!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpm)} / limite ${fmt(lp)}</div></div><button class="btn bsm bo" style="margin-left:auto;flex-shrink:0" onclick="gt('parc')">Ver</button></div>`);
     if(tpa>tr&&tr>0) avisos.push(`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span>💸</span><div><div style="font-weight:600;color:var(--red)">Parcelamentos superam reservas!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpa)} em parcelas vs ${fmt(tr)} em reservas</div></div></div>`);
+    const divAtHome=(S.dividas||[]).filter(d=>!d.quitada);const atrasHome=getAtrasados();
+    if(divAtHome.length>0||atrasHome.length>0){
+      avisos.push(`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">💸</span><div><div style="font-weight:600;color:var(--red)">Dívidas ativas</div><div style="font-size:12px;color:var(--text2)">${divAtHome.length>0?divAtHome.length+' dívida(s)':''}${atrasHome.length>0?(divAtHome.length>0?' · ':'')+atrasHome.length+' conta(s) em atraso':''}</div></div><button class="btn bsm br" style="margin-left:auto;flex-shrink:0" onclick="gt('div')">Ver dívidas</button></div>`);
+    }
     return avisos.length?`<div style="margin-bottom:${avisos.length?'4':'0'}px">${avisos.join('')}</div>`:'';
   })()}
 
@@ -1324,6 +1346,11 @@ function rHome(mc){
     <div id="sec-graf" style="display:block;margin-top:8px"><div id="hc-svg"></div></div>
   </div>
   ${S.avisos.filter(a=>a.on).length>0?`<div class="card"><div class="ctit">🔔 Avisos Ativos</div>${S.avisos.filter(a=>a.on).map(a=>`<div class="av"><div class="rdot" style="background:var(--blue)"></div><span style="flex:1;font-size:12px">${a.txt}</span></div>`).join('')}</div>`:''}
+
+  <div style="display:flex;gap:10px;margin-top:8px;margin-bottom:4px">
+    <button class="btn br" style="flex:1;justify-content:center;padding:12px;font-size:13px" onclick="mAddDivida()">💸 Adicionar Dívida</button>
+    <button class="btn bgh" style="padding:12px 18px;font-size:13px" onclick="mConfig()">⚙️ Config</button>
+  </div>
 
 `;
   requestAnimationFrame(()=>{
@@ -2263,46 +2290,564 @@ function rFree(mc){
   const fcEl=document.getElementById('fc-svg');if(fcEl)svgBar(fcEl,MONTHS,[{label:'Freelas',data:pm,color:'#A075F0'}],false);
 }
 
+function toggleGraf(id){
+  if(!S.config.grafAbertos) S.config.grafAbertos={};
+  // default all on if key missing
+  if(S.config.grafAbertos[id]===undefined) S.config.grafAbertos[id]=true;
+  S.config.grafAbertos[id]=!S.config.grafAbertos[id];
+  save();
+  const mc=document.getElementById('MC');
+  rGraf(mc);
+}
+
 function rGraf(mc){
   const CL=['#2DD4A0','#5B8AF0','#F09A40','#F05252','#A075F0','#1A8C6A','#3A5FB8','#A86820','#A83535','#6845B0'];
   const d2=D();
-  mc.innerHTML='<div style="font-size:18px;font-weight:700;margin-bottom:16px">Graficos '+S.anoAtivo+'</div>'+
-  '<div class="g2" style="margin-bottom:12px">'+
-    '<div class="card"><div class="ctit">Entradas mensais</div><div id="ge-svg"></div></div>'+
-    '<div class="card"><div class="ctit">Despesas mensais</div><div id="gd-svg"></div></div>'+
-  '</div>'+
-  '<div class="card" style="margin-bottom:12px"><div class="ctit">&#128200; Saldo Acumulado no ano</div><div id="acum-svg"></div></div>'+
-  '<div class="card" style="margin-bottom:12px"><div class="ctit">Saldo mensal</div><div id="gs-svg"></div></div>'+
-  '<div class="card" style="margin-bottom:12px">'+
-    '<div class="ctit">&#128197; Timeline de Parcelados</div>'+
-    '<div style="font-size:11px;color:var(--text2);margin-bottom:10px">Duracao de cada parcelado no ano. Linha azul = mes atual.</div>'+
-    '<div id="graf-timeline"></div>'+
-    '<div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">'+
-      [{k:'Nubank',c:'#9B59FC'},{k:'Mercado Pago',c:'#2DD4A0'},{k:'Itau',c:'#F09A40'},{k:'Parc. Direta',c:'#5B8AF0'}].map(function(x){return'<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:2px;background:'+x.c+';display:inline-block"></span>'+x.k+'</span>';}).join('')+
-      '<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3)"><span style="width:10px;height:10px;border-radius:2px;background:#3A4060;display:inline-block"></span>Quitado</span>'+
-    '</div>'+
-  '</div>'+
-  '<div class="card" style="margin-bottom:12px"><div class="ctit">&#128202; Heatmap de Gastos por Categoria</div><div style="font-size:11px;color:var(--text2);margin-bottom:8px">Intensidade = valor gasto. Azul escuro (zero) a vermelho (maximo).</div><div id="heat-svg"></div></div>'+
-  '<div class="card" style="margin-bottom:12px"><div class="ctit">&#128176; Evolucao das Reservas</div><div id="res-svg"></div></div>'+
-  '<div class="g2">'+
-    '<div class="card"><div class="ctit">Entradas anuais por tipo</div><div id="gep-svg"></div></div>'+
-    '<div class="card"><div class="ctit">Despesas anuais por tipo</div><div id="gdp-svg"></div></div>'+
-  '</div>';
+  if(!S.config.grafAbertos) S.config.grafAbertos={};
+  const GA=S.config.grafAbertos;
+  function gv(id){return GA[id]!==false;}
+
+  const GRAFS=[
+    {id:'ge',  t:'📊 Entradas mensais'},
+    {id:'gd',  t:'📊 Despesas mensais'},
+    {id:'acum',t:'📈 Saldo acumulado'},
+    {id:'gs',  t:'📉 Saldo mensal'},
+    {id:'timeline',t:'📅 Timeline parcelados'},
+    {id:'heat',t:'🟥 Heatmap de gastos'},
+    {id:'res', t:'💰 Evolução reservas'},
+    {id:'gep', t:'🥧 Entradas por tipo'},
+    {id:'gdp', t:'🥧 Despesas por tipo'},
+  ];
+
+  function xBtn(id){
+    return `<button onclick="toggleGraf('${id}')" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:12px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="Fechar">✕</button>`;
+  }
+  function card(id,titulo,inner){
+    if(!gv(id)) return '';
+    return `<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ctit" style="margin:0">${titulo}</div>${xBtn(id)}</div>${inner}</div>`;
+  }
+
+  const botoesHtml=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">${GRAFS.map(g=>`<button onclick="toggleGraf('${g.id}')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ${gv(g.id)?'var(--green2)':'var(--border)'};background:${gv(g.id)?'var(--green3)':'var(--bg3)'};color:${gv(g.id)?'var(--green)':'var(--text3)'};font-family:var(--font)">${g.t}</button>`).join('')}</div>`;
+
+  const pairBar=(gv('ge')||gv('gd'))?`<div class="g2" style="margin-bottom:12px">${gv('ge')?`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ctit" style="margin:0">📊 Entradas mensais</div>${xBtn('ge')}</div><div id="ge-svg"></div></div>`:''}${gv('gd')?`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ctit" style="margin:0">📊 Despesas mensais</div>${xBtn('gd')}</div><div id="gd-svg"></div></div>`:''}</div>`:'';
+
+  const pairDonut=(gv('gep')||gv('gdp'))?`<div class="g2" style="margin-bottom:12px">${gv('gep')?`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ctit" style="margin:0">🥧 Entradas por tipo</div>${xBtn('gep')}</div><div id="gep-svg"></div></div>`:''}${gv('gdp')?`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ctit" style="margin:0">🥧 Despesas por tipo</div>${xBtn('gdp')}</div><div id="gdp-svg"></div></div>`:''}</div>`:'';
+
+  const timelineLegend=`<div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">${[{k:'Nubank',c:'#9B59FC'},{k:'Mercado Pago',c:'#2DD4A0'},{k:'Itau',c:'#F09A40'},{k:'Parc. Direta',c:'#5B8AF0'}].map(x=>`<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:2px;background:${x.c};display:inline-block"></span>${x.k}</span>`).join('')}<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3)"><span style="width:10px;height:10px;border-radius:2px;background:#3A4060;display:inline-block"></span>Quitado</span></div>`;
+
+  mc.innerHTML=
+    `<div style="font-size:18px;font-weight:700;margin-bottom:12px">Gráficos ${S.anoAtivo}</div>`+
+    botoesHtml+
+    pairBar+
+    card('acum','📈 Saldo acumulado no ano','<div id="acum-svg"></div>')+
+    card('gs','📉 Saldo mensal','<div id="gs-svg"></div>')+
+    card('timeline','📅 Timeline de parcelados',`<div style="font-size:11px;color:var(--text2);margin-bottom:10px">Duração de cada parcelado. Linha azul = mês atual.</div><div id="graf-timeline"></div>${timelineLegend}`)+
+    card('heat','🟥 Heatmap de gastos','<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Intensidade = valor gasto.</div><div id="heat-svg"></div>')+
+    card('res','💰 Evolução das reservas','<div id="res-svg"></div>')+
+    pairDonut;
 
   requestAnimationFrame(function(){
-    svgBar(document.getElementById('ge-svg'),MONTHS,d2.entradas.map(function(r,i){return{label:r.nome,data:r.vals,color:CL[i%CL.length]};}),true);
-    svgBar(document.getElementById('gd-svg'),MONTHS,d2.despesas.map(function(r,i){return{label:r.nome,data:r.vals,color:CL[i%CL.length]};}),true);
-    svgBar(document.getElementById('gs-svg'),MONTHS,[{label:'Saldo',data:MONTHS.map(function(_,i){return sal(i);}),color:'#2DD4A0',negColor:'#F05252'}],false);
-    svgAcumulado(document.getElementById('acum-svg'));
-    svgTimeline(document.getElementById('graf-timeline'));
-    svgHeatmap(document.getElementById('heat-svg'));
-    svgReservas(document.getElementById('res-svg'));
-    svgDonut(document.getElementById('gep-svg'),d2.entradas.map(function(r,i){return{label:r.nome,val:r.vals.reduce(function(a,b){return a+b;},0),color:CL[i%CL.length]};}));
-    svgDonut(document.getElementById('gdp-svg'),d2.despesas.map(function(r,i){return{label:r.nome,val:r.vals.reduce(function(a,b){return a+b;},0),color:CL[i%CL.length]};}));
+    if(gv('ge')) svgBar(document.getElementById('ge-svg'),MONTHS,d2.entradas.map(function(r,i){return{label:r.nome,data:r.vals,color:CL[i%CL.length]};}),true);
+    if(gv('gd')) svgBar(document.getElementById('gd-svg'),MONTHS,d2.despesas.map(function(r,i){return{label:r.nome,data:r.vals,color:CL[i%CL.length]};}),true);
+    if(gv('gs')) svgBar(document.getElementById('gs-svg'),MONTHS,[{label:'Saldo',data:MONTHS.map(function(_,i){return sal(i);}),color:'#2DD4A0',negColor:'#F05252'}],false);
+    if(gv('acum')) svgAcumulado(document.getElementById('acum-svg'));
+    if(gv('timeline')) svgTimeline(document.getElementById('graf-timeline'));
+    if(gv('heat')) svgHeatmap(document.getElementById('heat-svg'));
+    if(gv('res')) svgReservas(document.getElementById('res-svg'));
+    if(gv('gep')) svgDonut(document.getElementById('gep-svg'),d2.entradas.map(function(r,i){return{label:r.nome,val:r.vals.reduce(function(a,b){return a+b;},0),color:CL[i%CL.length]};}));
+    if(gv('gdp')) svgDonut(document.getElementById('gdp-svg'),d2.despesas.map(function(r,i){return{label:r.nome,val:r.vals.reduce(function(a,b){return a+b;},0),color:CL[i%CL.length]};}));
   });
 }
 
 // ── AVISOS ──
+// ── CONFIGURAÇÕES ──
+function mConfig(){
+  const cfg=S.config;
+  const lr=cfg.limiteReserva||3000;
+  const lp=cfg.limiteParcMensal||800;
+  const moeda=cfg.moeda||'BRL';
+  const popupAuto=cfg.popupAuto!==false;
+  const nomeUsuario=cfg.nomeUsuario||'';
+  const metaPoupanca=cfg.metaPoupanca||0;
+  const diasLembreteVenc=cfg.diasLembreteVenc||3;
+  const tabsOcultas=cfg.tabsOcultas||[];
+  const tabsCustom=cfg.tabsCustom||[];
+
+  const tabInfo=[
+    {id:'home',l:'🏠 Home',fixo:true},
+    {id:'ob',l:'Orçamento'},
+    {id:'contas',l:'Contas'},
+    {id:'parc',l:'Parcelados'},
+    {id:'res',l:'Reservas'},
+    {id:'free',l:'Freelas'},
+    {id:'graf',l:'Gráficos'},
+    {id:'avi',l:'🔔 Avisos'},
+  ];
+
+  om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:580px">
+    <div class="mtitle">⚙️ Configurações<button class="mclose" onclick="cm()">×</button></div>
+    <div style="overflow-y:auto;max-height:75vh;padding-right:4px">
+
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">👤 Perfil</div>
+    <div class="fr c2" style="margin-bottom:16px">
+      <div><div class="fl">Seu nome</div><input id="cfg-nome" class="inp" placeholder="Ex: Felipe" value="${nomeUsuario}"/></div>
+      <div><div class="fl">Moeda</div>
+        <select id="cfg-moeda" class="inp">
+          <option value="BRL" ${moeda==='BRL'?'selected':''}>R$ — Real (BRL)</option>
+          <option value="USD" ${moeda==='USD'?'selected':''}>$ — Dólar (USD)</option>
+          <option value="EUR" ${moeda==='EUR'?'selected':''}>€ — Euro (EUR)</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">⚠️ Limites & Alertas</div>
+    <div class="fr c2" style="margin-bottom:4px">
+      <div><div class="fl">Reserva mínima crítica (R$)</div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Alerta vermelho quando reservas caírem abaixo disso</div><input id="cfg-lr" class="inp" type="number" step="100" value="${lr}"/></div>
+      <div><div class="fl">Limite de parcelas/mês (R$)</div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Aviso quando parcelas do mês ultrapassarem</div><input id="cfg-lp" class="inp" type="number" step="50" value="${lp}"/></div>
+    </div>
+    <div class="fr c2" style="margin-bottom:16px">
+      <div><div class="fl">Meta de poupança mensal (R$)</div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Referência pessoal nos resumos</div><input id="cfg-meta" class="inp" type="number" step="100" value="${metaPoupanca}"/></div>
+      <div><div class="fl">Aviso de vencimento (dias antes)</div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Alertar contas próximas do vencimento</div><input id="cfg-dias" class="inp" type="number" min="0" max="30" value="${diasLembreteVenc}"/></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">🔔 Notificações</div>
+    <div style="margin-bottom:16px">
+      <label style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer">
+        <input type="checkbox" id="cfg-popup" ${popupAuto?'checked':''} style="width:16px;height:16px;accent-color:var(--green)"/>
+        <div><div style="font-size:13px;font-weight:500">Popup automático de pagamentos</div><div style="font-size:11px;color:var(--text2)">Abre ao carregar o app quando há contas pendentes</div></div>
+      </label>
+    </div>
+
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">🗂️ Abas — Visibilidade</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Ative ou desative abas do menu. A aba Home não pode ser ocultada.</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+      ${tabInfo.map(t=>`<label style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer${t.fixo?';opacity:.5;pointer-events:none':''}">
+        <input type="checkbox" data-tabid="${t.id}" class="cfg-tab-chk" ${!tabsOcultas.includes(t.id)?'checked':''} ${t.fixo?'disabled':''} style="width:16px;height:16px;accent-color:var(--green)"/>
+        <span style="font-size:13px;font-weight:500">${t.l}</span>
+        ${t.fixo?'<span style="font-size:10px;color:var(--text3);margin-left:auto">obrigatória</span>':''}
+      </label>`).join('')}
+    </div>
+
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">➕ Abas Personalizadas</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Crie abas próprias com notas, links e checklists.</div>
+    ${tabsCustom.length>0?`<div style="margin-bottom:10px">${tabsCustom.map((tc,i)=>`<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:6px">
+      <span style="font-size:16px">${tc.emoji}</span>
+      <span style="flex:1;font-size:13px;font-weight:500">${tc.nome}</span>
+      <button class="btn bxs bgh" onclick="cm();gt('custom_${tc.id}')">Abrir →</button>
+      <button class="del" onclick="if(confirm('Excluir aba ${tc.nome}?')){S.config.tabsCustom.splice(${i},1);save();renderNav();mConfig();}">✕</button>
+    </div>`).join('')}</div>`:'<div style="font-size:12px;color:var(--text3);font-style:italic;margin-bottom:10px">Nenhuma aba personalizada ainda.</div>'}
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">Criar nova aba</div>
+      <div class="fr c2" style="margin-bottom:0">
+        <div><div class="fl">Emoji</div><input id="cfg-new-em" class="inp" placeholder="📌" maxlength="2" style="font-size:18px;text-align:center" value="📌"/></div>
+        <div><div class="fl">Nome da aba</div><input id="cfg-new-nm" class="inp" placeholder="Ex: Metas 2026"/></div>
+      </div>
+      <div class="fr" style="margin-top:8px;margin-bottom:0"><div><div class="fl">Descrição (opcional)</div><input id="cfg-new-desc" class="inp" placeholder="Subtítulo que aparece dentro da aba"/></div></div>
+      <button class="btn bg bsm" style="margin-top:10px" onclick="criarAbaCustom()">+ Criar aba</button>
+    </div>
+
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">🗂️ Dados</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+      <button class="btn bgh bsm" onclick="cm();exportarDados()">💾 Exportar backup</button>
+      <button class="btn bgh bsm" onclick="cm();importarDados()">📂 Importar backup</button>
+    </div>
+
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:14px;margin-top:10px">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn bg" onclick="svConfig()">💾 Salvar</button>
+    </div>
+  </div>`);
+}
+
+function criarAbaCustom(){
+  const em=document.getElementById('cfg-new-em').value.trim()||'📌';
+  const nm=document.getElementById('cfg-new-nm').value.trim();
+  const desc=document.getElementById('cfg-new-desc').value.trim();
+  if(!nm){toast('Dê um nome para a aba','orange');return;}
+  if(!S.config.tabsCustom) S.config.tabsCustom=[];
+  const cid='c'+Date.now();
+  S.config.tabsCustom.push({id:cid,emoji:em,nome:nm,descricao:desc,notas:[],links:[],checklist:[]});
+  save();cm();renderNav();gt('custom_'+cid);toast('Aba "'+nm+'" criada!','green');
+}
+
+function svConfig(){
+  const cfg=S.config;
+  const lr=+document.getElementById('cfg-lr').value||3000;
+  const lp=+document.getElementById('cfg-lp').value||800;
+  cfg.nomeUsuario=document.getElementById('cfg-nome').value.trim();
+  cfg.moeda=document.getElementById('cfg-moeda').value;
+  cfg.metaPoupanca=+document.getElementById('cfg-meta').value||0;
+  cfg.diasLembreteVenc=+document.getElementById('cfg-dias').value||3;
+  cfg.popupAuto=document.getElementById('cfg-popup').checked;
+  cfg.limiteParcMensal=lp;
+  // tabs ocultas
+  const ocultas=[];
+  document.querySelectorAll('.cfg-tab-chk').forEach(el=>{if(!el.checked) ocultas.push(el.dataset.tabid);});
+  cfg.tabsOcultas=ocultas;
+  const lrAntigo=cfg.limiteReserva||3000;
+  if(lr!==lrAntigo){
+    cm();
+    const m=document.createElement('div');
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px';
+    m.innerHTML='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:420px;width:100%"><div style="font-size:15px;font-weight:700;color:var(--orange);margin-bottom:10px">⚠️ Alterar limite crítico?</div><div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Mudar de '+fmt(lrAntigo)+' para '+fmt(lr)+'.</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn bgh" onclick="this.closest(\'div\').parentElement.remove();save();render()">Cancelar</button><button class="btn br" onclick="this.closest(\'div\').parentElement.remove();S.config.limiteReserva='+lr+';save();renderNav();render();toast(\'Configurações salvas!\',\'green\')">Confirmar</button></div></div>';
+    document.body.appendChild(m);
+  } else {
+    cfg.limiteReserva=lr;
+    save();cm();renderNav();render();toast('Configurações salvas!','green');
+  }
+}
+
+// ── ABAS PERSONALIZADAS ──
+function rCustomTab(mc, cid){
+  if(!S.config.tabsCustom) S.config.tabsCustom=[];
+  const tc=S.config.tabsCustom.find(x=>x.id===cid);
+  if(!tc){mc.innerHTML='<div style="padding:20px;color:var(--text3)">Aba não encontrada.</div>';return;}
+  if(!tc.notas) tc.notas=[];
+  if(!tc.links) tc.links=[];
+  if(!tc.checklist) tc.checklist=[];
+
+  mc.innerHTML=`
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+    <div>
+      <div style="font-size:18px;font-weight:700">${tc.emoji} ${tc.nome}</div>
+      ${tc.descricao?`<div style="font-size:12px;color:var(--text2);margin-top:3px">${tc.descricao}</div>`:''}
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn bgh bsm" onclick="mEditCustomTab('${cid}')">✏️ Editar</button>
+      <button class="btn br bsm" onclick="mDelCustomTab('${cid}')">Excluir aba</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="ctit" style="margin-bottom:10px">📝 Notas</div>
+    <textarea id="ct-nota-inp" class="inp" rows="5" style="resize:vertical;margin-bottom:8px" placeholder="Anotações, metas, lembretes…">${(tc.notas[0]||{texto:''}).texto}</textarea>
+    <button class="btn bg bsm" onclick="svCustomNota('${cid}')">💾 Salvar</button>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="ctit" style="margin-bottom:10px">✅ Checklist</div>
+    ${tc.checklist.length>0?`
+    <div style="margin-bottom:10px">
+      ${tc.checklist.map((c,i)=>`<div class="chk-row${c.ok?' done':''}" onclick="S.config.tabsCustom.find(x=>x.id==='${cid}').checklist[${i}].ok=!S.config.tabsCustom.find(x=>x.id==='${cid}').checklist[${i}].ok;save();render()">
+        <div class="chk-box${c.ok?' checked':''}"><span style="color:#000;font-size:11px;font-weight:700">${c.ok?'✓':''}</span></div>
+        <span class="chk-label">${c.texto}</span>
+        <button class="del" onclick="event.stopPropagation();S.config.tabsCustom.find(x=>x.id==='${cid}').checklist.splice(${i},1);save();render()">✕</button>
+      </div>`).join('')}
+      <button class="btn bxs bgh" style="margin-top:4px" onclick="S.config.tabsCustom.find(x=>x.id==='${cid}').checklist.forEach(c=>c.ok=false);save();render()">Limpar tudo</button>
+    </div>`:'<div style="font-size:12px;color:var(--text3);font-style:italic;margin-bottom:8px">Nenhum item ainda.</div>'}
+    <div style="display:flex;gap:8px">
+      <input id="ct-chk-inp" class="inp" placeholder="Novo item…" style="flex:1" onkeydown="if(event.key==='Enter')svCustomChk('${cid}')"/>
+      <button class="btn bg bsm" onclick="svCustomChk('${cid}')">+ Adicionar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctit" style="margin-bottom:10px">🔗 Links úteis</div>
+    ${tc.links.length>0?`<div style="margin-bottom:10px">${tc.links.map((l,i)=>`<div class="er">
+      <span style="font-size:13px">🔗</span>
+      <a href="${l.url}" target="_blank" style="flex:1;font-size:12px;color:var(--blue);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.titulo||l.url}</a>
+      <button class="del" onclick="S.config.tabsCustom.find(x=>x.id==='${cid}').links.splice(${i},1);save();render()">✕</button>
+    </div>`).join('')}</div>`:''}
+    <div class="fr c2" style="margin-bottom:8px">
+      <div><div class="fl">Título</div><input id="ct-link-t" class="inp" placeholder="Ex: Planilha do banco"/></div>
+      <div><div class="fl">URL</div><input id="ct-link-u" class="inp" placeholder="https://…"/></div>
+    </div>
+    <button class="btn bgh bsm" onclick="svCustomLink('${cid}')">+ Adicionar link</button>
+  </div>`;
+}
+
+function svCustomNota(cid){
+  const tc=S.config.tabsCustom.find(x=>x.id===cid);if(!tc)return;
+  if(!tc.notas||!tc.notas.length) tc.notas=[{texto:''}];
+  tc.notas[0].texto=document.getElementById('ct-nota-inp').value;
+  save();toast('Nota salva!','green');
+}
+function svCustomLink(cid){
+  const tc=S.config.tabsCustom.find(x=>x.id===cid);if(!tc)return;
+  const t=document.getElementById('ct-link-t').value.trim();
+  const u=document.getElementById('ct-link-u').value.trim();
+  if(!u){toast('Informe a URL','orange');return;}
+  tc.links.push({titulo:t||u,url:u});
+  save();render();toast('Link adicionado!','green');
+}
+function svCustomChk(cid){
+  const tc=S.config.tabsCustom.find(x=>x.id===cid);if(!tc)return;
+  const txt=document.getElementById('ct-chk-inp').value.trim();
+  if(!txt){toast('Escreva o item','orange');return;}
+  tc.checklist.push({texto:txt,ok:false});
+  save();render();toast('Item adicionado!','green');
+}
+function mEditCustomTab(cid){
+  const tc=S.config.tabsCustom.find(x=>x.id===cid);if(!tc)return;
+  om(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle">✏️ Editar aba<button class="mclose" onclick="cm()">×</button></div>
+    <div class="fr c2">
+      <div><div class="fl">Emoji</div><input id="ect-em" class="inp" value="${tc.emoji}" maxlength="2" style="font-size:20px;text-align:center"/></div>
+      <div><div class="fl">Nome</div><input id="ect-nm" class="inp" value="${tc.nome}"/></div>
+    </div>
+    <div class="fr"><div><div class="fl">Descrição (opcional)</div><input id="ect-desc" class="inp" value="${tc.descricao||''}"/></div></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn bg" onclick="const tc2=S.config.tabsCustom.find(x=>x.id==='${cid}');tc2.emoji=document.getElementById('ect-em').value||'📌';tc2.nome=document.getElementById('ect-nm').value||tc2.nome;tc2.descricao=document.getElementById('ect-desc').value;save();cm();renderNav();render();toast('Aba atualizada!','green')">Salvar</button>
+    </div>
+  </div>`);
+}
+function mDelCustomTab(cid){
+  om(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle" style="color:var(--red)">Excluir aba?<button class="mclose" onclick="cm()">×</button></div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Todo o conteúdo será apagado permanentemente.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn br" onclick="S.config.tabsCustom=S.config.tabsCustom.filter(x=>x.id!=='${cid}');save();cm();tab='home';renderNav();render();toast('Aba excluída','orange')">Excluir</button>
+    </div>
+  </div>`);
+}
+
+// ── DÍVIDAS ──
+function getDividas(){ if(!S.dividas) S.dividas=[]; return S.dividas; }
+
+function calcDividaAtual(d){
+  const hoje=new Date();
+  const base=d.valorAtual!=null?d.valorAtual:d.valor;
+  const dataBase=d.dataAtualizacao||d.dataCriacao||td();
+  if(!d.taxa||d.taxa<=0) return base;
+  const taxaMensal=d.tipoTaxa==='anual'?Math.pow(1+d.taxa/100,1/12)-1:d.taxa/100;
+  const partes=dataBase.split('-');
+  const dtBase=new Date(+partes[0],+partes[1]-1,+partes[2]||1);
+  const meses=((hoje.getFullYear()-dtBase.getFullYear())*12)+(hoje.getMonth()-dtBase.getMonth());
+  if(meses<=0) return base;
+  return base*Math.pow(1+taxaMensal,meses);
+}
+
+function mAddDivida(){
+  om(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle">💸 Adicionar Dívida<button class="mclose" onclick="cm()">×</button></div>
+    <div class="fr"><div><div class="fl">Nome / Credor</div><input id="dv-n" class="inp" placeholder="Ex: Empréstimo pessoal"/></div></div>
+    <div class="fr c2">
+      <div><div class="fl">Valor atual (R$)</div><input id="dv-v" class="inp" placeholder="3.000,00"/></div>
+      <div><div class="fl">Previsão de quitação</div><input id="dv-prev" type="date" class="inp"/></div>
+    </div>
+    <div class="fr c2">
+      <div><div class="fl">Taxa de juros (%)</div><input id="dv-taxa" class="inp" type="number" step="0.01" min="0" placeholder="0,00"/></div>
+      <div><div class="fl">Tipo de taxa</div>
+        <div class="tgr" style="margin-top:6px">
+          <div class="tgo on" id="dv-mensal" onclick="this.classList.add('on');document.getElementById('dv-anual').classList.remove('on')">% ao mês</div>
+          <div class="tgo" id="dv-anual" onclick="this.classList.add('on');document.getElementById('dv-mensal').classList.remove('on')">% ao ano</div>
+        </div>
+      </div>
+    </div>
+    <div class="fr"><div><div class="fl">Observação</div><input id="dv-obs" class="inp" placeholder="Banco, condições…"/></div></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn br" onclick="svAddDivida()">Adicionar</button>
+    </div>
+  </div>`);
+}
+
+function svAddDivida(){
+  const nome=document.getElementById('dv-n').value.trim();
+  const valor=pv(document.getElementById('dv-v').value);
+  const taxa=+document.getElementById('dv-taxa').value||0;
+  const tipoTaxa=document.getElementById('dv-anual').classList.contains('on')?'anual':'mensal';
+  const prev=document.getElementById('dv-prev').value||null;
+  const obs=document.getElementById('dv-obs').value.trim();
+  if(!nome||!valor){toast('Preencha nome e valor','orange');return;}
+  getDividas().push({id:nid(),nome,valor,valorAtual:valor,taxa,tipoTaxa,previsao:prev,obs,dataCriacao:td(),dataAtualizacao:null,quitada:false});
+  save();cm();renderNav();
+  if(!hasDividas()){gt('home');}else{gt('div');}
+  toast(`Dívida "${nome}" adicionada!`,'red');
+}
+
+function mAtualizarDivida(idx){
+  const d=getDividas()[idx]; if(!d) return;
+  const estimado=calcDividaAtual(d);
+  om(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle">🔄 Atualizar Dívida<button class="mclose" onclick="cm()">×</button></div>
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;border:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">${d.nome}</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div><div style="font-size:10px;color:var(--text3)">Valor original</div><div style="font-size:15px;font-weight:700;color:var(--red)">${fmt(d.valor)}</div></div>
+        ${d.taxa>0?`<div><div style="font-size:10px;color:var(--text3)">Estimativa atual</div><div style="font-size:15px;font-weight:700;color:var(--orange)">${fmt(estimado)}</div></div>`:''}
+        ${d.dataAtualizacao?`<div><div style="font-size:10px;color:var(--text3)">Última atualiz.</div><div style="font-size:12px;color:var(--text2)">${fdf(d.dataAtualizacao)}</div></div>`:''}
+      </div>
+    </div>
+    <div class="fr c2">
+      <div><div class="fl">Valor real atual (R$)</div><input id="dvu-v" class="inp" placeholder="Valor no boleto" value="${d.valorAtual!=null?fabs(d.valorAtual):''}"/></div>
+      <div><div class="fl">Data do valor</div><input id="dvu-d" type="date" class="inp" value="${td()}"/></div>
+    </div>
+    <div class="fr"><div><div class="fl">Nova previsão de quitação</div><input id="dvu-prev" type="date" class="inp" value="${d.previsao||''}"/></div></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn bb" onclick="svAtualizarDivida(${idx})">Salvar</button>
+    </div>
+  </div>`);
+}
+
+function svAtualizarDivida(idx){
+  const d=getDividas()[idx]; if(!d) return;
+  const val=pv(document.getElementById('dvu-v').value);
+  if(!val){toast('Informe o valor','orange');return;}
+  d.valorAtual=val;d.dataAtualizacao=document.getElementById('dvu-d').value||td();
+  d.previsao=document.getElementById('dvu-prev').value||d.previsao||null;
+  save();cm();render();toast('Dívida atualizada!','green');
+}
+
+function mEditDivida(idx){
+  const d=getDividas()[idx]; if(!d) return;
+  om(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle">✏️ Editar Dívida<button class="mclose" onclick="cm()">×</button></div>
+    <div class="fr"><div><div class="fl">Nome</div><input id="de-n" class="inp" value="${d.nome.replace(/"/g,'&quot;')}"/></div></div>
+    <div class="fr c2">
+      <div><div class="fl">Valor original (R$)</div><input id="de-v" class="inp" value="${fabs(d.valor)}"/></div>
+      <div><div class="fl">Previsão quitação</div><input id="de-prev" type="date" class="inp" value="${d.previsao||''}"/></div>
+    </div>
+    <div class="fr c2">
+      <div><div class="fl">Taxa juros (%)</div><input id="de-taxa" class="inp" type="number" step="0.01" value="${d.taxa||0}"/></div>
+      <div><div class="fl">Tipo</div>
+        <div class="tgr" style="margin-top:6px">
+          <div class="tgo ${d.tipoTaxa!=='anual'?'on':''}" id="de-mensal" onclick="this.classList.add('on');document.getElementById('de-anual').classList.remove('on')">% mês</div>
+          <div class="tgo ${d.tipoTaxa==='anual'?'on':''}" id="de-anual" onclick="this.classList.add('on');document.getElementById('de-mensal').classList.remove('on')">% ano</div>
+        </div>
+      </div>
+    </div>
+    <div class="fr"><div><div class="fl">Observação</div><input id="de-obs" class="inp" value="${(d.obs||'').replace(/"/g,'&quot;')}"/></div></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn bg" onclick="const d2=getDividas()[${idx}];d2.nome=document.getElementById('de-n').value;d2.valor=pv(document.getElementById('de-v').value)||d2.valor;d2.taxa=+document.getElementById('de-taxa').value||0;d2.tipoTaxa=document.getElementById('de-anual').classList.contains('on')?'anual':'mensal';d2.previsao=document.getElementById('de-prev').value||null;d2.obs=document.getElementById('de-obs').value;save();cm();render();toast('Dívida atualizada!','green')">Salvar</button>
+    </div>
+  </div>`);
+}
+
+function quitarDivida(idx){
+  const d=getDividas()[idx]; if(!d) return;
+  om(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle" style="color:var(--green)">✅ Quitar Dívida<button class="mclose" onclick="cm()">×</button></div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Confirma quitar <strong style="color:var(--text)">${d.nome}</strong>?<br><span style="color:var(--green)">Ela ficará no histórico.</span></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn bg" onclick="getDividas()[${idx}].quitada=true;getDividas()[${idx}].dataQuitacao=td();save();cm();renderNav();if(!hasDividas()&&tab==='div'){gt('home');}else{render();}toast('Dívida quitada! 🎉','green')">✅ Quitar</button>
+    </div>
+  </div>`);
+}
+
+function rDiv(mc){
+  if(!S.dividas) S.dividas=[];
+  const divAtivas=S.dividas.filter(d=>!d.quitada);
+  const divQuitadas=S.dividas.filter(d=>d.quitada);
+  const atrasados=getAtrasados();
+  const gruposAt={};
+  atrasados.forEach(a=>{
+    if(!gruposAt[a.id]) gruposAt[a.id]={...a,meses:[],total:0};
+    gruposAt[a.id].meses.push(a.mes);
+    gruposAt[a.id].total+=a.val;
+  });
+  const totalAtrasado=atrasados.reduce((s,a)=>s+a.val,0);
+  const totalDividas=divAtivas.reduce((s,d)=>s+calcDividaAtual(d),0);
+
+  mc.innerHTML=`
+  <div style="font-size:18px;font-weight:700;margin-bottom:16px">💸 Controle de Dívidas</div>
+
+  ${(divAtivas.length>0||totalAtrasado>0)?`
+  <div class="g2" style="margin-bottom:16px">
+    ${totalAtrasado>0?`<div class="met r"><div class="mlbl">🔴 Em atraso</div><div class="mval">${fmt(totalAtrasado)}</div><div class="msub">${atrasados.length} item(s)</div></div>`:''}
+    ${divAtivas.length>0?`<div class="met r"><div class="mlbl">💸 Dívidas ativas</div><div class="mval">${fmt(totalDividas)}</div><div class="msub">${divAtivas.length} dívida(s)</div></div>`:''}
+  </div>`:''}
+
+  ${atrasados.length>0?`
+  <div class="card" style="margin-bottom:12px;border-color:var(--red2)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:16px">🔴</span>
+      <div class="ctit" style="margin:0;color:var(--red)">CONTAS EM ATRASO</div>
+      <span style="font-size:11px;color:var(--text2);margin-left:auto">${fmt(totalAtrasado)} total</span>
+    </div>
+    ${Object.values(gruposAt).map(g=>{
+      const qtd=g.meses.length;
+      const mesesStr=g.meses.map(mi=>MONTHS[mi]).join(', ');
+      const tagHtml=g.tag?`<span class="tag ${g.tag==='P'?'tpa':'tda'}" style="font-size:9px;padding:1px 4px">${g.tag}</span>`:'';
+      const mesesJson=JSON.stringify(g.meses);
+      const jCalc=calcJurosAcumulado(g);
+      return`<div class="atrs-row" style="margin-bottom:8px">
+        <span class="atrs-ico">⚠️</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><span class="atrs-nome">${g.nome}</span>${tagHtml}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px">${mesesStr}${qtd>1?` <strong style="color:var(--red)">(${qtd} meses)</strong>`:''}</div>
+          <div style="font-size:11px;font-weight:700;color:var(--red);margin-top:2px">${fmt(g.total)}${jCalc&&jCalc.juros>0.01?` <span style="color:var(--orange);font-size:10px">+${fmt(jCalc.juros)} juros</span>`:''}</div>
+          ${jurosHtml(g)}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button class="btn bxs bg" onclick="pagarAtrasado('${g.id}',${mesesJson})">✓ Pago</button>
+          ${qtd>1?`<button class="btn bxs bgh" style="font-size:9px" onclick="pagarAtrasadoUm('${g.id}',${g.meses[0]})">✓ Só ${MONTHS[g.meses[0]]}</button>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`:''}
+
+  ${divAtivas.length>0?`
+  <div class="card" style="margin-bottom:12px">
+    <div class="ctit" style="margin-bottom:12px">💸 DÍVIDAS ATIVAS</div>
+    ${divAtivas.map((d,i)=>{
+      const realIdx=S.dividas.indexOf(d);
+      const valAtual=calcDividaAtual(d);
+      const temJuros=d.taxa>0;
+      const diasPrev=d.previsao?Math.ceil((new Date(d.previsao)-new Date())/(1000*60*60*24)):null;
+      const vencido=diasPrev!==null&&diasPrev<0;
+      return`<div style="background:var(--bg3);border:1px solid ${vencido?'var(--red2)':'var(--border)'};border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
+        <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+              <span style="font-size:14px;font-weight:700">${d.nome}</span>
+              ${temJuros?`<span class="tag tit" style="font-size:9px;padding:1px 5px">${d.taxa}% a.${d.tipoTaxa==='anual'?'a.':'m.'}</span>`:''}
+              ${vencido?`<span class="tag" style="background:var(--red3);color:var(--red);border:1px solid var(--red2);font-size:9px;padding:1px 5px">Vencida</span>`:''}
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+              <div><div style="font-size:10px;color:var(--text3)">Valor original</div><div style="font-size:13px;font-weight:600;color:var(--text2)">${fmt(d.valor)}</div></div>
+              ${d.valorAtual!=null&&d.valorAtual!==d.valor?`<div><div style="font-size:10px;color:var(--text3)">Último atualizado</div><div style="font-size:13px;font-weight:600;color:var(--red)">${fmt(d.valorAtual)}</div>${d.dataAtualizacao?`<div style="font-size:9px;color:var(--text3)">${fdf(d.dataAtualizacao)}</div>`:''}</div>`:''}
+              ${temJuros?`<div><div style="font-size:10px;color:var(--text3)">Estimativa hoje</div><div style="font-size:15px;font-weight:700;color:var(--orange)">${fmt(valAtual)}</div><div style="font-size:9px;color:var(--text3)">juros: ~${fmt(valAtual-(d.valorAtual!=null?d.valorAtual:d.valor))}</div></div>`:'<div><div style="font-size:10px;color:var(--text3)">Valor atual</div><div style="font-size:15px;font-weight:700;color:var(--red)">${fmt(valAtual)}</div></div>'}
+            </div>
+            ${d.previsao?`<div style="font-size:11px;color:${vencido?'var(--red)':'var(--text2)'};margin-bottom:4px">📅 Previsão: ${d.previsao}${diasPrev!==null?(vencido?` <strong style="color:var(--red)">(${Math.abs(diasPrev)}d atrasada)</strong>`:` (em ${diasPrev}d)`):''}  </div>`:''}
+            ${d.obs?`<div style="font-size:11px;color:var(--text3)">💬 ${d.obs}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+            <button class="btn bxs bb" onclick="mAtualizarDivida(${realIdx})">🔄 Atualizar valor</button>
+            <button class="btn bxs bgh" onclick="mEditDivida(${realIdx})">✏️ Editar</button>
+            <button class="btn bxs bg" onclick="quitarDivida(${realIdx})">✅ Quitar</button>
+          </div>
+        </div>
+        ${temJuros?`<div style="margin-top:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Projeção com juros compostos</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            ${[1,3,6,12].map(m=>{const taxaMensal=d.tipoTaxa==='anual'?Math.pow(1+d.taxa/100,1/12)-1:d.taxa/100;const base=d.valorAtual!=null?d.valorAtual:d.valor;const proj=base*Math.pow(1+taxaMensal,m);return`<div style="text-align:center;background:var(--bg3);border-radius:6px;padding:6px 10px;min-width:60px"><div style="font-size:9px;color:var(--text3)">${m}m</div><div style="font-size:12px;font-weight:700;color:var(--orange)">${fmt(proj)}</div></div>`;}).join('')}
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:6px;font-style:italic">⚠ Estimativa. Confirme o valor real no boleto.</div>
+        </div>`:''}
+      </div>`;
+    }).join('')}
+  </div>`:
+  `<div class="card" style="margin-bottom:12px;text-align:center;padding:32px 16px">
+    <div style="font-size:32px;margin-bottom:8px">✅</div>
+    <div style="font-size:15px;font-weight:600;color:var(--green);margin-bottom:4px">Nenhuma dívida ativa</div>
+    <div style="font-size:12px;color:var(--text2)">Adicione uma dívida para monitorar aqui</div>
+  </div>`}
+
+  ${divQuitadas.length>0?`
+  <div class="card" style="margin-bottom:12px">
+    <div class="sec-hdr" onclick="toggleSec('div-quit')">
+      <div class="ctit" style="margin:0;color:var(--green)">✅ QUITADAS (${divQuitadas.length})</div>
+      <button class="sec-tog" data-tog="div-quit">+</button>
+    </div>
+    <div id="div-quit" style="display:none;margin-top:10px">
+      ${divQuitadas.map((d,i)=>{const realIdx=S.dividas.indexOf(d);return`<div class="er" style="opacity:.6"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></div><span style="flex:1;font-size:12px;text-decoration:line-through;color:var(--text2)">${d.nome}</span><span style="font-size:12px;font-weight:600;color:var(--green)">${fmt(d.valor)}</span>${d.dataQuitacao?`<span style="font-size:10px;color:var(--text3);padding:0 6px">${fdf(d.dataQuitacao)}</span>`:''}<button class="del" onclick="if(confirm('Remover do histórico?')){getDividas().splice(${realIdx},1);save();renderNav();render();}">✕</button></div>`;}).join('')}
+    </div>
+  </div>`:''}
+
+  <div style="margin-top:8px;padding:4px 0">
+    <button class="btn br" style="width:100%;justify-content:center;padding:12px" onclick="mAddDivida()">+ Adicionar Nova Dívida</button>
+  </div>
+  `;
+}
+
+
 function rAvi(mc){
   mc.innerHTML=`<div style="font-size:18px;font-weight:700;margin-bottom:16px">🔔 Avisos & Lembretes</div>
   <div class="card" style="margin-bottom:12px">
