@@ -2418,6 +2418,25 @@ const TX_DATA=[];
 const CAT_COLORS={"Alimentação": ["#2DD4A0", "#0D4A38"], "Transporte": ["#5B8AF0", "#1A2550"], "Saúde": ["#F05252", "#3A1515"], "Beleza": ["#A075F0", "#2A1850"], "Streaming": ["#F09A40", "#3A2010"], "Vestuário": ["#F0C840", "#3A3010"], "Eletrônicos": ["#38BDF8", "#0C2A3A"], "Casa": ["#FB923C", "#3A1A05"], "Educação": ["#4ADE80", "#0A3A18"], "Lazer": ["#E879F9", "#3A0A3A"], "Serviços": ["#94A3B8", "#1A2535"], "Pets": ["#FDBA74", "#3A1A05"], "Finanças": ["#64748B", "#1A2535"], "Outros": ["#9BA3BF", "#2A3050"]};
 const CATEGORIAS_LIST=["Alimentação", "Transporte", "Saúde", "Beleza", "Streaming", "Vestuário", "Eletrônicos", "Casa", "Educação", "Lazer", "Serviços", "Pets", "Finanças", "Outros"];
 
+function delFatura(cartaoNome, fat){
+  const label=fmtFatura(fat);
+  om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
+    <div class="mtitle" style="color:var(--red)">🗑️ Deletar fatura?<button class="mclose" onclick="cm()">×</button></div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+      Deletar <strong style="color:var(--text)">${label}</strong> de <strong style="color:var(--text)">${cartaoNome}</strong>?<br>
+      <span style="color:var(--red)">Todos os lançamentos dessa fatura serão removidos.</span>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn br" onclick="
+        if(!S.faturas)S.faturas=[];
+        S.faturas=S.faturas.filter(t=>!(t.fatura==='${fat}'&&t.cartao==='${cartaoNome}'));
+        save();cm();render();toast('Fatura ${label} removida','orange');
+      ">Deletar</button>
+    </div>
+  </div>`);
+}
+
 function getAllTx(){
   // Merge TX_DATA (embedded) + S.faturas (imported at runtime)
   const imported=(S.faturas||[]);
@@ -2630,8 +2649,16 @@ function processImportFatura(e, cartaoId, cartaoNome){
       if(parts.length<3) continue;
       const date=parts[iDate]?.replace(/"/g,'').trim();
       const title=parts[iTitle]?.replace(/"/g,'').trim();
-      const amtStr=parts[iAmount]?.replace(/"/g,'').replace(/\./g,'').replace(',','.').trim();
-      const amount=parseFloat(amtStr);
+      // Smart amount parse: detect pt-BR (1.234,56) vs en-US (1234.56)
+      const rawAmt=parts[iAmount]?.replace(/"/g,'').trim()||'';
+      let amount;
+      if(/,\d{2}$/.test(rawAmt)){
+        // pt-BR format: 1.234,56 → remove dots, swap comma
+        amount=parseFloat(rawAmt.replace(/\./g,'').replace(',','.'));
+      } else {
+        // en-US format: 1234.56 → parse directly
+        amount=parseFloat(rawAmt.replace(/,/g,''));
+      }
       if(!date||!title||isNaN(amount)||amount<=0) continue;
 
       const [y,m,d]=date.split('-').map(Number);
@@ -2975,11 +3002,21 @@ function rCartaoTab(mc, cartaoId){
   }
 
   // ── FATURA SELECTOR PILLS ────────────────────────────────────────────────
+  // Which faturas are from S.faturas (imported, deletable) vs TX_DATA (embedded)
+  const importedFaturas=new Set((S.faturas||[]).filter(t=>t.cartao===cartao.nome).map(t=>t.fatura));
+
   const faturasPills=faturas.map(fat=>{
     const txF=(byFatura[fat]||[]).filter(matchFiltro);
     const tot=txF.reduce((s,t)=>s+t.amount,0);
     const isAtiva=fat===faturaAtiva;
-    return `<button onclick="S.cartaoFaturaAtiva['${cartaoId}']='${fat}';render()" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ${isAtiva?'var(--blue2)':'var(--border)'};background:${isAtiva?'var(--blue3)':'var(--bg3)'};color:${isAtiva?'var(--blue)':'var(--text2)'};font-family:var(--font);line-height:1.4">${fmtFatura(fat)}<br><span style="font-size:10px;font-weight:400;color:${isAtiva?'var(--blue)':'var(--text3)'}">R$${tot.toLocaleString('pt-BR',{minimumFractionDigits:0})}</span></button>`;
+    const isDeletable=importedFaturas.has(fat);
+    return `<div style="display:inline-flex;flex-direction:column;align-items:stretch;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:0">
+        <button onclick="S.cartaoFaturaAtiva['${cartaoId}']='${fat}';render()" style="padding:6px 10px 6px 14px;border-radius:${isDeletable?'20px 0 0 20px':'20px'};font-size:11px;font-weight:600;cursor:pointer;border:1px solid ${isAtiva?'var(--blue2)':'var(--border)'};border-right:${isDeletable?'none':'1px solid '+(isAtiva?'var(--blue2)':'var(--border)')};background:${isAtiva?'var(--blue3)':'var(--bg3)'};color:${isAtiva?'var(--blue)':'var(--text2)'};font-family:var(--font);line-height:1.4">
+          ${fmtFatura(fat)}<br><span style="font-size:10px;font-weight:400;color:${isAtiva?'var(--blue)':'var(--text3)'}">R$${tot.toLocaleString('pt-BR',{minimumFractionDigits:0})}</span>
+        </button>${isDeletable?`<button onclick="delFatura('${cartao.nome}','${fat}')" title="Deletar fatura" style="padding:0 8px;border-radius:0 20px 20px 0;border:1px solid ${isAtiva?'var(--blue2)':'var(--border)'};border-left:none;background:${isAtiva?'var(--blue3)':'var(--bg3)'};color:var(--red);font-size:12px;cursor:pointer;font-family:var(--font);height:100%">✕</button>`:''}
+      </div>
+    </div>`;
   }).join('');
 
   // ── FILTER BAR ───────────────────────────────────────────────────────────
