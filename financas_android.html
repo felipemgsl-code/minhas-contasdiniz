@@ -4545,10 +4545,11 @@ let _basicTab='home'; // 'home' | 'contas' | 'anual' | 'cfg'
 
 function basicGt(t){
   _basicTab=t;
-  // atualiza nav
+  // atualiza nav — atrasados não tem aba própria, home fica ativo
+  const navMap={home:'home',contas:'contas',anual:'anual',cfg:'cfg',atrasados:'home'};
   ['home','contas','anual','cfg'].forEach(id=>{
     const b=document.getElementById('bnav-'+id);
-    if(b) b.className='basic-nav-btn'+(t===id?' on':'');
+    if(b) b.className='basic-nav-btn'+((navMap[t]||t)===id?' on':'');
   });
   // FAB visível só em contas e home
   const fab=document.getElementById('basic-fab');
@@ -4567,6 +4568,7 @@ function renderBasico(mc){
   else if(_basicTab==='contas') rBasicoContas(mc);
   else if(_basicTab==='anual') rBasicoAnual(mc);
   else if(_basicTab==='cfg') rBasicoCfg(mc);
+  else if(_basicTab==='atrasados') rBasicoAtrasados(mc);
 }
 
 function rBasicoHome(mc){
@@ -4593,31 +4595,43 @@ function rBasicoHome(mc){
     <div style="flex:1"><div class="basic-alert-title">Limite de parcelas</div><div class="basic-alert-sub">${fmt(tpm)} de ${fmt(lp)} este mês</div></div>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
   </div>`;
-  if(atrasados.length>0) alertsHtml+=`<div class="basic-alert danger" onclick="basicGt('contas')">
+  if(atrasados.length>0) alertsHtml+=`<div class="basic-alert danger" onclick="basicGt('atrasados')">
     <div class="basic-alert-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
     <div style="flex:1"><div class="basic-alert-title">${atrasados.length} conta${atrasados.length>1?'s':''} em atraso</div><div class="basic-alert-sub">Toque para ver e marcar como pago</div></div>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
   </div>`;
 
-  // próximas contas a vencer (não pagas, até dia 10 desse mês)
+  // próximas contas a vencer (não pagas, a partir de hoje)
   const hoje=new Date().getDate();
   const d2=D();
   const proximas=[
-    ...d2.despesas.filter(r=>r.vals[mesIdx]>0&&!isChkMes(r.id,mesIdx)).map(r=>({nome:r.nome,val:r.vals[mesIdx],dia:getDia(r.id,'d')||0,tipo:'r'})),
-    ...d2.pd.filter(p=>mesIdx>=p.ini&&mesIdx<p.ini+p.n&&!isChkMes(p.id,mesIdx)).map(p=>({nome:p.desc,val:p.valor,dia:p.dia||0,tipo:'p'}))
+    ...d2.despesas.filter(r=>r.vals[mesIdx]>0&&!isChkMes(r.id,mesIdx)).map(r=>({nome:r.nome,val:r.vals[mesIdx],dia:getDia(r.id,'d')||0})),
+    ...d2.pd.filter(p=>mesIdx>=p.ini&&mesIdx<p.ini+p.n&&!isChkMes(p.id,mesIdx)).map(p=>({nome:p.desc,val:p.valor,dia:p.dia||0}))
   ].filter(x=>x.dia>=hoje||x.dia===0).sort((a,b)=>(a.dia||99)-(b.dia||99)).slice(0,4);
+
+  // entradas a receber (não marcadas como recebido)
+  const aReceber=d2.entradas.filter(r=>r.vals[mesIdx]>0&&!isChkMes(r.id,mesIdx))
+    .map(r=>({nome:r.nome,val:r.vals[mesIdx],dia:getDia(r.id,'e')||0}))
+    .sort((a,b)=>(a.dia||99)-(b.dia||99));
 
   const proximasHtml=proximas.length>0?proximas.map(p=>`
     <div class="basic-item">
       <div class="basic-item-dot r"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
       <div class="basic-item-info"><div class="basic-item-name">${p.nome}</div><div class="basic-item-day">${p.dia?'Vence dia '+p.dia:'Sem data definida'}</div></div>
-      <div class="basic-item-val r">${fmt(p.val)}</div>
-    </div>`).join(''):`<div style="text-align:center;padding:20px 0;color:#CBD5E1;font-size:13px">Nenhuma conta pendente 🎉</div>`;
+      <div class="basic-item-val r">-${fmt(p.val)}</div>
+    </div>`).join(''):`<div style="text-align:center;padding:16px 0;color:#CBD5E1;font-size:13px">Nenhuma conta pendente</div>`;
+
+  const aReceberHtml=aReceber.length>0?aReceber.map(r=>`
+    <div class="basic-item">
+      <div class="basic-item-dot g"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div>
+      <div class="basic-item-info"><div class="basic-item-name">${r.nome}</div><div class="basic-item-day">${r.dia?'Previsto dia '+r.dia:'Sem data'}</div></div>
+      <div class="basic-item-val g">+${fmt(r.val)}</div>
+    </div>`).join(''):`<div style="text-align:center;padding:16px 0;color:#CBD5E1;font-size:13px">Tudo recebido neste mês</div>`;
 
   mc.innerHTML=`
   <div class="basic-header">
     <div>
-      <div class="basic-title">${saudacaoStr}${nomeUsuario?' , '+nomeUsuario:''}!</div>
+      <div class="basic-title">${saudacaoStr}${nomeUsuario?', '+nomeUsuario:''}!</div>
       <div class="basic-sub">${MONTHS[mesIdx]} de ${anoAtivo}</div>
     </div>
     <button onclick="voltarSplash()" style="background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748B">
@@ -4643,15 +4657,89 @@ function rBasicoHome(mc){
 
   ${alertsHtml}
 
+  <div class="basic-stitle">A receber este mês</div>
+  <div class="bc" style="padding:4px 20px">
+    ${aReceberHtml}
+    <div style="padding:10px 0 2px;text-align:center">
+      <button onclick="mes=${mesIdx};basicGt('contas')" style="background:none;border:none;font-size:12px;font-weight:600;color:#2DD4A0;cursor:pointer;font-family:var(--font)">Ver todas as contas →</button>
+    </div>
+  </div>
+
   <div class="basic-stitle">Próximas a vencer</div>
   <div class="bc" style="padding:4px 20px">
     ${proximasHtml}
-    <div style="padding:12px 0 4px;text-align:center">
-      <button onclick="basicGt('contas')" style="background:none;border:none;font-size:12px;font-weight:600;color:#2DD4A0;cursor:pointer;font-family:var(--font)">Ver todas as contas →</button>
+    <div style="padding:10px 0 2px;text-align:center">
+      <button onclick="mes=${mesIdx};basicGt('contas')" style="background:none;border:none;font-size:12px;font-weight:600;color:#2DD4A0;cursor:pointer;font-family:var(--font)">Ver e marcar como pago →</button>
     </div>
   </div>
 
   <div style="height:8px"></div>`;
+}
+
+function rBasicoAtrasados(mc){
+  const atrasados=getAtrasados();
+  const itemsHtml=atrasados.length===0
+    ?`<div style="text-align:center;padding:32px 0;color:#CBD5E1;font-size:14px">Nenhuma conta em atraso</div>`
+    :atrasados.map(a=>`
+      <div class="basic-item" id="atrs-${a.id}-${a.mes}">
+        <div class="basic-item-dot r">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="basic-item-info">
+          <div class="basic-item-name">${a.nome}</div>
+          <div class="basic-item-day" style="color:#FCA5A5">${MONTHS[a.mes]}${a.tag?' · '+a.tag:''}</div>
+        </div>
+        <div class="basic-item-val r" style="margin-right:8px">${fmt(a.val)}</div>
+        <button onclick="
+          if(!S.chk)S.chk={};
+          S.chk[chkKey(S.anoAtivo,${a.mes},'${a.id}')]=true;
+          save();
+          const el=document.getElementById('atrs-${a.id}-${a.mes}');
+          if(el){
+            el.style.opacity='0.4';
+            el.style.pointerEvents='none';
+            el.querySelector('.basic-item-day').textContent='✓ Pago';
+            el.querySelector('.basic-item-day').style.color='#10B981';
+          }
+          toast('✓ Marcado como pago!','green');
+        " style="background:#D1FAE5;border:none;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;color:#10B981;cursor:pointer;font-family:var(--font);white-space:nowrap;flex-shrink:0">
+          Pago
+        </button>
+      </div>`).join('');
+
+  const total=atrasados.reduce((s,a)=>s+a.val,0);
+
+  mc.innerHTML=`
+  <div class="basic-header">
+    <div>
+      <div class="basic-title">Contas em atraso</div>
+      <div class="basic-sub">${atrasados.length} pendente${atrasados.length!==1?'s':''} · ${fmt(total)} total</div>
+    </div>
+    <button onclick="basicGt('home')" style="background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748B">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+  </div>
+
+  ${atrasados.length>0?`<div style="margin:0 16px 14px;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:16px;padding:14px 16px;font-size:13px;color:#EF4444;font-weight:500">
+    Marque como pago as contas que já foram quitadas nos meses anteriores.
+  </div>`:''}
+
+  <div class="bc" style="padding:4px 20px">
+    ${itemsHtml}
+  </div>
+
+  ${atrasados.length>0?`<div style="padding:0 16px;margin-top:4px">
+    <button onclick="
+      atrasados=getAtrasados();
+      if(!S.chk)S.chk={};
+      atrasados.forEach(a=>{S.chk[chkKey(S.anoAtivo,a.mes,a.id)]=true;});
+      save();basicGt('home');toast('✓ Todas marcadas como pagas!','green');
+    " style="width:100%;background:#1E293B;border:none;border-radius:16px;padding:14px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:var(--font)">
+      Marcar todas como pagas
+    </button>
+  </div>`:''}
+
+  <div style="height:16px"></div>`;
 }
 
 function rBasicoContas(mc){
