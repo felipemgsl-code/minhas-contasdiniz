@@ -168,15 +168,15 @@ body.desktop #hc-svg svg,body.desktop #ge-svg svg,body.desktop #gd-svg svg,body.
 body.modo-basico .adv-only{display:none!important}
 body:not(.modo-basico) .basic-only{display:none!important}
 
-/* ── MODO BÁSICO — design system próprio ── */
-body.modo-basico{background:#F0F4F8}
-body.modo-basico #app-root{background:#F0F4F8;min-height:100vh}
-body.modo-basico .topbar{display:none}
-body.modo-basico .main{padding:0;max-width:480px;padding-bottom:88px;margin:0 auto}
+/* ── MOBILE SHELL — active for any mobile mode ── */
+body.modo-mobile{background:#F0F4F8}
+body.modo-mobile #app-root{background:#F0F4F8;min-height:100vh}
+body.modo-mobile .topbar{display:none}
+body.modo-mobile .main{padding:0;max-width:480px;padding-bottom:88px;margin:0 auto}
 
 /* bottom nav básico */
 .basic-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #E2E8F0;z-index:200;padding:8px 0 calc(8px + env(safe-area-inset-bottom));justify-content:space-around}
-body.modo-basico .basic-nav{display:flex}
+body.modo-mobile .basic-nav{display:flex}
 .basic-nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 20px;color:#94A3B8;font-family:var(--font);transition:.15s;-webkit-tap-highlight-color:transparent;min-width:60px}
 .basic-nav-btn.on{color:#2DD4A0}
 .basic-nav-btn span{font-size:10px;font-weight:600;letter-spacing:.04em}
@@ -231,9 +231,9 @@ body.modo-basico .basic-nav{display:flex}
 .basic-item-chk.late{background:#FEF2F2;border-color:#FCA5A5}
 
 /* FAB */
-.basic-fab{position:fixed;bottom:76px;right:20px;width:54px;height:54px;border-radius:50%;background:#2DD4A0;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(45,212,160,.35);z-index:190;-webkit-tap-highlight-color:transparent;transition:.15s}
-body.modo-basico .basic-fab{display:flex}
-.basic-fab:active{transform:scale(.92)}
+
+body.modo-mobile #basic-fab-group{display:flex}
+
 
 /* alertas */
 .basic-alert{margin:0 16px 10px;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -424,25 +424,8 @@ svg{display:inline-block;vertical-align:middle;flex-shrink:0}
   <span>Designed by @felipediniz.pro</span>
 </div>
 
-<!-- BOTTOM NAV (modo básico) -->
-<nav class="basic-nav" id="basic-nav">
-  <button class="basic-nav-btn on" id="bnav-home" onclick="basicGt('home')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
-    <span>Início</span>
-  </button>
-  <button class="basic-nav-btn" id="bnav-contas" onclick="basicGt('contas')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-    <span>Contas</span>
-  </button>
-  <button class="basic-nav-btn" id="bnav-anual" onclick="basicGt('anual')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h2m4 0h2M8 18h2"/></svg>
-    <span>Anual</span>
-  </button>
-  <button class="basic-nav-btn" id="bnav-cfg" onclick="basicGt('cfg')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-    <span>Config</span>
-  </button>
-</nav>
+<!-- BOTTOM NAV (modo mobile) — preenchido por renderMobileNav() -->
+<nav class="basic-nav" id="basic-nav"></nav>
 
 <!-- FAB (modo básico) -->
 <button class="basic-fab" id="basic-fab" onclick="basicFab()" title="Adicionar">
@@ -671,7 +654,7 @@ function renderAll(){setupY();renderNav();render();}
 
 function render(){
   const mc=document.getElementById('MC');
-  if(isBasico()){renderBasico(mc);return;}
+  if(isMobile()){renderMobileShell(mc);return;}
   if(tab==='home'||tab==='parc') checkAlerts();
   if(tab==='home')rHome(mc);
   else if(tab==='ob')rOb(mc);
@@ -2054,7 +2037,10 @@ function svgHeatmap(el){
 
 function rParc(mc){
   const d2=D();const lp=S.config.limiteParcMensal||800;
-  const mTabs='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px">'+MONTHS.map(function(m,j){return'<button class="mtab'+(j===mes?' on':'')+'" onclick="mes='+j+';render()">'+m+'</button>';}).join('')+'</div>';
+  const isMobileParc=isMobile();
+  const mTabs=isMobileParc
+    ?'<div class="basic-month-scroll" style="margin-bottom:12px">'+MONTHS.map(function(m,j){const isCur=j===new Date().getMonth();return'<button class="basic-month-btn'+(j===mes?' on':''+(isCur?' cur':''))+'" onclick="mes='+j+';renderMobileShell(document.getElementById(\'MC\'));">'+m+'</button>';}).join('')+'</div>'
+    :'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px">'+MONTHS.map(function(m,j){return'<button class="mtab'+(j===mes?' on':'')+'" onclick="mes='+j+';render()">'+m+'</button>';}).join('')+'</div>';
   const sumRows=MONTHS.map(function(m,i){
     const pc={Nubank:0,'Mercado Pago':0,'Itau':0,Outro:0};
     d2.pc.forEach(function(p){const ef=p.n-(p.ant||0);if(i>=p.ini&&i<p.ini+ef)pc[p.cartao]=(pc[p.cartao]||0)+p.vp;});
@@ -4545,30 +4531,92 @@ let _basicTab='home'; // 'home' | 'contas' | 'anual' | 'cfg'
 
 function basicGt(t){
   _basicTab=t;
-  // atualiza nav — atrasados não tem aba própria, home fica ativo
-  const navMap={home:'home',contas:'contas',anual:'anual',cfg:'cfg',atrasados:'home'};
-  ['home','contas','anual','cfg'].forEach(id=>{
-    const b=document.getElementById('bnav-'+id);
-    if(b) b.className='basic-nav-btn'+((navMap[t]||t)===id?' on':'');
-  });
-  // FAB visível só em contas e home
   const fab=document.getElementById('basic-fab');
-  if(fab) fab.style.display=(t==='home'||t==='contas')?'flex':'none';
-  renderBasico(document.getElementById('MC'));
+  if(fab) fab.style.display=(t==='home'||t==='contas'||t==='parc')?'flex':'none';
+  renderMobileShell(document.getElementById('MC'));
 }
 
-function basicFab(){
-  if(_basicTab==='home'||_basicTab==='contas') mAddD();
+function rMobileMais(mc){
+  const items=[
+    {id:'anual',label:'Visão Anual',sub:'Planilha do ano completo',icon:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h2m4 0h2M8 18h2"/>'},
+    {id:'ob',label:'Orçamento',sub:'Template mensal de contas',icon:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="15" r="2"/>'},
+    {id:'res',label:'Reservas',sub:'Controle de economias',icon:'<ellipse cx="12" cy="7" rx="8" ry="3"/><path d="M4 7v5c0 1.66 3.58 3 8 3s8-1.34 8-3V7"/><path d="M4 12v5c0 1.66 3.58 3 8 3s8-1.34 8-3v-5"/>'},
+    {id:'free',label:'Freelas',sub:'Renda extra e projetos',icon:'<circle cx="12" cy="12" r="10"/><path d="M8.5 14.5s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'},
+    {id:'graf',label:'Gráficos',sub:'Visões e análises visuais',icon:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'},
+    {id:'avi',label:'Avisos',sub:'Alertas e lembretes',icon:'<path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>'},
+  ];
+  mc.innerHTML=`
+  <div class="basic-header" style="padding-bottom:12px">
+    <div><div class="basic-title">Mais</div><div class="basic-sub">Ferramentas avançadas</div></div>
+  </div>
+  <div class="bc" style="padding:4px 20px">
+    ${items.map(it=>`
+    <div class="basic-item" style="cursor:pointer" onclick="basicGt('${it.id}')">
+      <div class="basic-item-dot" style="background:#F1F5F9">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${it.icon}</svg>
+      </div>
+      <div class="basic-item-info">
+        <div class="basic-item-name">${it.label}</div>
+        <div class="basic-item-day">${it.sub}</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`).join('')}
+  </div>
+  <div style="height:8px"></div>`;
 }
 
-function renderBasico(mc){
-  const fab=document.getElementById('basic-fab');
+function basicFab(){}
+
+function renderMobileNav(){
+  const nav=document.getElementById('basic-nav');
+  if(!nav) return;
+  const adv=!isBasico();
+  nav.innerHTML=`
+    <button class="basic-nav-btn${(_basicTab==='home'||_basicTab==='atrasados')?' on':''}" id="bnav-home" onclick="basicGt('home')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+      <span>Início</span>
+    </button>
+    <button class="basic-nav-btn${_basicTab==='contas'?' on':''}" id="bnav-contas" onclick="basicGt('contas')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+      <span>Contas</span>
+    </button>
+    ${adv?`
+    <button class="basic-nav-btn${_basicTab==='parc'?' on':''}" id="bnav-parc" onclick="basicGt('parc')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      <span>Parcelas</span>
+    </button>` : `
+    <button class="basic-nav-btn${_basicTab==='anual'?' on':''}" id="bnav-anual" onclick="basicGt('anual')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h2m4 0h2M8 18h2"/></svg>
+      <span>Anual</span>
+    </button>`}
+    ${adv?`
+    <button class="basic-nav-btn${['res','free','graf','avi','ob','anual'].includes(_basicTab)?' on':''}" id="bnav-mais" onclick="basicGt('mais')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      <span>Mais</span>
+    </button>` : ''}
+    <button class="basic-nav-btn${_basicTab==='cfg'?' on':''}" id="bnav-cfg" onclick="basicGt('cfg')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Config</span>
+    </button>`;
+}
+
+function renderMobileShell(mc){
+  renderMobileNav();
+  const fab=document.getElementById('basic-fab-group');
   if(fab) fab.style.display=(_basicTab==='home'||_basicTab==='contas')?'flex':'none';
   if(_basicTab==='home') rBasicoHome(mc);
   else if(_basicTab==='contas') rBasicoContas(mc);
   else if(_basicTab==='anual') rBasicoAnual(mc);
   else if(_basicTab==='cfg') rBasicoCfg(mc);
   else if(_basicTab==='atrasados') rBasicoAtrasados(mc);
+  else if(_basicTab==='mais') rMobileMais(mc);
+  // Modo avançado no mobile — usa as telas do desktop mas dentro do shell mobile
+  else if(_basicTab==='parc'){if(fab)fab.style.display='flex';rParc(mc);}
+  else if(_basicTab==='res') rRes(mc);
+  else if(_basicTab==='free') rFree(mc);
+  else if(_basicTab==='graf') rGraf(mc);
+  else if(_basicTab==='avi') rAvi(mc);
+  else if(_basicTab==='ob') rOb(mc);
 }
 
 function rBasicoHome(mc){
@@ -4636,6 +4684,33 @@ function rBasicoHome(mc){
     </div>
     <button onclick="voltarSplash()" style="background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748B">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div style="display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;scrollbar-width:none">
+    <button onclick="abrirPopupPagamentos()" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:12px 14px;cursor:pointer;font-family:var(--font);flex-shrink:0;min-width:68px;-webkit-tap-highlight-color:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span style="font-size:10px;font-weight:600;color:#64748B;white-space:nowrap">Pagamentos</span>
+    </button>
+    <button onclick="mAddE()" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:12px 14px;cursor:pointer;font-family:var(--font);flex-shrink:0;min-width:68px;-webkit-tap-highlight-color:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      <span style="font-size:10px;font-weight:600;color:#64748B;white-space:nowrap">+ Entrada</span>
+    </button>
+    <button onclick="mAddD()" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:12px 14px;cursor:pointer;font-family:var(--font);flex-shrink:0;min-width:68px;-webkit-tap-highlight-color:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      <span style="font-size:10px;font-weight:600;color:#64748B;white-space:nowrap">- Despesa</span>
+    </button>
+    <button onclick="mAddC()" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:12px 14px;cursor:pointer;font-family:var(--font);flex-shrink:0;min-width:68px;-webkit-tap-highlight-color:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+      <span style="font-size:10px;font-weight:600;color:#64748B;white-space:nowrap">Cartão</span>
+    </button>
+    <button onclick="mUpd()" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:12px 14px;cursor:pointer;font-family:var(--font);flex-shrink:0;min-width:68px;-webkit-tap-highlight-color:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      <span style="font-size:10px;font-weight:600;color:#64748B;white-space:nowrap">Atualizar</span>
+    </button>
+    <button onclick="mSim()" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:12px 14px;cursor:pointer;font-family:var(--font);flex-shrink:0;min-width:68px;-webkit-tap-highlight-color:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8.01" y2="10"/><line x1="12" y1="10" x2="12.01" y2="10"/><line x1="16" y1="10" x2="16.01" y2="10"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="16" y1="14" x2="16.01" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+      <span style="font-size:10px;font-weight:600;color:#64748B;white-space:nowrap">Simular</span>
     </button>
   </div>
 
@@ -4754,7 +4829,7 @@ function rBasicoContas(mc){
     const cls='basic-item-chk'+(marcado?' done':atrasado?' late':'');
     const ico=marcado?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
       :atrasado?`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FCA5A5" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`:'';
-    return `<button class="${cls}" onclick="toggleChkMes('${id}',${i});renderBasico(document.getElementById('MC'))">${ico}</button>`;
+    return `<button class="${cls}" onclick="toggleChkMes('${id}',${i});renderMobileShell(document.getElementById('MC'))">${ico}</button>`;
   }
 
   const entradas=d2.entradas.filter(r=>r.vals[i]>0);
@@ -4815,7 +4890,7 @@ function rBasicoContas(mc){
     ${MONTHS.map((m,j)=>{
       const isCur=j===m0;
       const isOn=j===i;
-      return`<button class="basic-month-btn${isOn?' on':''}${isCur?' cur':''}" onclick="mes=${j};renderBasico(document.getElementById('MC'))">${m}</button>`;
+      return`<button class="basic-month-btn${isOn?' on':''}${isCur?' cur':''}" onclick="mes=${j};renderMobileShell(document.getElementById('MC'))">${m}</button>`;
     }).join('')}
   </div>
 
@@ -4907,7 +4982,7 @@ function rBasicoCfg(mc){
         <div class="basic-cfg-label">Seu nome</div>
         <div class="basic-cfg-sub">Aparece na saudação da tela inicial</div>
       </div>
-      <input style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:10px;padding:6px 12px;font-size:14px;font-family:var(--font);color:#1E293B;width:130px;text-align:right;outline:none" value="${nomeUsuario}" placeholder="Seu nome" onblur="S.config.nomeUsuario=this.value;save();renderBasico(document.getElementById('MC'))"/>
+      <input style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:10px;padding:6px 12px;font-size:14px;font-family:var(--font);color:#1E293B;width:130px;text-align:right;outline:none" value="${nomeUsuario}" placeholder="Seu nome" onblur="S.config.nomeUsuario=this.value;save();renderMobileShell(document.getElementById('MC'))"/>
     </div>
     <div class="basic-cfg-item">
       <div>
@@ -4932,9 +5007,9 @@ function rBasicoCfg(mc){
     <div class="basic-cfg-item">
       <div>
         <div class="basic-cfg-label">Modo interface</div>
-        <div class="basic-cfg-sub">Básico está ativo agora</div>
+        <div class="basic-cfg-sub">${isBasico()?'Básico':'Avançado'} está ativo agora</div>
       </div>
-      <button onclick="alternarComplexidade()" style="background:#1E293B;border:none;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;color:#2DD4A0;cursor:pointer;font-family:var(--font)">Ir para Avançado →</button>
+      <button onclick="alternarComplexidade()" style="background:#1E293B;border:none;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;color:#2DD4A0;cursor:pointer;font-family:var(--font)">${isBasico()?'Ir para Avançado →':'Ir para Básico ←'}</button>
     </div>
     <div class="basic-cfg-item">
       <div>
@@ -5002,6 +5077,7 @@ function setModoEComplexidade(m){
 function setModo(m){
   _modo=m;
   document.body.classList.toggle('desktop',m==='desktop');
+  document.body.classList.toggle('modo-mobile',m==='mobile');
   document.body.classList.toggle('modo-basico',_complexidade==='basico');
   document.getElementById('splash').style.display='none';
   document.getElementById('app-root').style.display='flex';
@@ -5010,6 +5086,8 @@ function setModo(m){
   atualizarBadgeComplexidade();
   init();
 }
+
+function isMobile(){return _modo==='mobile';}
 
 function atualizarBadgeComplexidade(){
   const bc=document.getElementById('complexidade-badge');
@@ -5023,9 +5101,14 @@ function alternarComplexidade(){
   _complexidade=_complexidade==='basico'?'avancado':'basico';
   document.body.classList.toggle('modo-basico',_complexidade==='basico');
   atualizarBadgeComplexidade();
-  // Se a aba atual não existe no novo modo, volta pra home
+  // Se no desktop: garante que a aba atual existe no novo modo
   const advIds=['ob','parc','res','free','graf','avi'];
-  if(isBasico()&&advIds.includes(tab)) tab='home';
+  if(!isMobile()){
+    if(isBasico()&&advIds.includes(tab)) tab='home';
+  } else {
+    // No mobile: volta pro home ao trocar
+    _basicTab='home';
+  }
   renderAll();
   toast(_complexidade==='basico'?'Modo Básico ativado':'Modo Avançado ativado','green');
 }
