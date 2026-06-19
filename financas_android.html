@@ -168,6 +168,107 @@ body.desktop #hc-svg svg,body.desktop #ge-svg svg,body.desktop #gd-svg svg,body.
 body.modo-basico .adv-only{display:none!important}
 body:not(.modo-basico) .basic-only{display:none!important}
 
+/* ── MODO BÁSICO — design system próprio ── */
+body.modo-basico{background:#F0F4F8}
+body.modo-basico #app-root{background:#F0F4F8;min-height:100vh}
+body.modo-basico .topbar{display:none}
+body.modo-basico .main{padding:0;max-width:480px;padding-bottom:88px;margin:0 auto}
+
+/* bottom nav básico */
+.basic-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #E2E8F0;z-index:200;padding:8px 0 calc(8px + env(safe-area-inset-bottom));justify-content:space-around}
+body.modo-basico .basic-nav{display:flex}
+.basic-nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 20px;color:#94A3B8;font-family:var(--font);transition:.15s;-webkit-tap-highlight-color:transparent;min-width:60px}
+.basic-nav-btn.on{color:#2DD4A0}
+.basic-nav-btn span{font-size:10px;font-weight:600;letter-spacing:.04em}
+
+/* cards básicos */
+.bc{background:#fff;border-radius:20px;padding:20px;margin:0 16px 12px;box-shadow:0 1px 4px rgba(15,17,23,.08)}
+.bc-sm{background:#fff;border-radius:16px;padding:16px;margin:0 16px 10px;box-shadow:0 1px 4px rgba(15,17,23,.06)}
+
+/* header básico */
+.basic-header{padding:20px 20px 4px;display:flex;align-items:center;justify-content:space-between}
+.basic-title{font-size:20px;font-weight:700;color:#1E293B}
+.basic-sub{font-size:13px;color:#94A3B8;margin-top:1px}
+
+/* saldo hero */
+.basic-hero{background:#1E293B;border-radius:24px;padding:28px 24px 22px;margin:12px 16px 14px;position:relative;overflow:hidden}
+.basic-hero::after{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;background:rgba(45,212,160,.06);pointer-events:none}
+.basic-hero-lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:6px}
+.basic-hero-val{font-size:38px;font-weight:700;color:#fff;line-height:1;letter-spacing:-.02em}
+.basic-hero-val.neg{color:#F87171}
+.basic-hero-val.pos{color:#34D399}
+.basic-hero-sub{font-size:12px;color:rgba(255,255,255,.35);margin-top:8px}
+.basic-hero-pills{display:flex;gap:8px;margin-top:20px}
+.basic-pill{background:rgba(255,255,255,.07);border-radius:14px;padding:10px 14px;flex:1}
+.basic-pill-lbl{font-size:10px;color:rgba(255,255,255,.35);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.basic-pill-val{font-size:15px;font-weight:700;color:#fff}
+.basic-pill-val.g{color:#34D399}
+.basic-pill-val.r{color:#F87171}
+
+/* mês selector */
+.basic-month-scroll{display:flex;gap:6px;overflow-x:auto;padding:2px 16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.basic-month-scroll::-webkit-scrollbar{display:none}
+.basic-month-btn{flex-shrink:0;background:#fff;border:1.5px solid #E2E8F0;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;font-family:var(--font);transition:.15s;-webkit-tap-highlight-color:transparent}
+.basic-month-btn.on{background:#1E293B;border-color:#1E293B;color:#fff}
+.basic-month-btn.cur{border-color:#2DD4A0;color:#2DD4A0}
+.basic-month-btn.on.cur{background:#2DD4A0;border-color:#2DD4A0;color:#0F1117}
+
+/* item lista */
+.basic-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #F1F5F9}
+.basic-item:last-child{border-bottom:none;padding-bottom:4px}
+.basic-item-dot{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.basic-item-dot.g{background:#D1FAE5}
+.basic-item-dot.r{background:#FEE2E2}
+.basic-item-dot.o{background:#FEF3C7}
+.basic-item-info{flex:1;min-width:0}
+.basic-item-name{font-size:14px;font-weight:500;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.basic-item-day{font-size:11px;color:#CBD5E1;margin-top:2px}
+.basic-item-val{font-size:15px;font-weight:700;flex-shrink:0;min-width:70px;text-align:right}
+.basic-item-val.g{color:#10B981}
+.basic-item-val.r{color:#EF4444}
+.basic-item-chk{width:30px;height:30px;border-radius:9px;border:1.5px solid #E2E8F0;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s;-webkit-tap-highlight-color:transparent}
+.basic-item-chk.done{background:#10B981;border-color:#10B981}
+.basic-item-chk.late{background:#FEF2F2;border-color:#FCA5A5}
+
+/* FAB */
+.basic-fab{position:fixed;bottom:76px;right:20px;width:54px;height:54px;border-radius:50%;background:#2DD4A0;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(45,212,160,.35);z-index:190;-webkit-tap-highlight-color:transparent;transition:.15s}
+body.modo-basico .basic-fab{display:flex}
+.basic-fab:active{transform:scale(.92)}
+
+/* alertas */
+.basic-alert{margin:0 16px 10px;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.basic-alert.danger{background:#FEF2F2;border:1.5px solid #FECACA}
+.basic-alert.warn{background:#FFFBEB;border:1.5px solid #FDE68A}
+.basic-alert-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.basic-alert.danger .basic-alert-icon{background:#FEE2E2;color:#EF4444}
+.basic-alert.warn .basic-alert-icon{background:#FEF3C7;color:#F59E0B}
+.basic-alert-title{font-size:13px;font-weight:600;color:#1E293B}
+.basic-alert-sub{font-size:12px;color:#94A3B8;margin-top:2px}
+
+/* seção título */
+.basic-stitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94A3B8;padding:4px 20px 8px}
+
+/* anual simplificado */
+.basic-ann-card{background:#fff;border-radius:16px;margin:0 16px 8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.basic-ann-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.basic-ann-name{font-size:14px;font-weight:600;color:#1E293B}
+.basic-ann-month-label{font-size:12px;color:#94A3B8;font-weight:500}
+.basic-ann-sal{font-size:16px;font-weight:700}
+.basic-ann-body{border-top:1px solid #F1F5F9}
+.basic-ann-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid #F8FAFC}
+.basic-ann-row:last-child{border-bottom:none}
+.basic-ann-row-name{flex:1;font-size:13px;color:#64748B}
+.basic-ann-row-val{font-size:13px;font-weight:600}
+
+/* configurações básico */
+.basic-cfg-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #F1F5F9}
+.basic-cfg-item:last-child{border-bottom:none}
+.basic-cfg-label{font-size:14px;font-weight:500;color:#1E293B}
+.basic-cfg-sub{font-size:12px;color:#94A3B8;margin-top:2px}
+.basic-cfg-val{font-size:14px;font-weight:600;color:#2DD4A0}
+
+/* ── FIM MODO BÁSICO ── */
+
 /* complexidade badge */
 .complexidade-badge{font-size:9px!important;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.06em;cursor:pointer;user-select:none;transition:.2s}
 .complexidade-badge:hover{opacity:.75}
@@ -317,11 +418,36 @@ svg{display:inline-block;vertical-align:middle;flex-shrink:0}
   </div>
 </div>
 <div class="main" id="MC"></div>
-<div style="text-align:center;padding:12px 16px 20px;opacity:.28;font-size:10px;color:var(--text3);letter-spacing:.04em;user-select:none;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+<div style="text-align:center;padding:12px 16px 20px;opacity:.28;font-size:10px;color:var(--text3);letter-spacing:.04em;user-select:none;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap" id="ver-badge-footer">
   <span id="ver-badge">v— · —</span>
   <span style="opacity:.4">·</span>
   <span>Designed by @felipediniz.pro</span>
 </div>
+
+<!-- BOTTOM NAV (modo básico) -->
+<nav class="basic-nav" id="basic-nav">
+  <button class="basic-nav-btn on" id="bnav-home" onclick="basicGt('home')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+    <span>Início</span>
+  </button>
+  <button class="basic-nav-btn" id="bnav-contas" onclick="basicGt('contas')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+    <span>Contas</span>
+  </button>
+  <button class="basic-nav-btn" id="bnav-anual" onclick="basicGt('anual')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h2m4 0h2M8 18h2"/></svg>
+    <span>Anual</span>
+  </button>
+  <button class="basic-nav-btn" id="bnav-cfg" onclick="basicGt('cfg')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span>Config</span>
+  </button>
+</nav>
+
+<!-- FAB (modo básico) -->
+<button class="basic-fab" id="basic-fab" onclick="basicFab()" title="Adicionar">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F1117" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
 </div><!-- /footer -->
 </div><!-- /app -->
 </div><!-- /app-root -->
@@ -545,6 +671,7 @@ function renderAll(){setupY();renderNav();render();}
 
 function render(){
   const mc=document.getElementById('MC');
+  if(isBasico()){renderBasico(mc);return;}
   if(tab==='home'||tab==='parc') checkAlerts();
   if(tab==='home')rHome(mc);
   else if(tab==='ob')rOb(mc);
@@ -4410,6 +4537,344 @@ function voltarSplash(){
   document.getElementById('app-root').style.display='none';
   document.getElementById('splash').style.display='flex';
 }
+
+// ══════════════════════════════════════════════════
+// ── MODO BÁSICO — UI completamente própria ──
+// ══════════════════════════════════════════════════
+let _basicTab='home'; // 'home' | 'contas' | 'anual' | 'cfg'
+
+function basicGt(t){
+  _basicTab=t;
+  // atualiza nav
+  ['home','contas','anual','cfg'].forEach(id=>{
+    const b=document.getElementById('bnav-'+id);
+    if(b) b.className='basic-nav-btn'+(t===id?' on':'');
+  });
+  // FAB visível só em contas e home
+  const fab=document.getElementById('basic-fab');
+  if(fab) fab.style.display=(t==='home'||t==='contas')?'flex':'none';
+  renderBasico(document.getElementById('MC'));
+}
+
+function basicFab(){
+  if(_basicTab==='home'||_basicTab==='contas') mAddD();
+}
+
+function renderBasico(mc){
+  const fab=document.getElementById('basic-fab');
+  if(fab) fab.style.display=(_basicTab==='home'||_basicTab==='contas')?'flex':'none';
+  if(_basicTab==='home') rBasicoHome(mc);
+  else if(_basicTab==='contas') rBasicoContas(mc);
+  else if(_basicTab==='anual') rBasicoAnual(mc);
+  else if(_basicTab==='cfg') rBasicoCfg(mc);
+}
+
+function rBasicoHome(mc){
+  const m0=new Date().getMonth();
+  const anoAtivo=S.anoAtivo;
+  const anoEncerrado=anoAtivo<new Date().getFullYear();
+  const mesIdx=anoEncerrado?11:m0;
+  const e=tE(mesIdx),d=tD(mesIdx),s=sal(mesIdx);
+  const nomeUsuario=S.config.nomeUsuario||'';
+  const tr=rTot(),lr=S.config.limiteReserva||3000;
+  const tpm=tPM(mesIdx),lp=S.config.limiteParcMensal||800;
+  const atrasados=getAtrasados();
+  const hora=new Date().getHours();
+  const saudacaoStr=hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite';
+
+  let alertsHtml='';
+  if(tr<lr) alertsHtml+=`<div class="basic-alert danger" onclick="sugerirAvancado('reservas')">
+    <div class="basic-alert-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+    <div style="flex:1"><div class="basic-alert-title">Reservas críticas</div><div class="basic-alert-sub">Saldo abaixo do limite seguro</div></div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`;
+  if(tpm>lp) alertsHtml+=`<div class="basic-alert warn" onclick="sugerirAvancado('parcelados')">
+    <div class="basic-alert-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+    <div style="flex:1"><div class="basic-alert-title">Limite de parcelas</div><div class="basic-alert-sub">${fmt(tpm)} de ${fmt(lp)} este mês</div></div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`;
+  if(atrasados.length>0) alertsHtml+=`<div class="basic-alert danger" onclick="basicGt('contas')">
+    <div class="basic-alert-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+    <div style="flex:1"><div class="basic-alert-title">${atrasados.length} conta${atrasados.length>1?'s':''} em atraso</div><div class="basic-alert-sub">Toque para ver e marcar como pago</div></div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`;
+
+  // próximas contas a vencer (não pagas, até dia 10 desse mês)
+  const hoje=new Date().getDate();
+  const d2=D();
+  const proximas=[
+    ...d2.despesas.filter(r=>r.vals[mesIdx]>0&&!isChkMes(r.id,mesIdx)).map(r=>({nome:r.nome,val:r.vals[mesIdx],dia:getDia(r.id,'d')||0,tipo:'r'})),
+    ...d2.pd.filter(p=>mesIdx>=p.ini&&mesIdx<p.ini+p.n&&!isChkMes(p.id,mesIdx)).map(p=>({nome:p.desc,val:p.valor,dia:p.dia||0,tipo:'p'}))
+  ].filter(x=>x.dia>=hoje||x.dia===0).sort((a,b)=>(a.dia||99)-(b.dia||99)).slice(0,4);
+
+  const proximasHtml=proximas.length>0?proximas.map(p=>`
+    <div class="basic-item">
+      <div class="basic-item-dot r"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+      <div class="basic-item-info"><div class="basic-item-name">${p.nome}</div><div class="basic-item-day">${p.dia?'Vence dia '+p.dia:'Sem data definida'}</div></div>
+      <div class="basic-item-val r">${fmt(p.val)}</div>
+    </div>`).join(''):`<div style="text-align:center;padding:20px 0;color:#CBD5E1;font-size:13px">Nenhuma conta pendente 🎉</div>`;
+
+  mc.innerHTML=`
+  <div class="basic-header">
+    <div>
+      <div class="basic-title">${saudacaoStr}${nomeUsuario?' , '+nomeUsuario:''}!</div>
+      <div class="basic-sub">${MONTHS[mesIdx]} de ${anoAtivo}</div>
+    </div>
+    <button onclick="voltarSplash()" style="background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748B">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="basic-hero">
+    <div class="basic-hero-lbl">Saldo do mês</div>
+    <div class="basic-hero-val ${s>=0?'pos':'neg'}">${fmt(s)}</div>
+    <div class="basic-hero-sub">${MONTHS[mesIdx]} · ${anoAtivo}</div>
+    <div class="basic-hero-pills">
+      <div class="basic-pill">
+        <div class="basic-pill-lbl">Entradas</div>
+        <div class="basic-pill-val g">${fmt(e)}</div>
+      </div>
+      <div class="basic-pill">
+        <div class="basic-pill-lbl">Despesas</div>
+        <div class="basic-pill-val r">${fmt(d)}</div>
+      </div>
+    </div>
+  </div>
+
+  ${alertsHtml}
+
+  <div class="basic-stitle">Próximas a vencer</div>
+  <div class="bc" style="padding:4px 20px">
+    ${proximasHtml}
+    <div style="padding:12px 0 4px;text-align:center">
+      <button onclick="basicGt('contas')" style="background:none;border:none;font-size:12px;font-weight:600;color:#2DD4A0;cursor:pointer;font-family:var(--font)">Ver todas as contas →</button>
+    </div>
+  </div>
+
+  <div style="height:8px"></div>`;
+}
+
+function rBasicoContas(mc){
+  const i=mes;
+  const m0=new Date().getMonth();
+  const d2=D();
+  const e=tE(i),d=tD(i),s=sal(i);
+
+  function chkHtml(id,tipo){
+    const marcado=isChkMes(id,i);
+    const atrasado=i<m0&&!marcado;
+    const cls='basic-item-chk'+(marcado?' done':atrasado?' late':'');
+    const ico=marcado?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
+      :atrasado?`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FCA5A5" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`:'';
+    return `<button class="${cls}" onclick="toggleChkMes('${id}',${i});renderBasico(document.getElementById('MC'))">${ico}</button>`;
+  }
+
+  const entradas=d2.entradas.filter(r=>r.vals[i]>0);
+  const despesas=d2.despesas.filter(r=>r.vals[i]>0);
+  const parcelas=d2.pd.filter(p=>i>=p.ini&&i<p.ini+p.n);
+
+  const entradasHtml=entradas.length?entradas.map(r=>`
+    <div class="basic-item">
+      <div class="basic-item-dot g"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div>
+      <div class="basic-item-info">
+        <div class="basic-item-name">${r.nome}</div>
+        <div class="basic-item-day">${getDia(r.id,'e')?'Dia '+getDia(r.id,'e'):'Sem data'}</div>
+      </div>
+      <div class="basic-item-val g">${fmt(r.vals[i])}</div>
+      ${chkHtml(r.id,'e')}
+    </div>`).join(''):`<div style="color:#CBD5E1;font-size:13px;padding:12px 0;text-align:center">Nenhuma entrada</div>`;
+
+  const despesasHtml=[
+    ...despesas.map(r=>`
+    <div class="basic-item">
+      <div class="basic-item-dot r"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
+      <div class="basic-item-info">
+        <div class="basic-item-name">${r.nome}${r.da?' <span style="font-size:10px;background:#EFF6FF;color:#3B82F6;border-radius:4px;padding:1px 5px;font-weight:600">D.A.</span>':''}</div>
+        <div class="basic-item-day">${getDia(r.id,'d')?'Vence dia '+getDia(r.id,'d'):'Sem data'}</div>
+      </div>
+      <div class="basic-item-val r">${fmt(r.vals[i])}</div>
+      ${chkHtml(r.id,'d')}
+    </div>`),
+    ...parcelas.map(p=>`
+    <div class="basic-item">
+      <div class="basic-item-dot o"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+      <div class="basic-item-info">
+        <div class="basic-item-name">${p.desc} <span style="font-size:10px;background:#FEF3C7;color:#D97706;border-radius:4px;padding:1px 5px;font-weight:600">PARCELA</span></div>
+        <div class="basic-item-day">${p.dia?'Vence dia '+p.dia:'Sem data'}</div>
+      </div>
+      <div class="basic-item-val r">${fmt(p.valor)}</div>
+      ${chkHtml(p.id,'d')}
+    </div>`)
+  ].join('')||`<div style="color:#CBD5E1;font-size:13px;padding:12px 0;text-align:center">Nenhuma despesa</div>`;
+
+  mc.innerHTML=`
+  <div class="basic-header">
+    <div>
+      <div class="basic-title">Contas</div>
+      <div class="basic-sub">${MONTHS[i]} · ${S.anoAtivo}</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="mAddE()" style="background:#D1FAE5;border:none;border-radius:12px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#10B981">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="5 12 12 5 19 12"/></svg>
+      </button>
+      <button onclick="mAddD()" style="background:#FEE2E2;border:none;border-radius:12px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#EF4444">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="basic-month-scroll">
+    ${MONTHS.map((m,j)=>{
+      const isCur=j===m0;
+      const isOn=j===i;
+      return`<button class="basic-month-btn${isOn?' on':''}${isCur?' cur':''}" onclick="mes=${j};renderBasico(document.getElementById('MC'))">${m}</button>`;
+    }).join('')}
+  </div>
+
+  <div class="bc" style="padding:12px 20px 4px;margin-bottom:12px">
+    <div style="display:flex;gap:0;justify-content:space-around;padding:4px 0 12px">
+      <div style="text-align:center">
+        <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Entradas</div>
+        <div style="font-size:18px;font-weight:700;color:#10B981">${fmt(e)}</div>
+      </div>
+      <div style="width:1px;background:#F1F5F9"></div>
+      <div style="text-align:center">
+        <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Despesas</div>
+        <div style="font-size:18px;font-weight:700;color:#EF4444">${fmt(d)}</div>
+      </div>
+      <div style="width:1px;background:#F1F5F9"></div>
+      <div style="text-align:center">
+        <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Saldo</div>
+        <div style="font-size:18px;font-weight:700;color:${s>=0?'#10B981':'#EF4444'}">${fmt(s)}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="basic-stitle">Entradas</div>
+  <div class="bc" style="padding:4px 20px">${entradasHtml}</div>
+
+  <div class="basic-stitle">Despesas</div>
+  <div class="bc" style="padding:4px 20px">${despesasHtml}</div>
+
+  <div style="height:8px"></div>`;
+}
+
+function rBasicoAnual(mc){
+  const anoAtivo=S.anoAtivo;
+  const m0=new Date().getFullYear()>anoAtivo?11:new Date().getMonth();
+  const d2=D();
+
+  const mesesHtml=MONTHS.map((mNome,mi)=>{
+    const e=tE(mi),d=tD(mi),s=sal(mi);
+    const isCur=mi===m0;
+    const entradas=d2.entradas.filter(r=>r.vals[mi]>0);
+    const despesas=d2.despesas.filter(r=>r.vals[mi]>0);
+    const parcelas=d2.pd.filter(p=>mi>=p.ini&&mi<p.ini+p.n);
+    const uid=`basic-ann-${mi}`;
+    const detalhes=[
+      ...entradas.map(r=>`<div class="basic-ann-row"><span class="basic-ann-row-name">${r.nome}</span><span class="basic-ann-row-val" style="color:#10B981">+${fmt(r.vals[mi])}</span></div>`),
+      ...despesas.map(r=>`<div class="basic-ann-row"><span class="basic-ann-row-name">${r.nome}</span><span class="basic-ann-row-val" style="color:#EF4444">-${fmt(r.vals[mi])}</span></div>`),
+      ...parcelas.map(p=>`<div class="basic-ann-row"><span class="basic-ann-row-name">${p.desc}</span><span class="basic-ann-row-val" style="color:#F59E0B">-${fmt(p.valor)}</span></div>`)
+    ].join('')||'<div style="color:#CBD5E1;font-size:12px;padding:10px 0;text-align:center">Mês sem lançamentos</div>';
+    return`<div class="basic-ann-card" style="${isCur?'border:2px solid #2DD4A0':''}">
+      <div class="basic-ann-hdr" onclick="const b=document.getElementById('${uid}');b.style.display=b.style.display==='none'?'block':'none'">
+        <div>
+          <div class="basic-ann-name">${mNome}${isCur?' <span style="font-size:10px;background:#D1FAE5;color:#059669;border-radius:20px;padding:1px 7px;font-weight:700">atual</span>':''}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="basic-ann-sal" style="color:${s>=0?'#10B981':'#EF4444'}">${fmt(s)}</div>
+          <div style="font-size:11px;color:#94A3B8;margin-top:2px">${fmt(e)} − ${fmt(d)}</div>
+        </div>
+      </div>
+      <div id="${uid}" class="basic-ann-body" style="display:${isCur?'block':'none'}">${detalhes}</div>
+    </div>`;
+  }).join('');
+
+  mc.innerHTML=`
+  <div class="basic-header">
+    <div>
+      <div class="basic-title">Visão Anual</div>
+      <div class="basic-sub">${anoAtivo} — toque para expandir</div>
+    </div>
+    <select onchange="setAno(+this.value)" style="background:#fff;border:1.5px solid #E2E8F0;border-radius:10px;padding:6px 10px;font-size:13px;font-weight:600;color:#1E293B;font-family:var(--font);outline:none">
+      ${S.anos.map(a=>`<option value="${a}"${a===S.anoAtivo?' selected':''}>${a}</option>`).join('')}
+    </select>
+  </div>
+  ${mesesHtml}
+  <div style="height:8px"></div>`;
+}
+
+function rBasicoCfg(mc){
+  const cfg=S.config;
+  const nomeUsuario=cfg.nomeUsuario||'';
+  const lr=cfg.limiteReserva||3000;
+  mc.innerHTML=`
+  <div class="basic-header">
+    <div><div class="basic-title">Configurações</div></div>
+  </div>
+
+  <div class="bc" style="padding:4px 20px;margin-bottom:16px">
+    <div class="basic-cfg-item">
+      <div>
+        <div class="basic-cfg-label">Seu nome</div>
+        <div class="basic-cfg-sub">Aparece na saudação da tela inicial</div>
+      </div>
+      <input style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:10px;padding:6px 12px;font-size:14px;font-family:var(--font);color:#1E293B;width:130px;text-align:right;outline:none" value="${nomeUsuario}" placeholder="Seu nome" onblur="S.config.nomeUsuario=this.value;save();renderBasico(document.getElementById('MC'))"/>
+    </div>
+    <div class="basic-cfg-item">
+      <div>
+        <div class="basic-cfg-label">Ano ativo</div>
+        <div class="basic-cfg-sub">Dados exibidos no app</div>
+      </div>
+      <select onchange="setAno(+this.value)" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:10px;padding:6px 12px;font-size:14px;font-weight:600;color:#1E293B;font-family:var(--font);outline:none">
+        ${S.anos.map(a=>`<option value="${a}"${a===S.anoAtivo?' selected':''}>${a}</option>`).join('')}
+      </select>
+    </div>
+    <div class="basic-cfg-item">
+      <div>
+        <div class="basic-cfg-label">Reserva mínima</div>
+        <div class="basic-cfg-sub">Alerta quando abaixo deste valor</div>
+      </div>
+      <input style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:10px;padding:6px 12px;font-size:14px;font-family:var(--font);color:#1E293B;width:110px;text-align:right;outline:none" value="${fabs(lr)}" onblur="cfgLimR(pv(this.value),this)"/>
+    </div>
+  </div>
+
+  <div class="basic-stitle">Interface</div>
+  <div class="bc" style="padding:4px 20px;margin-bottom:16px">
+    <div class="basic-cfg-item">
+      <div>
+        <div class="basic-cfg-label">Modo interface</div>
+        <div class="basic-cfg-sub">Básico está ativo agora</div>
+      </div>
+      <button onclick="alternarComplexidade()" style="background:#1E293B;border:none;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;color:#2DD4A0;cursor:pointer;font-family:var(--font)">Ir para Avançado →</button>
+    </div>
+    <div class="basic-cfg-item">
+      <div>
+        <div class="basic-cfg-label">Dispositivo</div>
+        <div class="basic-cfg-sub">Mobile ou Desktop</div>
+      </div>
+      <button onclick="voltarSplash()" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;font-family:var(--font)">Trocar</button>
+    </div>
+  </div>
+
+  <div class="basic-stitle">Dados</div>
+  <div class="bc" style="padding:4px 20px;margin-bottom:16px">
+    <div class="basic-cfg-item">
+      <div><div class="basic-cfg-label">Exportar backup</div><div class="basic-cfg-sub">Salva arquivo JSON local</div></div>
+      <button onclick="exportarDados()" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;font-family:var(--font)">Exportar</button>
+    </div>
+    <div class="basic-cfg-item">
+      <div><div class="basic-cfg-label">Importar backup</div><div class="basic-cfg-sub">Restaura de arquivo JSON</div></div>
+      <button onclick="importarDados()" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;font-family:var(--font)">Importar</button>
+    </div>
+    <div class="basic-cfg-item">
+      <div><div class="basic-cfg-label">Google Drive</div><div class="basic-cfg-sub">Sincroniza automaticamente</div></div>
+      <button onclick="driveAction()" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;font-family:var(--font)">Conectar</button>
+    </div>
+  </div>
+  <div style="height:8px"></div>`;
+}
+// ══════════════════════════════════════════════════
 
 // ── MODO (mobile/desktop) + COMPLEXIDADE (basico/avancado) ──
 let _modo='mobile'; // 'mobile' | 'desktop'
