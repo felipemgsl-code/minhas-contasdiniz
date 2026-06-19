@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Finanças Pessoais</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23181C27'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%232DD4A0' stroke-width='1.6'/%3E%3Cline x1='16' y1='8' x2='16' y2='24' stroke='%232DD4A0' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M19 12C19 10.5 17.7 9.5 16 9.5C14.1 9.5 12.5 10.6 12.5 12.2C12.5 13.7 14 14.5 16 15.1C18.2 15.8 19.5 16.8 19.5 18.4C19.5 20 18 21 16 21C14 21 12.5 20 12.5 18.5' fill='none' stroke='%232DD4A0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{--bg:#0F1117;--bg2:#181C27;--bg3:#1E2235;--bg4:#252B40;--border:#2A3050;--border2:#353D60;--text:#E8EAF0;--text2:#9BA3BF;--text3:#5C6480;--green:#2DD4A0;--green2:#1A8C6A;--green3:#0D4A38;--red:#F05252;--red2:#A83535;--red3:#3A1515;--blue:#5B8AF0;--blue2:#3A5FB8;--blue3:#1A2550;--orange:#F09A40;--orange2:#A86820;--orange3:#3A2010;--purple:#A075F0;--purple2:#6845B0;--purple3:#2A1850;--gold:#F0C840;--radius:12px;--radius-sm:8px;--radius-xs:5px;--font:'Inter',system-ui,sans-serif;--shadow:0 4px 24px rgba(0,0,0,.4);}
@@ -75,7 +76,7 @@ select.inp{cursor:pointer}
 .qa{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .qab{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 12px;text-align:center;cursor:pointer;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:8px}
 .qab:hover{border-color:var(--border2);background:var(--bg4)}
-.qi{font-size:22px}.ql{font-size:11px;font-weight:500;color:var(--text2)}
+.qi{font-size:22px;display:flex;align-items:center;justify-content:center;color:var(--text2)}.ql{font-size:11px;font-weight:500;color:var(--text2)}
 .er{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--border)}
 .er:last-child{border-bottom:none}.er:hover{background:var(--bg3)}
 .ed{background:none;border:none;color:var(--text2);font-size:13px;font-family:var(--font);outline:none;padding:2px 4px;border-radius:4px;flex:1;min-width:0}
@@ -163,6 +164,20 @@ body.desktop .tbl tr:hover td{background:rgba(91,138,240,.06);transition:.1s}
 body.desktop #hc-svg svg,body.desktop #ge-svg svg,body.desktop #gd-svg svg,body.desktop #gs-svg svg,body.desktop #fc-svg svg{min-height:240px}
 /* tooltip SVG */
 .svg-tooltip{position:fixed;background:#1E2235;border:1px solid #353D60;border-radius:8px;padding:8px 12px;font-size:12px;color:#E8EAF0;pointer-events:none;z-index:800;box-shadow:0 4px 20px rgba(0,0,0,.5);display:none;max-width:220px;line-height:1.6}
+/* ── BASIC MODE — hide advanced-only elements ── */
+body.modo-basico .adv-only{display:none!important}
+body:not(.modo-basico) .basic-only{display:none!important}
+
+/* complexidade badge */
+.complexidade-badge{font-size:9px!important;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.06em;cursor:pointer;user-select:none;transition:.2s}
+.complexidade-badge:hover{opacity:.75}
+.complexidade-badge.basico{background:rgba(45,212,160,.15);color:#2DD4A0;border:1px solid rgba(45,212,160,.3)!important}
+.complexidade-badge.avancado{background:rgba(160,117,240,.15);color:#A075F0;border:1px solid rgba(160,117,240,.3)!important}
+
+/* SVG icons inherit color */
+svg{display:inline-block;vertical-align:middle;flex-shrink:0}
+.year-add-btn svg{display:block}
+.topbar-logo svg{flex-shrink:0}
 /* badge de modo no topbar */
 .modo-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;letter-spacing:.04em}
 .modo-badge.desktop{background:var(--green3);color:var(--green);border:1px solid var(--green2)}
@@ -192,33 +207,88 @@ body.desktop #hc-svg svg,body.desktop #ge-svg svg,body.desktop #gd-svg svg,body.
 <body>
 
 <!-- SPLASH -->
+<style>
+/* ── SPLASH TOGGLE STYLES ── */
+.sp-toggle-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.sp-toggle-labels{display:flex;justify-content:space-between;width:180px}
+.sp-toggle-lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:.3s;user-select:none}
+.sp-toggle-lbl.active{opacity:1}
+.sp-toggle-lbl.inactive{opacity:.3}
+.sp-toggle{width:80px;height:40px;border-radius:20px;cursor:pointer;position:relative;transition:background .4s ease;border:none;outline:none;padding:0;flex-shrink:0}
+.sp-toggle-thumb{position:absolute;top:4px;left:4px;width:32px;height:32px;border-radius:50%;background:#fff;transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.sp-toggle.basico{background:linear-gradient(135deg,#2DD4A0,#5B8AF0)}
+.sp-toggle.basico .sp-toggle-thumb{transform:translateX(0)}
+.sp-toggle.avancado{background:linear-gradient(135deg,#A075F0,#5B8AF0)}
+.sp-toggle.avancado .sp-toggle-thumb{transform:translateX(40px)}
+
+.sp-device-row{display:flex;gap:12px;justify-content:center;margin-top:4px}
+.sp-dev-btn{background:#1E2235;border:1px solid #2A3050;border-radius:12px;padding:20px 24px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:130px;transition:.2s;font-family:inherit;position:relative}
+.sp-dev-btn:hover{background:#252B40}
+.sp-dev-btn.mobile-btn:hover{border-color:#5B8AF0}
+.sp-dev-btn.desktop-btn:hover{border-color:#2DD4A0}
+.sp-dev-btn .sp-ico{font-size:36px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.sp-dev-btn .sp-name{font-size:14px;font-weight:700;color:#E8EAF0}
+.sp-dev-btn .sp-desc{font-size:10px;color:#5C6480;line-height:1.5;text-align:center;margin-top:2px}
+.sp-complexity-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.06em;position:absolute;top:8px;right:8px}
+.sp-complexity-badge.basico{background:rgba(45,212,160,.15);color:#2DD4A0;border:1px solid rgba(45,212,160,.3)}
+.sp-complexity-badge.avancado{background:rgba(160,117,240,.15);color:#A075F0;border:1px solid rgba(160,117,240,.3)}
+
+.sp-hint{font-size:10px;color:#2A3050;margin-top:8px;text-align:center}
+.sp-desc-box{background:#181C27;border:1px solid #1E2235;border-radius:10px;padding:10px 16px;max-width:280px;text-align:center;min-height:44px;transition:.3s}
+.sp-desc-box.basico{border-color:rgba(45,212,160,.2)}
+.sp-desc-box.avancado{border-color:rgba(160,117,240,.2)}
+.sp-desc-txt{font-size:11px;color:#9BA3BF;line-height:1.6}
+</style>
 <div id="splash" style="display:none;position:fixed;inset:0;background:#0F1117;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:32px">
-  <div style="font-size:28px;font-weight:800;color:#E8EAF0;margin-bottom:6px">💰 Finanças</div>
-  <div style="font-size:13px;color:#5C6480;margin-bottom:40px;letter-spacing:.04em">Como você quer abrir?</div>
-  <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
-    <button onclick="setModo('mobile')" style="background:#1E2235;border:1px solid #2A3050;border-radius:14px;padding:28px 32px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:150px;transition:.2s;font-family:inherit" onmouseover="this.style.borderColor='#5B8AF0';this.style.background='#252B40'" onmouseout="this.style.borderColor='#2A3050';this.style.background='#1E2235'">
-      <span style="font-size:40px">📱</span>
+  <div style="font-size:28px;font-weight:800;color:#E8EAF0;margin-bottom:4px"><span style="display:inline-flex;align-items:center;gap:10px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v2m0 8v2M9.5 9.5a2.5 2.5 0 015 0c0 1.5-1.5 2-2.5 2.5S10 13 10 14.5a2.5 2.5 0 005 0"/></svg><span>Finanças</span></span></div>
+  <div style="font-size:12px;color:#5C6480;margin-bottom:28px;letter-spacing:.04em">Configure como quiser entrar</div>
+
+  <!-- ESCOLHA DE DISPOSITIVO -->
+  <div style="font-size:10px;font-weight:600;color:#3A4060;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px">Como você vai usar?</div>
+  <div class="sp-device-row" style="margin-bottom:24px">
+    <button class="sp-dev-btn mobile-btn" onclick="setModoEComplexidade('mobile')">
+      <span class="sp-complexity-badge basico" id="sp-badge-mobile">BÁSICO</span>
+      <span class="sp-ico"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
       <div>
-        <div style="font-size:15px;font-weight:700;color:#E8EAF0;margin-bottom:4px">Mobile</div>
-        <div style="font-size:11px;color:#5C6480;line-height:1.5">Layout compacto<br>toque otimizado</div>
+        <div class="sp-name">Mobile</div>
+        <div class="sp-desc">Layout compacto<br>toque otimizado</div>
       </div>
     </button>
-    <button onclick="setModo('desktop')" style="background:#1E2235;border:1px solid #2A3050;border-radius:14px;padding:28px 32px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:150px;transition:.2s;font-family:inherit" onmouseover="this.style.borderColor='#2DD4A0';this.style.background='#252B40'" onmouseout="this.style.borderColor='#2A3050';this.style.background='#1E2235'">
-      <span style="font-size:40px">🖥️</span>
+    <button class="sp-dev-btn desktop-btn" onclick="setModoEComplexidade('desktop')">
+      <span class="sp-complexity-badge basico" id="sp-badge-desktop">BÁSICO</span>
+      <span class="sp-ico"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
       <div>
-        <div style="font-size:15px;font-weight:700;color:#E8EAF0;margin-bottom:4px">Desktop</div>
-        <div style="font-size:11px;color:#5C6480;line-height:1.5">Tela larga, tooltips<br>hover nos gráficos</div>
+        <div class="sp-name">Desktop</div>
+        <div class="sp-desc">Tela larga, tooltips<br>hover nos gráficos</div>
       </div>
     </button>
   </div>
-  <div style="margin-top:32px;font-size:10px;color:#2A3050">Você pode trocar depois pelo menu ⚙</div>
+
+  <!-- SEPARADOR -->
+  <div style="width:100%;max-width:300px;height:1px;background:#1E2235;margin-bottom:20px"></div>
+
+  <!-- TOGGLE BÁSICO / AVANÇADO -->
+  <div class="sp-toggle-wrap">
+    <div class="sp-toggle-labels">
+      <span class="sp-toggle-lbl active" id="sp-lbl-basico" style="color:#2DD4A0">BÁSICO</span>
+      <span class="sp-toggle-lbl inactive" id="sp-lbl-avancado" style="color:#A075F0">AVANÇADO</span>
+    </div>
+    <button class="sp-toggle basico" id="sp-toggle-btn" onclick="splashToggleComplexidade()" aria-label="Alternar modo">
+      <div class="sp-toggle-thumb"></div>
+    </button>
+    <!-- Descrição dinâmica -->
+    <div class="sp-desc-box basico" id="sp-desc-box">
+      <div class="sp-desc-txt" id="sp-desc-txt">Essencial para acompanhar suas contas.<br>Interface limpa e sem complicação.</div>
+    </div>
+  </div>
+  <div class="sp-hint" style="margin-top:16px">Você pode trocar nas configurações ⚙</div>
 </div>
 
 <div id="app-root" style="display:none;flex-direction:column;min-height:100vh">
 <div class="app">
 <div class="topbar">
   <div class="topbar-row1">
-    <div class="topbar-logo">💰 Finanças</div>
+    <div class="topbar-logo" style="display:flex;align-items:center;gap:7px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v2m0 8v2M9.5 9.5a2.5 2.5 0 015 0c0 1.5-1.5 2-2.5 2.5S10 13 10 14.5a2.5 2.5 0 005 0"/></svg><span>Finanças</span></div>
     <div class="year-select">
       <span style="font-size:11px;color:var(--text2)">ANO</span>
       <select id="YS" onchange="setAno(+this.value)"></select>
@@ -228,9 +298,9 @@ body.desktop #hc-svg svg,body.desktop #ge-svg svg,body.desktop #gd-svg svg,body.
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4.5 20L1 14l5.5-9.5h11L23 14l-3.5 6H4.5z" fill="#4285F4" opacity=".3"/><path d="M8.5 4.5L3 14h6l5.5-9.5H8.5z" fill="#0066DA"/><path d="M15.5 4.5H9L14.5 14H21L15.5 4.5z" fill="#00AC47"/><path d="M3 14l3.5 6h11l3.5-6H3z" fill="#FFBA00"/></svg>
         <span id="drive-btn-txt">Entrar</span>
       </button>
-      <button class="year-add-btn" onclick="abrirPopupPagamentos()" title="Atualizar pagamentos" style="color:var(--orange);border-color:var(--orange2)">🔔</button>
-      <button class="year-add-btn" onclick="importarDados()" title="Importar arquivo local">📂</button>
-      <button class="year-add-btn" id="local-export-btn" onclick="exportarDados()" title="Exportar local" style="color:var(--green);border-color:var(--green2)">💾</button>
+      <button class="year-add-btn" onclick="abrirPopupPagamentos()" title="Atualizar pagamentos" style="color:var(--orange);border-color:var(--orange2)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></button>
+      <button class="year-add-btn" onclick="importarDados()" title="Importar arquivo local"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></button>
+      <button class="year-add-btn" id="local-export-btn" onclick="exportarDados()" title="Exportar local" style="color:var(--green);border-color:var(--green2)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
     </div>
   </div>
   <div class="topbar-row2">
@@ -238,7 +308,10 @@ body.desktop #hc-svg svg,body.desktop #ge-svg svg,body.desktop #gd-svg svg,body.
     <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;padding:0 6px;border-left:1px solid var(--border);margin-left:4px">
       <button class="nbtn" onclick="addAno()" title="Adicionar ano" style="font-size:11px;padding:4px 10px">+ Ano</button>
       <button class="nbtn" onclick="voltarSplash()" title="Trocar modo Mobile/Desktop" style="font-size:13px;padding:4px 8px">
-        <span id="modo-badge" class="modo-badge mobile">📱</span>
+        <span id="modo-badge" class="modo-badge mobile"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
+      </button>
+      <button class="nbtn" onclick="alternarComplexidade()" title="Alternar Básico / Avançado" style="font-size:9px;padding:4px 6px">
+        <span id="complexidade-badge" class="modo-badge complexidade-badge basico">BÁSICO</span>
       </button>
     </div>
   </div>
@@ -434,22 +507,30 @@ function addAno(){
 }
 
 // nav
-const TABS=[{id:'home',l:'🏠 Home'},{id:'ob',l:'Orçamento'},{id:'contas',l:'Contas'},{id:'parc',l:'Parcelados'},{id:'res',l:'Reservas'},{id:'free',l:'Freelas'},{id:'graf',l:'Gráficos'},{id:'avi',l:'🔔 Avisos'}];
+const TABS=[{id:'home',l:'Home'},{id:'ob',l:'Orçamento'},{id:'contas',l:'Contas'},{id:'anual',l:'Anual'},{id:'parc',l:'Parcelados'},{id:'res',l:'Reservas'},{id:'free',l:'Freelas'},{id:'graf',l:'Gráficos'},{id:'avi',l:'Avisos'}];
 function hasDividas(){
   if(!S.dividas) S.dividas=[];
   return S.dividas.some(d=>!d.quitada)||getAtrasados().length>0;
 }
+// Tabs básicas (sempre visíveis) vs avançadas (só no modo avançado)
+const TABS_ADV_IDS=['ob','parc','res','free','graf','avi'];
 function renderNav(){
   const nav=document.getElementById('NAV');if(!nav)return;
   const tabsOcultas=S.config.tabsOcultas||[];
   const tabsCustom=S.config.tabsCustom||[];
   let tabs=TABS.filter(t=>!tabsOcultas.includes(t.id));
-  if(hasDividas()) tabs.push({id:'div',l:'⚠️ Dívidas'});
-  tabsCustom.forEach(tc=>tabs.push({id:'custom_'+tc.id,l:tc.emoji+' '+tc.nome}));
-  // Abas de cartão
-  const tabsOcultasCartoes=S.config.tabsOcultasCartoes||[];
-  const cartoesComFatura=getCartoesComFatura();
-  cartoesComFatura.forEach(c=>{if(!tabsOcultasCartoes.includes(c.id))tabs.push({id:'card_'+c.id,l:c.emoji+' '+c.nome});});
+  // No modo básico, esconder abas avançadas
+  if(isBasico()) tabs=tabs.filter(t=>!TABS_ADV_IDS.includes(t.id));
+  if(hasDividas()) tabs.push({id:'div',l:'Dívidas'});
+  if(!isBasico()){
+    tabsCustom.forEach(tc=>tabs.push({id:'custom_'+tc.id,l:tc.emoji+' '+tc.nome}));
+    // Abas de cartão
+    const tabsOcultasCartoes=S.config.tabsOcultasCartoes||[];
+    const cartoesComFatura=getCartoesComFatura();
+    cartoesComFatura.forEach(c=>{if(!tabsOcultasCartoes.includes(c.id))tabs.push({id:'card_'+c.id,l:c.emoji+' '+c.nome});});
+  }
+  // Se tab atual ficou oculta, volta pra home
+  if(!tabs.find(t=>t.id===tab)) tab='home';
   nav.innerHTML=tabs.map(t=>`<button class="nbtn${tab===t.id?' on':''}${t.id==='div'?' div-tab':''}" onclick="gt('${t.id}')">${t.l}</button>`).join('');
 }
 function gt(id){
@@ -468,6 +549,7 @@ function render(){
   if(tab==='home')rHome(mc);
   else if(tab==='ob')rOb(mc);
   else if(tab==='contas')rContas(mc);
+  else if(tab==='anual')rAnualTab(mc);
   else if(tab==='parc')rParc(mc);
   else if(tab==='res')rRes(mc);
   else if(tab==='free')rFree(mc);
@@ -486,9 +568,9 @@ function checkAlerts(){
   const m0=anoEncerradoChk?11:new Date().getMonth();
   const tpm=tPM(m0);
   const al=[];
-  if(tr<lr) al.push(`🚨 Reservas (${fmt(tr)}) abaixo do limite crítico de ${fmt(lr)}!`);
-  if(tpa>tr&&tr>0) al.push(`💸 Parcelamentos anuais (${fmt(tpa)}) superam suas reservas (${fmt(tr)}).`);
-  if(tpm>lp) al.push(`⚠️ Parcelas de ${MONTHS[m0]} (${fmt(tpm)}) ultrapassam o limite de ${fmt(lp)}.`);
+  if(tr<lr) al.push(`Reservas (${fmt(tr)}) abaixo do limite crítico de ${fmt(lr)}!`);
+  if(tpa>tr&&tr>0) al.push(`Parcelamentos anuais (${fmt(tpa)}) superam suas reservas (${fmt(tr)}).`);
+  if(tpm>lp) al.push(`Parcelas de ${MONTHS[m0]} (${fmt(tpm)}) ultrapassam o limite de ${fmt(lp)}.`);
   if(al.length){
     document.getElementById('AR').innerHTML=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px" onclick="this.remove()"><div style="background:var(--red3);border:2px solid var(--red);border-radius:var(--radius);padding:24px;max-width:440px;width:100%;text-align:center" onclick="event.stopPropagation()"><div style="font-size:36px;margin-bottom:10px">🚨</div><div style="font-size:15px;font-weight:700;color:var(--red);margin-bottom:10px">Atenção!</div><div style="font-size:13px;line-height:1.7;margin-bottom:16px">${al.join('<br><br>')}</div><button class="btn br" onclick="document.getElementById('AR').innerHTML=''">Entendido</button></div></div>`;
   }
@@ -535,19 +617,19 @@ function genIns(){
   const anoHoje=new Date().getFullYear();
   const m0=(S.anoAtivo<anoHoje)?11:new Date().getMonth();
   const tr=rTot();const lr=S.config.limiteReserva||3000;const lp=S.config.limiteParcMensal||800;
-  if(tr<lr) ins.push({t:'bad',m:`🚨 Reservas (${fmt(tr)}) abaixo do limite crítico de ${fmt(lr)}. Recomponha antes de qualquer gasto extra.`});
+  if(tr<lr) ins.push({t:'bad',m:`Reservas (${fmt(tr)}) abaixo do limite crítico de ${fmt(lr)}. Recomponha antes de qualquer gasto extra.`});
   else if(tr>lr*3) ins.push({t:'good',m:`✅ Reservas (${fmt(tr)}) estão ${((tr/lr-1)*100).toFixed(0)}% acima do mínimo. Boa posição!`});
   const mOv=MONTHS.map((_,i)=>({m:MONTHS[i],v:tPM(i)})).filter(x=>x.v>lp);
-  if(mOv.length) ins.push({t:'warn',m:`⚠️ Limite de parcelas ultrapassado em: ${mOv.map(x=>`${x.m}(${fmt(x.v)})`).join(', ')}.`});
+  if(mOv.length) ins.push({t:'warn',m:`Limite de parcelas ultrapassado em: ${mOv.map(x=>`${x.m}(${fmt(x.v)})`).join(', ')}.`});
   const enc=D().pc.filter(p=>{const ef=p.n-(p.ant||0);return p.ini+ef<=m0+2;});
   if(enc.length) ins.push({t:'good',m:`🎉 ${enc.length} compra(s) encerrando em breve: ${enc.map(p=>p.desc).join(', ')}. Vai liberar consumo!`});
   const sM=sal(m0);
   if(sM<0) ins.push({t:'bad',m:`📉 ${MONTHS[m0]} com saldo negativo (${fmt(sM)}). Revise as despesas.`});
-  else if(sM>2000) ins.push({t:'good',m:`💰 ${MONTHS[m0]} com bom saldo (${fmt(sM)}). Considere aportar nas reservas.`});
+  else if(sM>2000) ins.push({t:'good',m:`${MONTHS[m0]} com bom saldo (${fmt(sM)}). Considere aportar nas reservas.`});
   const totF=MONTHS.reduce((s,_,i)=>s+tFR(i),0);
   if(totF>0){const totE2=MONTHS.reduce((s,_,i)=>s+tE(i),0);ins.push({t:'good',m:`🎯 Freelas somam ${fmt(totF)} em ${S.anoAtivo} (${totE2>0?((totF/totE2)*100).toFixed(0):0}% das entradas).`});}
   const crescR=resDoAno().map(r=>{const ano=S.anoAtivo;const mv=r.movs.filter(m=>(m.data||'').startsWith(String(ano)));return{nome:r.nome,liq:mv.filter(m=>m.t==='e').reduce((s,m)=>s+m.v,0)-mv.filter(m=>m.t==='s').reduce((s,m)=>s+m.v,0)};}).sort((a,b)=>b.liq-a.liq);
-  if(crescR[0]&&crescR[0].liq>0) ins.push({t:'good',m:`📈 Reserva "${crescR[0].nome}" teve o maior crescimento líquido este ano (${fmt(crescR[0].liq)}).`});
+  if(crescR[0]&&crescR[0].liq>0) ins.push({t:'good',m:`Reserva "${crescR[0].nome}" teve o maior crescimento líquido este ano (${fmt(crescR[0].liq)}).`});
   if(!ins.length) ins.push({t:'good',m:`✅ Finanças em ordem. Continue monitorando e mantendo reservas acima de ${fmt(lr)}.`});
   return ins;
 }
@@ -830,7 +912,7 @@ function renderAtrasados(){
         const jTotal=jCalc&&jCalc.juros>0.01?`<span style="font-size:10px;color:var(--orange);margin-left:4px">+${fmt(jCalc.juros)} juros → ${fmt(jCalc.total)}</span>`:'';
         return`<div class="atrs-row" style="align-items:flex-start;flex-direction:column">
           <div style="display:flex;align-items:flex-start;gap:8px;width:100%">
-            <span class="atrs-ico" style="margin-top:2px">⚠️</span>
+            <span class="atrs-ico" style="margin-top:2px;color:var(--red)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
             <div style="flex:1;min-width:0">
               <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
                 <span class="atrs-nome">${g.nome}</span>
@@ -907,6 +989,72 @@ function renderChkSection(){
 }
 
 // editar célula da planilha anual inline
+
+// ── PLANILHA ANUAL — helper compartilhado ──
+function anualTableHtml(m0,anoEncerrado){
+  const d=D();
+  return`<div style="overflow-x:auto">
+    <table class="tbl" style="min-width:900px;font-size:11px">
+      <thead><tr>
+        <th style="min-width:140px"></th>
+        ${MONTHS.map((m,i)=>(i===m0&&!anoEncerrado)?`<th class="rv ann-cur-col" style="font-size:10px;padding:6px 6px">${m}<div style="font-size:8px;color:var(--blue);font-weight:400;margin-top:1px">atual</div></th>`:`<th class="rv" style="font-size:10px;padding:6px 6px">${m}</th>`).join('')}
+        <th class="rv" style="font-size:10px">Total</th>
+      </tr></thead>
+      <tbody>
+        ${d.entradas.map((e,ei)=>`<tr>
+          <td style="color:var(--text2);font-size:11px">${e.nome}${e.tag==='freela'?' <span class="tag tfr" style="font-size:9px;padding:1px 5px">F</span>':''}</td>
+          ${e.vals.map((v,mi)=>`<td class="rv${(mi===m0&&!anoEncerrado)?' ann-cur-col':''}" style="padding:3px 2px"><input class="ann-cell" style="color:${v>0?'var(--green)':'var(--text3)'}" value="${v>0?fabs(v):''}" placeholder="—" title="Editar ${e.nome} em ${MONTHS[mi]}" onfocus="this.select()" onblur="annEdit('e',${ei},${mi},this)"/></td>`).join('')}
+          <td class="rv" style="color:var(--green);font-weight:600;font-size:11px">${fabs(e.vals.reduce((a,b)=>a+b,0))}</td>
+        </tr>`).join('')}
+        <tr style="background:var(--green3);border-top:1px solid var(--green2)">
+          <td style="font-weight:700;color:var(--green);font-size:11px;padding:6px 10px">TOTAL ENTRADAS</td>
+          ${MONTHS.map((_,i)=>`<td class="rv${i===m0?' ann-cur-col':''}" id="ann-te-${i}" style="font-weight:700;color:var(--green);font-size:11px;padding:5px 6px">${fmt(tE(i))}</td>`).join('')}
+          <td class="rv" id="ann-te-tot" style="font-weight:700;color:var(--green);font-size:11px">${fmt(MONTHS.reduce((s,_,i)=>s+tE(i),0))}</td>
+        </tr>
+        <tr><td colspan="14" style="height:6px"></td></tr>
+        ${d.despesas.map((dd,di)=>`<tr>
+          <td style="color:var(--text2);font-size:11px">${dd.nome}${dd.da?' <span class="tag tda" style="font-size:9px;padding:1px 5px">D.A.</span>':''}</td>
+          ${dd.vals.map((v,mi)=>`<td class="rv${mi===m0?' ann-cur-col':''}" style="padding:3px 2px"><input class="ann-cell" style="color:${v>0?'var(--red)':'var(--text3)'}" value="${v>0?fabs(v):''}" placeholder="—" title="Editar ${dd.nome} em ${MONTHS[mi]}" onfocus="this.select()" onblur="annEdit('d',${di},${mi},this)"/></td>`).join('')}
+          <td class="rv" style="color:var(--red);font-weight:600;font-size:11px">${fabs(dd.vals.reduce((a,b)=>a+b,0))}</td>
+        </tr>`).join('')}
+        ${d.pd.map((p,pi)=>{
+          const vals=MONTHS.map((_,i)=>i>=p.ini&&i<p.ini+p.n?p.valor:0);
+          return`<tr>
+            <td style="color:var(--text2);font-size:11px"><input class="ann-cell" style="color:var(--text2);width:110px" value="${p.desc}" onblur="D().pd[${pi}].desc=this.value;save();updateAnnTotals()"/> <span class="tag tpa" style="font-size:9px;padding:1px 5px">P</span></td>
+            ${vals.map((v,mi)=>v>0?`<td class="rv${mi===m0?' ann-cur-col':''}" style="padding:3px 2px"><input class="ann-cell" style="color:var(--orange)" value="${fabs(v)}" placeholder="—" onfocus="this.select()" onblur="annEditPd(${pi},${mi},this)"/></td>`:`<td class="rv${mi===m0?' ann-cur-col':''}" style="color:var(--text3);font-size:11px;padding:5px 6px">—</td>`).join('')}
+            <td class="rv" style="color:var(--orange);font-weight:600;font-size:11px">${fabs(vals.reduce((a,b)=>a+b,0))}</td>
+          </tr>`;
+        }).join('')}
+        <tr style="background:var(--red3);border-top:1px solid var(--red2)">
+          <td style="font-weight:700;color:var(--red);font-size:11px;padding:6px 10px">TOTAL DESPESAS</td>
+          ${MONTHS.map((_,i)=>`<td class="rv${i===m0?' ann-cur-col':''}" id="ann-td-${i}" style="font-weight:700;color:var(--red);font-size:11px;padding:5px 6px">${fmt(tD(i))}</td>`).join('')}
+          <td class="rv" id="ann-td-tot" style="font-weight:700;color:var(--red);font-size:11px">${fmt(MONTHS.reduce((s,_,i)=>s+tD(i),0))}</td>
+        </tr>
+        <tr style="background:var(--bg4);border-top:1px solid var(--border2)">
+          <td style="font-weight:700;color:var(--text);font-size:12px;padding:8px 10px">FECHAMENTO</td>
+          ${MONTHS.map((_,i)=>{const s=sal(i);return`<td class="rv${i===m0?' ann-cur-col':''}" id="ann-sal-${i}" style="font-weight:700;color:${s>=0?'var(--green)':'var(--red)'};font-size:11px;padding:6px 6px">${fmt(s)}</td>`;}).join('')}
+          <td class="rv" id="ann-sal-tot" style="font-weight:700;color:${MONTHS.reduce((s,_,i)=>s+sal(i),0)>=0?'var(--green)':'var(--red)'};font-size:11px">${fmt(MONTHS.reduce((s,_,i)=>s+sal(i),0))}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+}
+
+// ── ABA ANUAL (visível no modo básico) ──
+function rAnualTab(mc){
+  const m0=new Date().getMonth();
+  const anoEncerrado=S.anoAtivo<new Date().getFullYear();
+  mc.innerHTML=`<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="ctit" style="margin:0">Contas ${S.anoAtivo} — Visão Anual</div>
+      <div style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px">
+        <span style="color:var(--blue)">✏️</span> Clique para editar
+      </div>
+    </div>
+    ${anualTableHtml(m0,anoEncerrado)}
+  </div>`;
+}
+
 
 function annEditPd(pi,mi,el){
   const pd=D().pd;
@@ -996,13 +1144,19 @@ function rHome(mc){
   const disp=eM-despF-tpm;const pct=eM>0?Math.max(0,Math.min(100,disp/eM*100)):0;
 
   mc.innerHTML=`
-  ${anoEncerrado?`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">📅</span><div><div style="font-weight:600;color:var(--text2);font-size:13px">Ano ${anoAtivo} encerrado</div><div style="font-size:11px;color:var(--text3)">Visualizando dados históricos. Edição ainda disponível.</div></div></div>`:''}
+  ${anoEncerrado?`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:18px"></span><div><div style="font-weight:600;color:var(--text2);font-size:13px">Ano ${anoAtivo} encerrado</div><div style="font-size:11px;color:var(--text3)">Visualizando dados históricos. Edição ainda disponível.</div></div></div>`:''}
 
   <!-- AVISOS NO TOPO -->
   ${(()=>{
     const avisos=[];
-    if(tr<lr) avisos.push(`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">🚨</span><div><div style="font-weight:600;color:var(--red)">Reservas em nível crítico!</div><div style="font-size:12px;color:var(--text2)">${fmt(tr)} — abaixo de ${fmt(lr)}</div></div><button class="btn bsm br" style="margin-left:auto;flex-shrink:0" onclick="gt('res')">Ver</button></div>`);
-    if(tpm>lp) avisos.push(`<div style="background:var(--orange3);border:1px solid var(--orange);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">⚠️</span><div><div style="font-weight:600;color:var(--orange)">Limite de parcelamentos!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpm)} / limite ${fmt(lp)}</div></div><button class="btn bsm bo" style="margin-left:auto;flex-shrink:0" onclick="gt('parc')">Ver</button></div>`);
+    if(tr<lr) avisos.push(isBasico()
+      ?`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="sugerirAvancado('reservas')"><span style="font-size:18px">🚨</span><div style="flex:1"><div style="font-weight:600;color:var(--red)">Reservas em nível crítico!</div><div style="font-size:12px;color:var(--text2)">${fmt(tr)} — abaixo de ${fmt(lr)}</div></div><span style="font-size:11px;color:var(--red2);flex-shrink:0">Toque para saber mais →</span></div>`
+      :`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">🚨</span><div><div style="font-weight:600;color:var(--red)">Reservas em nível crítico!</div><div style="font-size:12px;color:var(--text2)">${fmt(tr)} — abaixo de ${fmt(lr)}</div></div><button class="btn bsm br" style="margin-left:auto;flex-shrink:0" onclick="gt('res')">Ver</button></div>`
+    );
+    if(tpm>lp) avisos.push(isBasico()
+      ?`<div style="background:var(--orange3);border:1px solid var(--orange);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="sugerirAvancado('parcelados')"><span style="font-size:18px">⚠️</span><div style="flex:1"><div style="font-weight:600;color:var(--orange)">Limite de parcelamentos!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpm)} / limite ${fmt(lp)}</div></div><span style="font-size:11px;color:var(--orange2);flex-shrink:0">Toque para saber mais →</span></div>`
+      :`<div style="background:var(--orange3);border:1px solid var(--orange);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">⚠️</span><div><div style="font-weight:600;color:var(--orange)">Limite de parcelamentos!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpm)} / limite ${fmt(lp)}</div></div><button class="btn bsm bo" style="margin-left:auto;flex-shrink:0" onclick="gt('parc')">Ver</button></div>`
+    );
     if(tpa>tr&&tr>0) avisos.push(`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span>💸</span><div><div style="font-weight:600;color:var(--red)">Parcelamentos superam reservas!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpa)} em parcelas vs ${fmt(tr)} em reservas</div></div></div>`);
     const divAtHome=(S.dividas||[]).filter(d=>!d.quitada);const atrasHome=getAtrasados();
     if(divAtHome.length>0||atrasHome.length>0){
@@ -1020,14 +1174,14 @@ function rHome(mc){
   </div>
 
   <div id="unsaved-banner" style="display:none;background:var(--orange3);border:1px solid var(--orange);border-radius:var(--radius);padding:10px 16px;margin-bottom:12px;flex;align-items:center;gap:10px">
-    <span style="font-size:16px">💾</span>
+    <span style="display:flex;align-items:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 18 8"/></svg></span>
     <div style="flex:1"><div style="font-weight:600;color:var(--orange);font-size:13px">Dados não salvos</div><div style="font-size:11px;color:var(--text2)">Exporte o backup antes de fechar para não perder as alterações.</div></div>
-    <button class="btn bg bsm" onclick="gdToken?driveSalvar():driveAction()">☁ Salvar no Drive</button><button class="btn bo bsm" onclick="exportarDados()" style="margin-left:4px">💾 Local</button>
+    <button class="btn bg bsm" onclick="gdToken?driveSalvar():driveAction()">Salvar no Drive</button><button class="btn bo bsm" onclick="exportarDados()" style="margin-left:4px">Local</button>
   </div>
 
   <div id="card-atrasados" class="card" style="margin-bottom:12px;border-color:var(--red2);display:none">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <span style="font-size:16px">🔴</span>
+      <span style="color:var(--red);display:flex"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg></span>
       <div class="ctit" style="margin:0;color:var(--red)">CONTAS EM ATRASO</div>
     </div>
     <div id="sec-atrasados"></div>
@@ -1036,7 +1190,7 @@ function rHome(mc){
   <div class="card" style="margin-bottom:12px;border-color:var(--blue2);${anoEncerrado?'opacity:0.6':''}">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div onclick="toggleSec('sec-chk')" style="cursor:pointer;flex:1">
-        <div class="ctit" style="margin:0;color:var(--blue)">📋 CONTAS ${anoEncerrado?"DO ANO":"DESSE MÊS — "+MONTHS[m0].toUpperCase()}/${S.anoAtivo}</div>
+        <div class="ctit" style="margin:0;color:var(--blue)">Contas ${anoEncerrado?"do ano":"de "+MONTHS[m0]} / ${S.anoAtivo}</div>
         <div style="font-size:11px;color:var(--text2);margin-top:3px">Marque o que já recebeu e pagou</div>
       </div>
       <button class="btn bxs bg" onclick="mAddE()">+ Entrada</button>
@@ -1050,14 +1204,14 @@ function rHome(mc){
   <div class="card">
     <div class="sec-hdr" onclick="toggleSec('sec-qa')"><div class="ctit" style="margin:0">Ações Rápidas</div><button class="sec-tog" data-tog="sec-qa">−</button></div>
     <div id="sec-qa" style="display:block;margin-top:10px"><div class="qa">
-      <div class="qab" onclick="mAddD()"><div class="qi">📤</div><div class="ql">Adicionar Despesa</div></div>
-      <div class="qab" onclick="mAddE()"><div class="qi">📥</div><div class="ql">Adicionar Entrada</div></div>
-      <div class="qab" onclick="mAddC()"><div class="qi">💳</div><div class="ql">Compra no Cartão</div></div>
-      <div class="qab" onclick="mRet()"><div class="qi">📉</div><div class="ql">Retirada de Reserva</div></div>
-      <div class="qab" onclick="mAp()"><div class="qi">📈</div><div class="ql">Aporte em Reserva</div></div>
-      <div class="qab" onclick="mUpd()"><div class="qi">🔄</div><div class="ql">Atualizar Números</div></div>
-      <div class="qab" onclick="mSim()"><div class="qi">🧮</div><div class="ql">Simular Compra</div></div>
-      <div class="qab" onclick="gt('avi')"><div class="qi">🔔</div><div class="ql">Me Avisar Quando</div></div>
+      <div class="qab" onclick="mAddD()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div><div class="ql">Adicionar Despesa</div></div>
+      <div class="qab" onclick="mAddE()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div><div class="ql">Adicionar Entrada</div></div>
+      <div class="qab" onclick="mAddC()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></div><div class="ql">Compra no Cartão</div></div>
+      <div class="qab" onclick="mRet()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12l-3 3 3 3"/><line x1="21" y1="15" x2="15" y2="15"/></svg></div><div class="ql">Retirada de Reserva</div></div>
+      <div class="qab" onclick="mAp()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M15 12l3 3-3 3"/><line x1="18" y1="15" x2="12" y2="15"/></svg></div><div class="ql">Aporte em Reserva</div></div>
+      <div class="qab" onclick="mUpd()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></div><div class="ql">Atualizar Números</div></div>
+      <div class="qab" onclick="mSim()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8.01" y2="10"/><line x1="12" y1="10" x2="12.01" y2="10"/><line x1="16" y1="10" x2="16.01" y2="10"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="16" y1="14" x2="16.01" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg></div><div class="ql">Simular Compra</div></div>
+      <div class="qab" onclick="gt('avi')"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><div class="ql">Me Avisar Quando</div></div>
     </div></div>
   </div>
   <div class="card" style="margin-bottom:12px">
@@ -1100,68 +1254,24 @@ function rHome(mc){
     </div>
   </div>
   </div></div>
-  <div class="card" style="margin-bottom:12px">
+  ${!isBasico()?`<div class="card" style="margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-      <div onclick="toggleSec('sec-ann')" style="cursor:pointer" class="ctit" style="margin:0">📋 CONTAS ${S.anoAtivo} — Visão Anual</div>
+      <div onclick="toggleSec('sec-ann')" style="cursor:pointer" class="ctit" style="margin:0">Contas ${S.anoAtivo} — Visão Anual</div>
       <button class="sec-tog" data-tog="sec-ann" onclick="toggleSec('sec-ann')">−</button>
       <div style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px">
         <span style="color:var(--blue)">✏️</span> Clique para editar
       </div>
     </div>
-    <div id="sec-ann" style="display:block;margin-top:8px"><div style="overflow-x:auto">
-      <table class="tbl" style="min-width:900px;font-size:11px">
-        <thead><tr>
-          <th style="min-width:140px"></th>
-          ${MONTHS.map((m,i)=>(i===m0&&!anoEncerrado)?`<th class="rv ann-cur-col" style="font-size:10px;padding:6px 6px">${m}<div style="font-size:8px;color:var(--blue);font-weight:400;margin-top:1px">atual</div></th>`:`<th class="rv" style="font-size:10px;padding:6px 6px">${m}</th>`).join('')}
-          <th class="rv" style="font-size:10px">Total</th>
-        </tr></thead>
-        <tbody>
-          ${D().entradas.map((e,ei)=>`<tr>
-            <td style="color:var(--text2);font-size:11px">${e.nome}${e.tag==='freela'?' <span class="tag tfr" style="font-size:9px;padding:1px 5px">F</span>':''}</td>
-            ${e.vals.map((v,mi)=>`<td class="rv${(mi===m0&&!anoEncerrado)?' ann-cur-col':''}" style="padding:3px 2px"><input class="ann-cell" style="color:${v>0?'var(--green)':'var(--text3)'}" value="${v>0?fabs(v):''}" placeholder="—" title="Editar ${e.nome} em ${MONTHS[mi]}" onfocus="this.select()" onblur="annEdit('e',${ei},${mi},this)"/></td>`).join('')}
-            <td class="rv" style="color:var(--green);font-weight:600;font-size:11px">${fabs(e.vals.reduce((a,b)=>a+b,0))}</td>
-          </tr>`).join('')}
-          <tr style="background:var(--green3);border-top:1px solid var(--green2)">
-            <td style="font-weight:700;color:var(--green);font-size:11px;padding:6px 10px">TOTAL ENTRADAS</td>
-            ${MONTHS.map((_,i)=>`<td class="rv${i===m0?' ann-cur-col':''}" id="ann-te-${i}" style="font-weight:700;color:var(--green);font-size:11px;padding:5px 6px">${fmt(tE(i))}</td>`).join('')}
-            <td class="rv" id="ann-te-tot" style="font-weight:700;color:var(--green);font-size:11px">${fmt(MONTHS.reduce((s,_,i)=>s+tE(i),0))}</td>
-          </tr>
-          <tr><td colspan="14" style="height:6px"></td></tr>
-          ${D().despesas.map((d,di)=>`<tr>
-            <td style="color:var(--text2);font-size:11px">${d.nome}${d.da?' <span class="tag tda" style="font-size:9px;padding:1px 5px">D.A.</span>':''}</td>
-            ${d.vals.map((v,mi)=>`<td class="rv${mi===m0?' ann-cur-col':''}" style="padding:3px 2px"><input class="ann-cell" style="color:${v>0?'var(--red)':'var(--text3)'}" value="${v>0?fabs(v):''}" placeholder="—" title="Editar ${d.nome} em ${MONTHS[mi]}" onfocus="this.select()" onblur="annEdit('d',${di},${mi},this)"/></td>`).join('')}
-            <td class="rv" style="color:var(--red);font-weight:600;font-size:11px">${fabs(d.vals.reduce((a,b)=>a+b,0))}</td>
-          </tr>`).join('')}
-          ${D().pd.map((p,pi)=>{
-            const vals=MONTHS.map((_,i)=>i>=p.ini&&i<p.ini+p.n?p.valor:0);
-            return`<tr>
-              <td style="color:var(--text2);font-size:11px"><input class="ann-cell" style="color:var(--text2);width:110px" value="${p.desc}" onblur="D().pd[${pi}].desc=this.value;save();updateAnnTotals()"/> <span class="tag tpa" style="font-size:9px;padding:1px 5px">P</span></td>
-              ${vals.map((v,mi)=>v>0?`<td class="rv${mi===m0?' ann-cur-col':''}" style="padding:3px 2px"><input class="ann-cell" style="color:var(--orange)" value="${fabs(v)}" placeholder="—" onfocus="this.select()" onblur="annEditPd(${pi},${mi},this)"/></td>`:`<td class="rv${mi===m0?' ann-cur-col':''} " style="color:var(--text3);font-size:11px;padding:5px 6px">—</td>`).join('')}
-              <td class="rv" style="color:var(--orange);font-weight:600;font-size:11px">${fabs(vals.reduce((a,b)=>a+b,0))}</td>
-            </tr>`;
-          }).join('')}
-          <tr style="background:var(--red3);border-top:1px solid var(--red2)">
-            <td style="font-weight:700;color:var(--red);font-size:11px;padding:6px 10px">TOTAL DESPESAS</td>
-            ${MONTHS.map((_,i)=>`<td class="rv${i===m0?' ann-cur-col':''}" id="ann-td-${i}" style="font-weight:700;color:var(--red);font-size:11px;padding:5px 6px">${fmt(tD(i))}</td>`).join('')}
-            <td class="rv" id="ann-td-tot" style="font-weight:700;color:var(--red);font-size:11px">${fmt(MONTHS.reduce((s,_,i)=>s+tD(i),0))}</td>
-          </tr>
-          <tr style="background:var(--bg4);border-top:1px solid var(--border2)">
-            <td style="font-weight:700;color:var(--text);font-size:12px;padding:8px 10px">FECHAMENTO</td>
-            ${MONTHS.map((_,i)=>{const s=sal(i);return`<td class="rv${i===m0?' ann-cur-col':''}" id="ann-sal-${i}" style="font-weight:700;color:${s>=0?'var(--green)':'var(--red)'};font-size:11px;padding:6px 6px">${fmt(s)}</td>`;}).join('')}
-            <td class="rv" id="ann-sal-tot" style="font-weight:700;color:${MONTHS.reduce((s,_,i)=>s+sal(i),0)>=0?'var(--green)':'var(--red)'};font-size:11px">${fmt(MONTHS.reduce((s,_,i)=>s+sal(i),0))}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div></div>
-  </div>
+    <div id="sec-ann" style="display:block;margin-top:8px">${anualTableHtml(m0,anoEncerrado)}</div>
+  </div>`:''}
   <div class="card" style="margin-bottom:12px">
-    <div class="sec-hdr" onclick="toggleSec('sec-graf')"><div class="ctit" style="margin:0">📈 Visão Anual ${S.anoAtivo} — Gráfico</div><button class="sec-tog" data-tog="sec-graf">−</button></div>
+    <div class="sec-hdr" onclick="toggleSec('sec-graf')"><div class="ctit" style="margin:0">Visão Anual ${S.anoAtivo} — Gráfico</div><button class="sec-tog" data-tog="sec-graf">−</button></div>
     <div id="sec-graf" style="display:block;margin-top:8px"><div id="hc-svg"></div></div>
   </div>
-  ${S.avisos.filter(a=>a.on).length>0?`<div class="card"><div class="ctit">🔔 Avisos Ativos</div>${S.avisos.filter(a=>a.on).map(a=>`<div class="av"><div class="rdot" style="background:var(--blue)"></div><span style="flex:1;font-size:12px">${a.txt}</span></div>`).join('')}</div>`:''}
+  ${S.avisos.filter(a=>a.on).length>0?`<div class="card"><div class="ctit">Avisos Ativos</div>${S.avisos.filter(a=>a.on).map(a=>`<div class="av"><div class="rdot" style="background:var(--blue)"></div><span style="flex:1;font-size:12px">${a.txt}</span></div>`).join('')}</div>`:''}
 
   <div style="display:flex;gap:10px;margin-top:8px;margin-bottom:4px">
-    <button class="btn br" style="flex:1;justify-content:center;padding:12px;font-size:13px" onclick="mAddDivida()">💸 Adicionar Dívida</button>
+    <button class="btn br" style="flex:1;justify-content:center;padding:12px;font-size:13px" onclick="mAddDivida()">Adicionar Dívida</button>
     <button class="btn bgh" style="padding:12px 18px;font-size:13px" onclick="mConfig()">⚙️ Config</button>
   </div>
 
@@ -2121,7 +2231,7 @@ function rGraf(mc){
   const GRAFS=[
     {id:'ge',t:'📊 Entradas mensais'},{id:'gd',t:'📊 Despesas mensais'},
     {id:'acum',t:'📈 Saldo acumulado'},{id:'gs',t:'📉 Saldo mensal'},
-    {id:'timeline',t:'📅 Timeline parcelados'},{id:'heat',t:'🟥 Heatmap'},
+    {id:'timeline',t:' Timeline parcelados'},{id:'heat',t:'🟥 Heatmap'},
     {id:'res',t:'💰 Evolução reservas'},{id:'gep',t:'🥧 Entradas tipo'},{id:'gdp',t:'🥧 Despesas tipo'},{id:'catcard',t:'💳 Gastos cartões'},
   ];
 
@@ -2134,7 +2244,7 @@ function rGraf(mc){
   const pairDonut=(gv('gep')||gv('gdp'))?`<div class="g2" style="margin-bottom:12px">${gv('gep')?`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ctit" style="margin:0">🥧 Entradas por tipo</div>${xBtn('gep')}</div><div id="gep-svg"></div></div>`:''}${gv('gdp')?`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ctit" style="margin:0">🥧 Despesas por tipo</div>${xBtn('gdp')}</div><div id="gdp-svg"></div></div>`:''}</div>`:'';
   const tLeg=`<div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">${[{k:'Nubank',c:'#9B59FC'},{k:'Mercado Pago',c:'#2DD4A0'},{k:'Itau',c:'#F09A40'},{k:'Parc. Direta',c:'#5B8AF0'}].map(x=>`<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:2px;background:${x.c};display:inline-block"></span>${x.k}</span>`).join('')}<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3)"><span style="width:10px;height:10px;border-radius:2px;background:#3A4060;display:inline-block"></span>Quitado</span></div>`;
 
-  mc.innerHTML=`<div style="font-size:18px;font-weight:700;margin-bottom:12px">Gráficos ${S.anoAtivo}</div>`+botoesHtml+pairBar+card('acum','📈 Saldo acumulado no ano','<div id="acum-svg"></div>')+card('gs','📉 Saldo mensal','<div id="gs-svg"></div>')+card('timeline','📅 Timeline de parcelados',`<div style="font-size:11px;color:var(--text2);margin-bottom:10px">Duração de cada parcelado.</div><div id="graf-timeline"></div>${tLeg}`)+card('heat','🟥 Heatmap de gastos','<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Intensidade = valor gasto.</div><div id="heat-svg"></div>')+card('res','💰 Evolução das reservas','<div id="res-svg"></div>')+pairDonut;
+  mc.innerHTML=`<div style="font-size:18px;font-weight:700;margin-bottom:12px">Gráficos ${S.anoAtivo}</div>`+botoesHtml+pairBar+card('acum','📈 Saldo acumulado no ano','<div id="acum-svg"></div>')+card('gs','📉 Saldo mensal','<div id="gs-svg"></div>')+card('timeline',' Timeline de parcelados',`<div style="font-size:11px;color:var(--text2);margin-bottom:10px">Duração de cada parcelado.</div><div id="graf-timeline"></div>${tLeg}`)+card('heat','🟥 Heatmap de gastos','<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Intensidade = valor gasto.</div><div id="heat-svg"></div>')+card('res','💰 Evolução das reservas','<div id="res-svg"></div>')+pairDonut;
 
   requestAnimationFrame(function(){
     if(gv('ge')) svgBar(document.getElementById('ge-svg'),MONTHS,d2.entradas.map(function(r,i){return{label:r.nome,data:r.vals,color:CL[i%CL.length]};}),true);
@@ -2157,10 +2267,24 @@ function mConfig(){
   const moeda=cfg.moeda||'BRL',popupAuto=cfg.popupAuto!==false;
   const nomeUsuario=cfg.nomeUsuario||'',metaPoupanca=cfg.metaPoupanca||0,diasLembreteVenc=cfg.diasLembreteVenc||3;
   const tabsOcultas=cfg.tabsOcultas||[],tabsCustom=cfg.tabsCustom||[];
-  const tabInfo=[{id:'home',l:'🏠 Home',fixo:true},{id:'ob',l:'Orçamento'},{id:'contas',l:'Contas'},{id:'parc',l:'Parcelados'},{id:'res',l:'Reservas'},{id:'free',l:'Freelas'},{id:'graf',l:'Gráficos'},{id:'avi',l:'🔔 Avisos'}];
+  const tabInfo=[{id:'home',l:'Home',fixo:true},{id:'ob',l:'Orçamento'},{id:'contas',l:'Contas'},{id:'parc',l:'Parcelados'},{id:'res',l:'Reservas'},{id:'free',l:'Freelas'},{id:'graf',l:'Gráficos'},{id:'avi',l:'Avisos'}];
   om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:580px">
-    <div class="mtitle">⚙️ Configurações<button class="mclose" onclick="cm()">×</button></div>
+    <div class="mtitle">Configurações<button class="mclose" onclick="cm()">×</button></div>
     <div style="overflow-y:auto;max-height:75vh;padding-right:4px">
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">🎛️ Interface</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Modo de interface</div>
+        <div style="font-size:11px;color:var(--text2)">Básico mostra só o essencial. Avançado libera gráficos, parcelados, reservas e mais.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <span style="font-size:11px;font-weight:700;color:${_complexidade==='basico'?'#2DD4A0':'var(--text3)'}">BÁSICO</span>
+        <button onclick="alternarComplexidade();cm();setTimeout(mConfig,80)" style="width:50px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;padding:0;background:${_complexidade==='basico'?'linear-gradient(135deg,#2DD4A0,#5B8AF0)':'linear-gradient(135deg,#A075F0,#5B8AF0)'}">
+          <div style="position:absolute;top:3px;left:${_complexidade==='basico'?'3px':'23px'};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .3s;box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>
+        </button>
+        <span style="font-size:11px;font-weight:700;color:${_complexidade==='avancado'?'#A075F0':'var(--text3)'}">AVANÇADO</span>
+      </div>
+    </div>
     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">👤 Perfil</div>
     <div class="fr c2" style="margin-bottom:16px">
       <div><div class="fl">Seu nome</div><input id="cfg-nome" class="inp" placeholder="Ex: Felipe" value="${nomeUsuario}"/></div>
@@ -2175,7 +2299,7 @@ function mConfig(){
       <div><div class="fl">Meta de poupança mensal (R$)</div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Referência pessoal nos resumos</div><input id="cfg-meta" class="inp" type="number" step="100" value="${metaPoupanca}"/></div>
       <div><div class="fl">Aviso de vencimento (dias antes)</div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Alertar contas próximas do vencimento</div><input id="cfg-dias" class="inp" type="number" min="0" max="30" value="${diasLembreteVenc}"/></div>
     </div>
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">🔔 Notificações</div>
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">Notificações</div>
     <div style="margin-bottom:16px"><label style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer">
       <input type="checkbox" id="cfg-popup" ${popupAuto?'checked':''} style="width:16px;height:16px;accent-color:var(--green)"/>
       <div><div style="font-size:13px;font-weight:500">Popup automático de pagamentos</div><div style="font-size:11px;color:var(--text2)">Abre ao carregar o app quando há contas pendentes</div></div>
@@ -2225,12 +2349,12 @@ function mConfig(){
     </div>
     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px">🗂️ Dados</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-      <button class="btn bgh bsm" onclick="cm();exportarDados()">💾 Exportar backup</button>
-      <button class="btn bgh bsm" onclick="cm();importarDados()">📂 Importar backup</button>
+      <button class="btn bgh bsm" onclick="cm();exportarDados()">Exportar backup</button>
+      <button class="btn bgh bsm" onclick="cm();importarDados()">Importar backup</button>
     </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:14px;margin-top:10px">
-      <button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn bg" onclick="svConfig()">💾 Salvar</button>
+      <button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn bg" onclick="svConfig()">Salvar</button>
     </div>
   </div>`);
 }
@@ -2239,7 +2363,7 @@ function delCartao(cid){
   const c=(S.config.cartoesCustom||[]).find(x=>x.id===cid);
   const nome=c?c.nome:cid;
   om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
-    <div class="mtitle" style="color:var(--red)">🗑️ Remover cartão?<button class="mclose" onclick="cm()">×</button></div>
+    <div class="mtitle" style="color:var(--red)"> Remover cartão?<button class="mclose" onclick="cm()">×</button></div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
       Remover <strong style="color:var(--text)">${nome}</strong>?<br>
       <span style="color:var(--red)">Todas as faturas importadas serão apagadas.</span>
@@ -2320,7 +2444,7 @@ function rCustomTab(mc,cid){
   <div class="card" style="margin-bottom:12px">
     <div class="ctit" style="margin-bottom:10px">📝 Notas</div>
     <textarea id="ct-nota-inp" class="inp" rows="5" style="resize:vertical;margin-bottom:8px" placeholder="Anotações, metas, lembretes…">${(tc.notas[0]||{texto:''}).texto}</textarea>
-    <button class="btn bg bsm" onclick="svCustomNota('${cid}')">💾 Salvar</button>
+    <button class="btn bg bsm" onclick="svCustomNota('${cid}')">Salvar</button>
   </div>
   <div class="card" style="margin-bottom:12px">
     <div class="ctit" style="margin-bottom:10px">✅ Checklist</div>
@@ -2352,7 +2476,7 @@ function calcDividaAtual(d){
 }
 function mAddDivida(){
   om(`<div class="modal" onclick="event.stopPropagation()">
-    <div class="mtitle">💸 Adicionar Dívida<button class="mclose" onclick="cm()">×</button></div>
+    <div class="mtitle">Adicionar Dívida<button class="mclose" onclick="cm()">×</button></div>
     <div class="fr"><div><div class="fl">Nome / Credor</div><input id="dv-n" class="inp" placeholder="Ex: Empréstimo pessoal"/></div></div>
     <div class="fr c2"><div><div class="fl">Valor atual (R$)</div><input id="dv-v" class="inp" placeholder="3.000,00"/></div><div><div class="fl">Previsão de quitação</div><input id="dv-prev" type="date" class="inp"/></div></div>
     <div class="fr c2"><div><div class="fl">Taxa de juros (%)</div><input id="dv-taxa" class="inp" type="number" step="0.01" min="0" placeholder="0,00"/></div><div><div class="fl">Tipo</div><div class="tgr" style="margin-top:6px"><div class="tgo on" id="dv-mensal" onclick="this.classList.add('on');document.getElementById('dv-anual').classList.remove('on')">% ao mês</div><div class="tgo" id="dv-anual" onclick="this.classList.add('on');document.getElementById('dv-mensal').classList.remove('on')">% ao ano</div></div></div></div>
@@ -2407,8 +2531,8 @@ function rDiv(mc){
   mc.innerHTML=`
   <div style="font-size:18px;font-weight:700;margin-bottom:16px">💸 Controle de Dívidas</div>
   ${(divAtivas.length>0||totalAtrasado>0)?`<div class="g2" style="margin-bottom:16px">${totalAtrasado>0?`<div class="met r"><div class="mlbl">🔴 Em atraso</div><div class="mval">${fmt(totalAtrasado)}</div><div class="msub">${atrasados.length} item(s)</div></div>`:''} ${divAtivas.length>0?`<div class="met r"><div class="mlbl">💸 Dívidas ativas</div><div class="mval">${fmt(totalDividas)}</div><div class="msub">${divAtivas.length} dívida(s)</div></div>`:''}</div>`:''}
-  ${atrasados.length>0?`<div class="card" style="margin-bottom:12px;border-color:var(--red2)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:16px">🔴</span><div class="ctit" style="margin:0;color:var(--red)">CONTAS EM ATRASO</div><span style="font-size:11px;color:var(--text2);margin-left:auto">${fmt(totalAtrasado)}</span></div>${Object.values(gruposAt).map(g=>{const qtd=g.meses.length;const mesesStr=g.meses.map(mi=>MONTHS[mi]).join(', ');const tagHtml=g.tag?`<span class="tag ${g.tag==='P'?'tpa':'tda'}" style="font-size:9px;padding:1px 4px">${g.tag}</span>`:'';const mesesJson=JSON.stringify(g.meses);const jCalc=calcJurosAcumulado(g);return`<div class="atrs-row" style="margin-bottom:8px"><span class="atrs-ico">⚠️</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><span class="atrs-nome">${g.nome}</span>${tagHtml}</div><div style="font-size:10px;color:var(--text2);margin-top:2px">${mesesStr}${qtd>1?` <strong style="color:var(--red)">(${qtd} meses)</strong>`:''}</div><div style="font-size:11px;font-weight:700;color:var(--red);margin-top:2px">${fmt(g.total)}${jCalc&&jCalc.juros>0.01?` <span style="color:var(--orange);font-size:10px">+${fmt(jCalc.juros)} juros</span>`:''}</div>${jurosHtml(g)}</div><div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0"><button class="btn bxs bg" onclick="pagarAtrasado('${g.id}',${mesesJson})">✓ Pago</button>${qtd>1?`<button class="btn bxs bgh" style="font-size:9px" onclick="pagarAtrasadoUm('${g.id}',${g.meses[0]})">✓ Só ${MONTHS[g.meses[0]]}</button>`:''}</div></div>`;}).join('')}</div>`:''}
-  ${divAtivas.length>0?`<div class="card" style="margin-bottom:12px"><div class="ctit" style="margin-bottom:12px">💸 DÍVIDAS ATIVAS</div>${divAtivas.map((d,i)=>{const realIdx=S.dividas.indexOf(d);const valAtual=calcDividaAtual(d);const temJuros=d.taxa>0;const diasPrev=d.previsao?Math.ceil((new Date(d.previsao)-new Date())/(1000*60*60*24)):null;const vencido=diasPrev!==null&&diasPrev<0;return`<div style="background:var(--bg3);border:1px solid ${vencido?'var(--red2)':'var(--border)'};border-radius:var(--radius-sm);padding:14px;margin-bottom:10px"><div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:200px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">${d.nome}</span>${temJuros?`<span class="tag tit" style="font-size:9px;padding:1px 5px">${d.taxa}% a.${d.tipoTaxa==='anual'?'a.':'m.'}</span>`:''} ${vencido?`<span class="tag" style="background:var(--red3);color:var(--red);border:1px solid var(--red2);font-size:9px;padding:1px 5px">Vencida</span>`:''}</div><div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px"><div><div style="font-size:10px;color:var(--text3)">Original</div><div style="font-size:13px;font-weight:600;color:var(--text2)">${fmt(d.valor)}</div></div>${d.valorAtual!=null&&d.valorAtual!==d.valor?`<div><div style="font-size:10px;color:var(--text3)">Atualizado</div><div style="font-size:13px;font-weight:600;color:var(--red)">${fmt(d.valorAtual)}</div>${d.dataAtualizacao?`<div style="font-size:9px;color:var(--text3)">${fdf(d.dataAtualizacao)}</div>`:''}</div>`:''} ${temJuros?`<div><div style="font-size:10px;color:var(--text3)">Estimativa hoje</div><div style="font-size:15px;font-weight:700;color:var(--orange)">${fmt(valAtual)}</div></div>`:`<div><div style="font-size:10px;color:var(--text3)">Valor atual</div><div style="font-size:15px;font-weight:700;color:var(--red)">${fmt(valAtual)}</div></div>`}</div>${d.previsao?`<div style="font-size:11px;color:${vencido?'var(--red)':'var(--text2)'};margin-bottom:4px">📅 ${d.previsao}${diasPrev!==null?(vencido?` <strong style="color:var(--red)">(${Math.abs(diasPrev)}d atrasada)</strong>`:` (em ${diasPrev}d)`):''}  </div>`:''} ${d.obs?`<div style="font-size:11px;color:var(--text3)">💬 ${d.obs}</div>`:''}</div><div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button class="btn bxs bb" onclick="mAtualizarDivida(${realIdx})">🔄 Atualizar</button><button class="btn bxs bgh" onclick="mEditDivida(${realIdx})">✏️ Editar</button><button class="btn bxs bg" onclick="quitarDivida(${realIdx})">✅ Quitar</button></div></div>${temJuros?`<div style="margin-top:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px"><div style="font-size:10px;color:var(--text3);margin-bottom:6px">Projeção</div><div style="display:flex;gap:10px;flex-wrap:wrap">${[1,3,6,12].map(m=>{const tm=d.tipoTaxa==='anual'?Math.pow(1+d.taxa/100,1/12)-1:d.taxa/100;const base=d.valorAtual!=null?d.valorAtual:d.valor;return`<div style="text-align:center;background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--text3)">${m}m</div><div style="font-size:12px;font-weight:700;color:var(--orange)">${fmt(base*Math.pow(1+tm,m))}</div></div>`;}).join('')}</div></div>`:''}  </div>`;}).join('')}</div>`:`<div class="card" style="margin-bottom:12px;text-align:center;padding:32px 16px"><div style="font-size:32px;margin-bottom:8px">✅</div><div style="font-size:15px;font-weight:600;color:var(--green)">Nenhuma dívida ativa</div></div>`}
+  ${atrasados.length>0?`<div class="card" style="margin-bottom:12px;border-color:var(--red2)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="color:var(--red);display:flex"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg></span><div class="ctit" style="margin:0;color:var(--red)">CONTAS EM ATRASO</div><span style="font-size:11px;color:var(--text2);margin-left:auto">${fmt(totalAtrasado)}</span></div>${Object.values(gruposAt).map(g=>{const qtd=g.meses.length;const mesesStr=g.meses.map(mi=>MONTHS[mi]).join(', ');const tagHtml=g.tag?`<span class="tag ${g.tag==='P'?'tpa':'tda'}" style="font-size:9px;padding:1px 4px">${g.tag}</span>`:'';const mesesJson=JSON.stringify(g.meses);const jCalc=calcJurosAcumulado(g);return`<div class="atrs-row" style="margin-bottom:8px"><span class="atrs-ico">⚠️</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><span class="atrs-nome">${g.nome}</span>${tagHtml}</div><div style="font-size:10px;color:var(--text2);margin-top:2px">${mesesStr}${qtd>1?` <strong style="color:var(--red)">(${qtd} meses)</strong>`:''}</div><div style="font-size:11px;font-weight:700;color:var(--red);margin-top:2px">${fmt(g.total)}${jCalc&&jCalc.juros>0.01?` <span style="color:var(--orange);font-size:10px">+${fmt(jCalc.juros)} juros</span>`:''}</div>${jurosHtml(g)}</div><div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0"><button class="btn bxs bg" onclick="pagarAtrasado('${g.id}',${mesesJson})">✓ Pago</button>${qtd>1?`<button class="btn bxs bgh" style="font-size:9px" onclick="pagarAtrasadoUm('${g.id}',${g.meses[0]})">✓ Só ${MONTHS[g.meses[0]]}</button>`:''}</div></div>`;}).join('')}</div>`:''}
+  ${divAtivas.length>0?`<div class="card" style="margin-bottom:12px"><div class="ctit" style="margin-bottom:12px">💸 DÍVIDAS ATIVAS</div>${divAtivas.map((d,i)=>{const realIdx=S.dividas.indexOf(d);const valAtual=calcDividaAtual(d);const temJuros=d.taxa>0;const diasPrev=d.previsao?Math.ceil((new Date(d.previsao)-new Date())/(1000*60*60*24)):null;const vencido=diasPrev!==null&&diasPrev<0;return`<div style="background:var(--bg3);border:1px solid ${vencido?'var(--red2)':'var(--border)'};border-radius:var(--radius-sm);padding:14px;margin-bottom:10px"><div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:200px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">${d.nome}</span>${temJuros?`<span class="tag tit" style="font-size:9px;padding:1px 5px">${d.taxa}% a.${d.tipoTaxa==='anual'?'a.':'m.'}</span>`:''} ${vencido?`<span class="tag" style="background:var(--red3);color:var(--red);border:1px solid var(--red2);font-size:9px;padding:1px 5px">Vencida</span>`:''}</div><div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px"><div><div style="font-size:10px;color:var(--text3)">Original</div><div style="font-size:13px;font-weight:600;color:var(--text2)">${fmt(d.valor)}</div></div>${d.valorAtual!=null&&d.valorAtual!==d.valor?`<div><div style="font-size:10px;color:var(--text3)">Atualizado</div><div style="font-size:13px;font-weight:600;color:var(--red)">${fmt(d.valorAtual)}</div>${d.dataAtualizacao?`<div style="font-size:9px;color:var(--text3)">${fdf(d.dataAtualizacao)}</div>`:''}</div>`:''} ${temJuros?`<div><div style="font-size:10px;color:var(--text3)">Estimativa hoje</div><div style="font-size:15px;font-weight:700;color:var(--orange)">${fmt(valAtual)}</div></div>`:`<div><div style="font-size:10px;color:var(--text3)">Valor atual</div><div style="font-size:15px;font-weight:700;color:var(--red)">${fmt(valAtual)}</div></div>`}</div>${d.previsao?`<div style="font-size:11px;color:${vencido?'var(--red)':'var(--text2)'};margin-bottom:4px"> ${d.previsao}${diasPrev!==null?(vencido?` <strong style="color:var(--red)">(${Math.abs(diasPrev)}d atrasada)</strong>`:` (em ${diasPrev}d)`):''}  </div>`:''} ${d.obs?`<div style="font-size:11px;color:var(--text3)">💬 ${d.obs}</div>`:''}</div><div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button class="btn bxs bb" onclick="mAtualizarDivida(${realIdx})">🔄 Atualizar</button><button class="btn bxs bgh" onclick="mEditDivida(${realIdx})">✏️ Editar</button><button class="btn bxs bg" onclick="quitarDivida(${realIdx})">✅ Quitar</button></div></div>${temJuros?`<div style="margin-top:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px"><div style="font-size:10px;color:var(--text3);margin-bottom:6px">Projeção</div><div style="display:flex;gap:10px;flex-wrap:wrap">${[1,3,6,12].map(m=>{const tm=d.tipoTaxa==='anual'?Math.pow(1+d.taxa/100,1/12)-1:d.taxa/100;const base=d.valorAtual!=null?d.valorAtual:d.valor;return`<div style="text-align:center;background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--text3)">${m}m</div><div style="font-size:12px;font-weight:700;color:var(--orange)">${fmt(base*Math.pow(1+tm,m))}</div></div>`;}).join('')}</div></div>`:''}  </div>`;}).join('')}</div>`:`<div class="card" style="margin-bottom:12px;text-align:center;padding:32px 16px"><div style="font-size:32px;margin-bottom:8px">✅</div><div style="font-size:15px;font-weight:600;color:var(--green)">Nenhuma dívida ativa</div></div>`}
   ${divQuitadas.length>0?`<div class="card" style="margin-bottom:12px"><div class="sec-hdr" onclick="toggleSec('div-quit')"><div class="ctit" style="margin:0;color:var(--green)">✅ QUITADAS (${divQuitadas.length})</div><button class="sec-tog" data-tog="div-quit">+</button></div><div id="div-quit" style="display:none;margin-top:10px">${divQuitadas.map((d,i)=>{const realIdx=S.dividas.indexOf(d);return`<div class="er" style="opacity:.6"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></div><span style="flex:1;font-size:12px;text-decoration:line-through;color:var(--text2)">${d.nome}</span><span style="font-size:12px;font-weight:600;color:var(--green)">${fmt(d.valor)}</span>${d.dataQuitacao?`<span style="font-size:10px;color:var(--text3);padding:0 6px">${fdf(d.dataQuitacao)}</span>`:''}<button class="del" onclick="if(confirm('Remover?')){getDividas().splice(${realIdx},1);save();renderNav();render();}">✕</button></div>`;}).join('')}</div></div>`:''}
   <div style="margin-top:8px"><button class="btn br" style="width:100%;justify-content:center;padding:12px" onclick="mAddDivida()">+ Adicionar Nova Dívida</button></div>`;
 }
@@ -2421,7 +2545,7 @@ const CATEGORIAS_LIST=["Alimentação", "Transporte", "Saúde", "Beleza", "Strea
 function delFatura(cartaoNome, fat){
   const label=fmtFatura(fat);
   om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
-    <div class="mtitle" style="color:var(--red)">🗑️ Deletar fatura?<button class="mclose" onclick="cm()">×</button></div>
+    <div class="mtitle" style="color:var(--red)"> Deletar fatura?<button class="mclose" onclick="cm()">×</button></div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
       Deletar <strong style="color:var(--text)">${label}</strong> de <strong style="color:var(--text)">${cartaoNome}</strong>?<br>
       <span style="color:var(--red)">Todos os lançamentos dessa fatura serão removidos.</span>
@@ -2583,7 +2707,7 @@ function autoCategoria(title){
 
 function triggerImportFatura(cartaoId, cartaoNome){
   om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:500px">
-    <div class="mtitle">📂 Importar Fatura — ${cartaoNome}<button class="mclose" onclick="cm()">×</button></div>
+    <div class="mtitle">Importar Fatura — ${cartaoNome}<button class="mclose" onclick="cm()">×</button></div>
     <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Como exportar a fatura</div>
     <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.8">
       <div>1. Abra o app do banco</div>
@@ -3061,7 +3185,7 @@ function rCartaoTab(mc, cartaoId){
   </div>
 
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:6px">📅 Selecionar fatura</div>
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:6px"> Selecionar fatura</div>
     <div style="overflow-x:auto;display:flex;gap:8px;padding-bottom:6px">${faturasPills}</div>
   </div>
 
@@ -3142,13 +3266,13 @@ function toggleFiltroCat(cartaoId, cat){
 
 
 function rAvi(mc){
-  mc.innerHTML=`<div style="font-size:18px;font-weight:700;margin-bottom:16px">🔔 Avisos & Lembretes</div>
+  mc.innerHTML=`<div style="font-size:18px;font-weight:700;margin-bottom:16px">Avisos & Lembretes</div>
   <div class="card" style="margin-bottom:12px">
     <div class="ctit">Me Avisar Quando…</div>
     <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6">Escreva o que você quer ser lembrado. A IA vai monitorar e exibir alertas na Home.<br><strong>Exemplos:</strong> "Me avisa quando a reserva Emergência atingir 10000" · "Me avisa quando a compra Ventilador acabar" · "Aniversário da mãe em 5 de maio, me lembra 1 mês antes"</div>
     <textarea id="AVI" class="inp" rows="3" style="resize:vertical;margin-bottom:8px" placeholder="Escreva seu aviso…"></textarea>
     <div style="display:flex;gap:8px">
-      <button class="btn bg bsm" onclick="salAviso()">💾 Salvar Aviso</button>
+      <button class="btn bg bsm" onclick="salAviso()">Salvar Aviso</button>
       <button class="btn bb bsm" onclick="analisarIA()">✨ Analisar com IA</button>
     </div>
     <div id="AIR" style="margin-top:10px"></div>
@@ -3270,7 +3394,7 @@ function mAddD(){
       </div></div>
     </div>
     <div class="fr"><div><div class="fl">Tipo</div>
-      <div class="tgr"><div class="tgo on" id="ad-fixa" onclick="selT('ad','fixa')">🔒 Fixa</div><div class="tgo" id="ad-parc" onclick="selT('ad','parc')">📅 Parcelada</div><div class="tgo" id="ad-unica" onclick="selT('ad','unica')">1× Única</div></div>
+      <div class="tgr"><div class="tgo on" id="ad-fixa" onclick="selT('ad','fixa')">🔒 Fixa</div><div class="tgo" id="ad-parc" onclick="selT('ad','parc')"> Parcelada</div><div class="tgo" id="ad-unica" onclick="selT('ad','unica')">1× Única</div></div>
     </div></div>
     <div id="ad_fixa"><div class="fr"><div><div class="fl">Válida em</div>${scopeOpts('ad-sc')}</div></div></div>
     <div id="ad_parc" style="display:none"><div class="fr c2"><div><div class="fl">Mês início</div>${mIni('ad-pi')}</div><div><div class="fl">Nº meses</div><input id="ad-pn" class="inp" type="number" min="1" max="12" value="1"/></div></div>
@@ -3317,7 +3441,7 @@ function mAddE(){
       <div><div class="fl">Tag Freela</div><label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-size:12px"><input type="checkbox" id="ae-fr"/> <span class="tag tfr">Freela</span></label></div>
     </div>
     <div class="fr"><div><div class="fl">Tipo</div>
-      <div class="tgr"><div class="tgo on" id="ae-fixa" onclick="selT('ae','fixa')">🔒 Fixa</div><div class="tgo" id="ae-parc" onclick="selT('ae','parc')">📅 Parcelada</div><div class="tgo" id="ae-unica" onclick="selT('ae','unica')">1× Única</div></div>
+      <div class="tgr"><div class="tgo on" id="ae-fixa" onclick="selT('ae','fixa')">🔒 Fixa</div><div class="tgo" id="ae-parc" onclick="selT('ae','parc')"> Parcelada</div><div class="tgo" id="ae-unica" onclick="selT('ae','unica')">1× Única</div></div>
     </div></div>
     <div id="ae_fixa"><div class="fr"><div><div class="fl">Válida em</div>${scopeOpts('ae-sc')}</div></div></div>
     <div id="ae_parc" style="display:none"><div class="fr c2"><div><div class="fl">Mês início</div>${mIni('ae-pi')}</div><div><div class="fl">Nº meses</div><input id="ae-pn" class="inp" type="number" min="1" max="12" value="1"/></div></div></div>
@@ -3754,7 +3878,7 @@ function mEditOD(idx){
     <div class="fr"><div><div class="fl">Modo</div>
       <select id="eod-m" class="inp" onchange="toggleObdOpts(this.value)">
         <option value="fixa" ${modoAtual==='fixa'?'selected':''}>🔒 Fixa (todo mês, todo ano)</option>
-        <option value="parc" ${modoAtual==='parc'?'selected':''}>📅 Extra parcelada (só neste ano)</option>
+        <option value="parc" ${modoAtual==='parc'?'selected':''}> Extra parcelada (só neste ano)</option>
         <option value="none" ${modoAtual==='none'?'selected':''}>Manual</option>
       </select>
     </div></div>
@@ -4287,18 +4411,97 @@ function voltarSplash(){
   document.getElementById('splash').style.display='flex';
 }
 
-// ── MODO (mobile/desktop) ──
+// ── MODO (mobile/desktop) + COMPLEXIDADE (basico/avancado) ──
 let _modo='mobile'; // 'mobile' | 'desktop'
+let _complexidade='basico'; // 'basico' | 'avancado'
+
+// Estado local do toggle na splash (antes de confirmar)
+let _splashComplexidade='basico';
+
+function splashToggleComplexidade(){
+  _splashComplexidade=_splashComplexidade==='basico'?'avancado':'basico';
+  const btn=document.getElementById('sp-toggle-btn');
+  const lblB=document.getElementById('sp-lbl-basico');
+  const lblA=document.getElementById('sp-lbl-avancado');
+  const box=document.getElementById('sp-desc-box');
+  const txt=document.getElementById('sp-desc-txt');
+  const badgeM=document.getElementById('sp-badge-mobile');
+  const badgeD=document.getElementById('sp-badge-desktop');
+  const isB=_splashComplexidade==='basico';
+  btn.className='sp-toggle '+(isB?'basico':'avancado');
+  lblB.className='sp-toggle-lbl '+(isB?'active':'inactive');
+  lblA.className='sp-toggle-lbl '+(isB?'inactive':'active');
+  box.className='sp-desc-box '+(isB?'basico':'avancado');
+  txt.innerHTML=isB
+    ?'Essencial para acompanhar suas contas.<br>Interface limpa e sem complicação.'
+    :'Controle total: gráficos, parcelados,<br>cartões, reservas e muito mais.';
+  const bClass='sp-complexity-badge '+(isB?'basico':'avancado');
+  const bTxt=isB?'BÁSICO':'AVANÇADO';
+  if(badgeM){badgeM.className=bClass;badgeM.textContent=bTxt;}
+  if(badgeD){badgeD.className=bClass;badgeD.textContent=bTxt;}
+}
+
+function setModoEComplexidade(m){
+  _complexidade=_splashComplexidade;
+  setModo(m);
+}
+
 function setModo(m){
   _modo=m;
   document.body.classList.toggle('desktop',m==='desktop');
+  document.body.classList.toggle('modo-basico',_complexidade==='basico');
   document.getElementById('splash').style.display='none';
   document.getElementById('app-root').style.display='flex';
   const b=document.getElementById('modo-badge');
-  if(b){b.textContent=m==='desktop'?'🖥️':'📱';b.className='modo-badge '+m;}
+  if(b){b.innerHTML=m==='desktop'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>';b.className='modo-badge '+m;}
+  atualizarBadgeComplexidade();
   init();
 }
+
+function atualizarBadgeComplexidade(){
+  const bc=document.getElementById('complexidade-badge');
+  if(bc){
+    bc.textContent=_complexidade==='basico'?'BÁSICO':'AVANÇADO';
+    bc.className='modo-badge complexidade-badge '+_complexidade;
+  }
+}
+
+function alternarComplexidade(){
+  _complexidade=_complexidade==='basico'?'avancado':'basico';
+  document.body.classList.toggle('modo-basico',_complexidade==='basico');
+  atualizarBadgeComplexidade();
+  // Se a aba atual não existe no novo modo, volta pra home
+  const advIds=['ob','parc','res','free','graf','avi'];
+  if(isBasico()&&advIds.includes(tab)) tab='home';
+  renderAll();
+  toast(_complexidade==='basico'?'Modo Básico ativado':'Modo Avançado ativado','green');
+}
+
 function isModo(m){return _modo===m;}
+function isBasico(){return _complexidade==='basico';}
+
+// Modal sugerindo modo avançado ao clicar num aviso no modo básico
+function sugerirAvancado(contexto){
+  const msgs={
+    reservas:{titulo:'🚨 Reservas críticas',desc:'Para ver o detalhamento das suas reservas, acompanhar movimentações e definir metas, ative o Modo Avançado.'},
+    parcelados:{titulo:'⚠️ Limite de parcelamentos',desc:'Para ver e gerenciar seus parcelamentos detalhados, ative o Modo Avançado.'},
+  };
+  const m=msgs[contexto]||{titulo:'💡 Mais detalhes disponíveis',desc:'Para acessar essa informação completa, ative o Modo Avançado.'};
+  om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
+    <div class="mtitle">${m.titulo}<button class="mclose" onclick="cm()">×</button></div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6">${m.desc}</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:18px;display:flex;align-items:center;gap:10px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:2px">Modo Avançado</div>
+        <div style="font-size:11px;color:var(--text2)">Reservas, Parcelados, Gráficos, Freelas e muito mais</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn bgh" onclick="cm()">Agora não</button>
+      <button class="btn bp" onclick="cm();alternarComplexidade()">Ativar Avançado</button>
+    </div>
+  </div>`);
+}
 
 // ── INIT ──
 function init(){
