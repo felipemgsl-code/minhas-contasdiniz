@@ -749,6 +749,7 @@ function updIns(){const ins=genIns();const b=document.getElementById('IB');if(b)
 // ── AVISO DADOS PASSADOS ──
 function confirmPast(changes, onConfirm){
   // changes = array de {desc, tipo:'positivo'|'negativo'|'neutro', detalhe}
+  window._confirmPastCb = onConfirm;
   const m0=new Date().getMonth();
   const linhas=changes.map(c=>{
     const cor=c.tipo==='positivo'?'var(--green)':c.tipo==='negativo'?'var(--red)':'var(--orange)';
@@ -772,7 +773,7 @@ function confirmPast(changes, onConfirm){
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn bgh" onclick="cm()">Cancelar</button>
-      <button class="btn bo" onclick="cm();(${onConfirm.toString()})()">Confirmar alteração</button>
+      <button class="btn bo" onclick="cm();if(window._confirmPastCb){window._confirmPastCb();window._confirmPastCb=null;}">Confirmar alteração</button>
     </div>
   </div>`);
 }
