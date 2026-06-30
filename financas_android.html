@@ -2307,7 +2307,7 @@ function rParc(mc){
   '<div class="card" style="margin-bottom:12px">'+
     '<div class="ctit">Despesas Parceladas (nao cartao)</div>'+
     '<table class="tbl"><thead><tr><th>Descricao</th><th class="rv">Valor/mes</th><th class="cv">Inicio</th><th class="cv">Meses</th><th>Obs</th><th></th></tr></thead>'+
-    '<tbody>'+(d2.pd.length===0?'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Nenhuma</td></tr>':d2.pd.map(function(p,idx){return'<tr><td style="font-weight:500">'+p.desc+'</td><td class="rv" style="color:var(--orange)">'+fmt(p.valor)+'</td><td class="cv">'+MONTHS[p.ini]+'</td><td class="cv">'+p.n+'x</td><td style="color:var(--text2);font-size:11px">'+(p.obs||'—')+'</td><td style="display:flex;gap:4px"><button class="btn bxs bgh" onclick="mEditPd('+idx+')" style="display:inline-flex;align-items:center">${_ico('pencil',13,'currentColor')}</button><button class="del" onclick="D().pd.splice('+idx+',1);save();render()">x</button></td></tr>';}).join(''))+'</tbody>'+
+    '<tbody>'+(d2.pd.length===0?'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Nenhuma</td></tr>':d2.pd.map(function(p,idx){return'<tr><td style="font-weight:500">'+p.desc+'</td><td class="rv" style="color:var(--orange)">'+fmt(p.valor)+'</td><td class="cv">'+MONTHS[p.ini]+'</td><td class="cv">'+p.n+'x</td><td style="color:var(--text2);font-size:11px">'+(p.obs||'—')+'</td><td style="display:flex;gap:4px"><button class="btn bxs bgh" onclick="mEditPd('+idx+')" style="display:inline-flex;align-items:center">'+_ico('pencil',13)+'</button><button class="del" onclick="D().pd.splice('+idx+',1);save();render()">x</button></td></tr>';}).join(''))+'</tbody>'+
     '</table>'+
   '</div>'+
   '<div class="card" style="margin-bottom:12px">'+
@@ -2343,7 +2343,7 @@ function rParc(mc){
           '<td class="cv">'+p.n+'x'+(p.ant?'<span style="color:var(--green);font-size:10px"> ('+p.ant+' ant.)</span>':'')+'</td>'+
           '<td class="rv" style="color:var(--orange);font-weight:600">'+fmt(p.vp)+'</td>'+
           '<td class="cv" style="color:'+sc+';font-weight:500">'+qLabel+'</td>'+
-          '<td style="display:flex;gap:4px"><button class="btn bxs bgh" onclick="mEditPc('+realIdx+')" style="display:inline-flex;align-items:center">${_ico('pencil',13,'currentColor')}</button><button class="del" onclick="D().pc.splice('+realIdx+',1);save();render()">✕</button></td></tr>';
+          '<td style="display:flex;gap:4px"><button class="btn bxs bgh" onclick="mEditPc('+realIdx+')" style="display:inline-flex;align-items:center">'+_ico('pencil',13)+'</button><button class="del" onclick="D().pc.splice('+realIdx+',1);save();render()">✕</button></td></tr>';
       }
       let rows=ativos.map(function(p){return rowP(p,false);}).join('');
       if(quitados.length>0){
@@ -2742,7 +2742,7 @@ function svConfig(){
     cm();
     const m=document.createElement('div');
     m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px';
-    m.innerHTML='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:420px;width:100%"><div style="font-size:15px;font-weight:700;color:var(--orange);margin-bottom:10px" style="display:flex;align-items:center;gap:6px">${_ico('warning',15,'var(--orange)')} Alterar limite crítico?</div><div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Mudar de '+fmt(lrAntigo)+' para '+fmt(lr)+'.</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn bgh" onclick="this.parentElement.parentElement.parentElement.remove();save();render()">Cancelar</button><button class="btn br" id="cfg-lr-btn-'+Date.now()+'">Confirmar</button></div></div>';
+    m.innerHTML='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:420px;width:100%"><div style="font-size:15px;font-weight:700;color:var(--orange);margin-bottom:10px" style="display:flex;align-items:center;gap:6px">'+_ico('warning',15,'var(--orange)')+' Alterar limite crítico?</div><div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Mudar de '+fmt(lrAntigo)+' para '+fmt(lr)+'.</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn bgh" onclick="this.parentElement.parentElement.parentElement.remove();save();render()">Cancelar</button><button class="btn br" id="cfg-lr-btn-'+Date.now()+'">Confirmar</button></div></div>';
     m.querySelector('button.btn.br').onclick=function(){m.remove();S.config.limiteReserva=lr;save();renderNav();render();toast('Configurações salvas!','green');};
     document.body.appendChild(m);
   } else {
