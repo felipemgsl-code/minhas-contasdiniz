@@ -733,6 +733,19 @@ function dc(){Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});ch
 
 function renderAll(){setupY();renderNav();render();}
 
+let _heroIdx=0,_heroTimer=null;
+function heroNav(dir){const ss=document.querySelectorAll('.hero-s');if(!ss.length)return;_heroIdx=(_heroIdx+dir+ss.length)%ss.length;_heroUpd(ss);_heroResetTimer();}
+function heroGoto(i){const ss=document.querySelectorAll('.hero-s');if(!ss.length)return;_heroIdx=i;_heroUpd(ss);_heroResetTimer();}
+function _heroUpd(ss){
+  const wrap=document.getElementById('hero-track');if(wrap)wrap.style.transform='translateX(-'+(_heroIdx*100)+'%)';
+  const ctr=document.getElementById('hero-ctr');if(ctr)ctr.textContent=(_heroIdx+1)+' / '+ss.length;
+  document.querySelectorAll('[id^="hd-"]').forEach((d,i)=>{d.style.width=i===_heroIdx?'22px':'7px';d.style.background=i===_heroIdx?'var(--purple)':'var(--border)';});
+  const card=document.getElementById('hero-card');
+  if(card&&ss[_heroIdx]){const cor=ss[_heroIdx].dataset.cor,bg=ss[_heroIdx].dataset.bg,img=ss[_heroIdx].dataset.img||'';card.style.borderColor=cor;card.style.background=img?'linear-gradient(rgba(10,13,20,.72),rgba(10,13,20,.72)),url('+img+') center / cover no-repeat':(isMobile()?'#13161F':bg);}
+}
+function _heroResetTimer(){if(_heroTimer)clearInterval(_heroTimer);_heroTimer=setInterval(()=>{const ss=document.querySelectorAll('.hero-s');if(ss.length>1){_heroIdx=(_heroIdx+1)%ss.length;_heroUpd(ss);}},5000);}
+function heroStartTimer(){_heroResetTimer();}
+
 function render(){
   const mc=document.getElementById('MC');
   if(isMobile()){renderMobileShell(mc);return;}
@@ -759,9 +772,10 @@ function checkAlerts(){
   const m0=anoEncerradoChk?11:new Date().getMonth();
   const tpm=tPM(m0);
   const al=[];
-  if(tr<lr) al.push(`Reservas (${fmt(tr)}) abaixo do limite crítico de ${fmt(lr)}!`);
-  if(tpa>tr&&tr>0) al.push(`Parcelamentos anuais (${fmt(tpa)}) superam suas reservas (${fmt(tr)}).`);
-  if(tpm>lp) al.push(`Parcelas de ${MONTHS[m0]} (${fmt(tpm)}) ultrapassam o limite de ${fmt(lp)}.`);
+  const temDados=tr>0||tpa>0||tpm>0;
+  if(temDados&&tr<lr) al.push(`Reservas (${fmt(tr)}) abaixo do limite crítico de ${fmt(lr)}!`);
+  if(temDados&&tpa>tr&&tr>0) al.push(`Parcelamentos anuais (${fmt(tpa)}) superam suas reservas (${fmt(tr)}).`);
+  if(temDados&&tpm>lp) al.push(`Parcelas de ${MONTHS[m0]} (${fmt(tpm)}) ultrapassam o limite de ${fmt(lp)}.`);
   if(al.length){
     document.getElementById('AR').innerHTML=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px" onclick="this.remove()"><div style="background:var(--red3);border:2px solid var(--red);border-radius:var(--radius);padding:24px;max-width:440px;width:100%;text-align:center" onclick="event.stopPropagation()"><div style="font-size:36px;margin-bottom:10px">🚨</div><div style="font-size:15px;font-weight:700;color:var(--red);margin-bottom:10px">Atenção!</div><div style="font-size:13px;line-height:1.7;margin-bottom:16px">${al.join('<br><br>')}</div><button class="btn br" onclick="document.getElementById('AR').innerHTML=''">Entendido</button></div></div>`;
   }
@@ -1063,6 +1077,8 @@ function renderAtrasados(){
   const el=document.getElementById('sec-atrasados');
   const card=document.getElementById('card-atrasados');
   if(!el||!card) return;
+  card.style.display='none';
+  if(!isMobile()) return;
   const m0=new Date().getMonth();
   const lista=getAtrasados();
 
@@ -1127,6 +1143,35 @@ function renderAtrasados(){
     </div>
   `;
 }
+function mEditChkVal(tipo, itemId){
+  const m0=new Date().getMonth();const d2=D();
+  let item, isPc=false;
+  if(tipo==='e') item=d2.entradas.find(x=>x.id===itemId);
+  else if(tipo==='p'){item=d2.pd.find(x=>x.id===itemId);isPc=true;}
+  else item=d2.despesas.find(x=>x.id===itemId);
+  if(!item)return;
+  const nome=isPc?item.desc:item.nome;
+  const valAtual=isPc?item.valor:(item.vals[m0]||0);
+  om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:320px">
+    <div class="mtitle">${_ico('pencil',15)} Editar valor<button class="mclose" onclick="cm()">×</button></div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${nome}</div>
+    <div class="fr"><div><div class="fl">Valor (R$)</div>
+      <input id="ecv-v" class="inp" value="${fabs(valAtual)}" type="text" inputmode="decimal" autofocus/>
+    </div></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn bb" onclick="
+        const v=pv(document.getElementById('ecv-v').value);
+        ${isPc
+          ? `const p=D().pd.find(x=>x.id==='${itemId}');if(p){p.valor=v;save();}`
+          : `const arr=${tipo==='e'?'D().entradas':'D().despesas'};const it=arr.find(x=>x.id==='${itemId}');if(it){it.vals[${m0}]=v;save();}`
+        }
+        cm();renderChkSection();renderAtrasados();
+      ">Salvar</button>
+    </div>
+  </div>`);
+  setTimeout(()=>{const el=document.getElementById('ecv-v');if(el){el.focus();el.select();}},80);
+}
 function renderChkSection(){
   const m0=new Date().getMonth();const d2=D();
   const eItems=d2.entradas.filter(e=>e.vals[m0]>0);
@@ -1152,7 +1197,7 @@ function renderChkSection(){
         <div class="chk-box${ok?' checked':''}"><span style="color:#000;font-size:11px;font-weight:700">${ok?'✓':''}</span></div>
         ${dia?`<span style="font-size:10px;font-weight:700;color:var(--text3);min-width:18px;text-align:center">${dia}</span>`:''}
         <span class="chk-label">${e.nome}${e.tag==='freela'?' <span class="tag tfr" style="font-size:9px;padding:1px 4px">F</span>':''}</span>
-        <span class="chk-val g">${fmt(e.vals[m0])}</span>
+        <span class="chk-val g" title="Clique para editar" onclick="event.stopPropagation();mEditChkVal('e','${e.id}')" style="cursor:pointer;border-bottom:1px dashed var(--green)">${fmt(e.vals[m0])}</span>
       </div>`;}).join('')}
     </div>
     <div>
@@ -1167,13 +1212,13 @@ function renderChkSection(){
           <div class="chk-box${ok?' checked-r':''}"><span style="color:#fff;font-size:11px;font-weight:700">${ok?'✓':''}</span></div>
           ${dia?`<span style="font-size:10px;font-weight:700;color:var(--text3);min-width:18px;text-align:center">${dia}</span>`:''}
           <span class="chk-label">${item.desc} <span class="tag tpa" style="font-size:9px;padding:1px 4px">P</span></span>
-          <span class="chk-val r">${fmt(item.valor)}</span>
+          <span class="chk-val r" title="Clique para editar" onclick="event.stopPropagation();mEditChkVal('p','${item.id}')" style="cursor:pointer;border-bottom:1px dashed var(--red)">${fmt(item.valor)}</span>
         </div>`;
         return`<div class="chk-row${ok?' done':''}" onclick="toggleChk('${item.id}')">
           <div class="chk-box${ok?' checked-r':''}"><span style="color:#fff;font-size:11px;font-weight:700">${ok?'✓':''}</span></div>
           ${dia?`<span style="font-size:10px;font-weight:700;color:var(--text3);min-width:18px;text-align:center">${dia}</span>`:''}
           <span class="chk-label">${item.nome}${item.da?' <span class="tag tda" style="font-size:9px;padding:1px 4px">D.A.</span>':''}</span>
-          <span class="chk-val r">${fmt(item.vals[m0])}</span>
+          <span class="chk-val r" title="Clique para editar" onclick="event.stopPropagation();mEditChkVal('d','${item.id}')" style="cursor:pointer;border-bottom:1px dashed var(--red)">${fmt(item.vals[m0])}</span>
         </div>`;
       }).join('')}
     </div>
@@ -1338,27 +1383,85 @@ function rHome(mc){
   mc.innerHTML=`
   ${anoEncerrado?`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:18px"></span><div><div style="font-weight:600;color:var(--text2);font-size:13px">Ano ${anoAtivo} encerrado</div><div style="font-size:11px;color:var(--text3)">Visualizando dados históricos. Edição ainda disponível.</div></div></div>`:''}
 
-  <!-- AVISOS NO TOPO -->
+  <!-- HERO CAROUSEL -->
   ${(()=>{
-    const avisos=[];
-    if(tr<lr) avisos.push(isBasico()
-      ?`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="sugerirAvancado('reservas')"><span style="display:flex;align-items:center">${_ico('bell',20,'var(--red)')}</span><div style="flex:1"><div style="font-weight:600;color:var(--red)">Reservas em nível crítico!</div><div style="font-size:12px;color:var(--text2)">${fmt(tr)} — abaixo de ${fmt(lr)}</div></div><span style="font-size:11px;color:var(--red2);flex-shrink:0">Toque para saber mais →</span></div>`
-      :`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="display:flex;align-items:center">${_ico('bell',20,'var(--red)')}</span><div><div style="font-weight:600;color:var(--red)">Reservas em nível crítico!</div><div style="font-size:12px;color:var(--text2)">${fmt(tr)} — abaixo de ${fmt(lr)}</div></div><button class="btn bsm br" style="margin-left:auto;flex-shrink:0" onclick="gt('res')">Ver</button></div>`
-    );
-    if(tpm>lp) avisos.push(isBasico()
-      ?`<div style="background:var(--orange3);border:1px solid var(--orange);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="sugerirAvancado('parcelados')"><span style="display:flex;align-items:center">${_ico('warning',18,'var(--orange)')}</span><div style="flex:1"><div style="font-weight:600;color:var(--orange)">Limite de parcelamentos!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpm)} / limite ${fmt(lp)}</div></div><span style="font-size:11px;color:var(--orange2);flex-shrink:0">Toque para saber mais →</span></div>`
-      :`<div style="background:var(--orange3);border:1px solid var(--orange);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="display:flex;align-items:center">${_ico('warning',18,'var(--orange)')}</span><div><div style="font-weight:600;color:var(--orange)">Limite de parcelamentos!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpm)} / limite ${fmt(lp)}</div></div><button class="btn bsm bo" style="margin-left:auto;flex-shrink:0" onclick="gt('parc')">Ver</button></div>`
-    );
-    if(tpa>tr&&tr>0) avisos.push(`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="display:flex;align-items:center">${_ico('dollar',18,'var(--red)')}</span><div><div style="font-weight:600;color:var(--red)">Parcelamentos superam reservas!</div><div style="font-size:12px;color:var(--text2)">${fmt(tpa)} em parcelas vs ${fmt(tr)} em reservas</div></div></div>`);
-    const divAtHome=(S.dividas||[]).filter(d=>!d.quitada);const atrasHome=getAtrasados();
-    if(divAtHome.length>0||atrasHome.length>0){
-      const nDiv=divAtHome.length,nAtr=atrasHome.length;
-      const descDiv=nDiv>0?nDiv+' dívida(s)':'';const descAtr=nAtr>0?nAtr+' conta(s) em atraso':'';
-      const desc=descDiv+(nDiv>0&&nAtr>0?' · ':'')+descAtr;
-      avisos.push(`<div style="background:var(--red3);border:1px solid var(--red);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="display:flex;align-items:center">${_ico('dollar',18,'var(--red)')}</span><div><div style="font-weight:600;color:var(--red)">Dívidas ativas</div><div style="font-size:12px;color:var(--text2)">${desc}</div></div><button class="btn bsm br" style="margin-left:auto;flex-shrink:0" onclick="gt('div')">Ver dívidas</button></div>`);
+    const slides=[];
+    // Sem dados: boas-vindas
+    const semDados=eM===0&&dM===0&&tpm===0&&tr===0&&(S.dividas||[]).filter(d=>!d.quitada).length===0;
+    if(semDados){
+      const icoStar='<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+      return '<div class="card" style="margin-bottom:12px;padding:28px 28px 26px">'
+        +'<div style="display:flex;align-items:flex-start;gap:20px">'
+        +'<div style="width:3px;background:var(--purple);border-radius:4px;flex-shrink:0;align-self:stretch;min-height:90px"></div>'
+        +'<div style="flex:1">'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+icoStar+'<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--purple)">Bem-vindo</span></div>'
+        +'<div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.15">Tudo pronto para começar</div>'
+        +'<div style="font-size:13px;color:var(--text2);line-height:1.7">Seu painel financeiro está vazio. Comece adicionando suas <strong style="color:var(--text)">entradas</strong> (salário, freelance…) e <strong style="color:var(--text)">despesas</strong> fixas na aba <em>Obrigações</em> — os resumos e avisos aparecem automaticamente aqui.</div>'
+        +'<div style="display:flex;gap:8px;margin-top:16px">'
+        +'<button onclick="gt(\'ob\')" class="btn bsm" style="background:var(--purple3);color:var(--purple);border:1px solid var(--purple);border-radius:var(--radius-sm)">Ir para Obrigações →</button>'
+        +'<button onclick="abrirOnboarding()" class="btn bsm" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm)">Ver tutorial</button>'
+        +'</div></div></div></div>';
     }
-    return avisos.length?`<div style="margin-bottom:${avisos.length?'4':'0'}px">${avisos.join('')}</div>`:'';
+    // 1. Semáforo
+    if(!anoEncerrado&&eM>0){
+      const pD=disp/eM;let sc=2;
+      if(sM<-500||pD<-0.1) sc=0;
+      else if(sM<0||pD<0.05||tpm>lp||tr<lr) sc=1;
+      const pOk=tpm<=lp,rOk=tr>=lr;
+      const sCor=sc===0?'var(--red)':sc===1?'var(--orange)':'var(--green)';
+      const sBg=sc===0?'var(--red3)':sc===1?'var(--orange3)':'var(--bg3)';
+      const sLbl=sc===0?'Mês difícil':sc===1?'Atenção':'Mês positivo';
+      const MR=['Saldo negativo em '+fmt(Math.abs(sM))+'. As reservas podem precisar cobrir o déficit — revise os gastos agora.','Despesas '+Math.round((dM/eM-1)*100)+'% acima das entradas. Esse ritmo não é sustentável — corte o que for possível.','Limite de consumo esgotado. Não há margem para gastos extras este mês.','Contas no vermelho. Avalie o que pode ser cortado antes que o impacto chegue nas reservas.'];
+      const MY=['Só '+fmt(disp)+' de folga após todos os compromissos. Nada de gastos por impulso.','Um imprevisto pode desestabilizar o mês — deixe margem antes de gastar.','Parcelas acima do limite ('+fmt(tpm)+' vs '+fmt(lp)+'). Evite novos parcelamentos até equilibrar.','Reservas abaixo do nível crítico. Priorize recompô-las antes de qualquer gasto extra.','As contas fecham mas a folga é pequena — cautela com gastos variáveis.'];
+      const MG=[fmt(disp)+' disponíveis após todos os compromissos. Aproveite com moderação.','Finanças em dia! Se sobrar ao final do mês, considere aportar nas reservas.','Bom momento para antecipar parcelas ou reforçar a reserva de emergência.',Math.round(pD*100)+'% da renda disponível este mês. Continue nesse ritmo!'];
+      let smsg;
+      if(sc===0){if(sM<-1000)smsg=MR[0];else if(dM/eM>1.2)smsg=MR[1];else if(disp<-200)smsg=MR[2];else smsg=MR[3];}
+      else if(sc===1){if(!pOk&&!rOk)smsg=MY[4];else if(!pOk)smsg=MY[2];else if(!rOk)smsg=MY[3];else if(pD<0.05)smsg=MY[0];else smsg=MY[1];}
+      else{if(pD>0.3)smsg=MG[3];else if(tr<lr*1.5)smsg=MG[1];else smsg=MG[0];}
+      const sIco=sc===0?'alert':sc===1?'warning':'check-circle';
+      slides.push({cor:sCor,bg:sBg,label:'Semáforo financeiro · '+MONTHS[m0].toUpperCase()+'/'+S.anoAtivo,title:sLbl,body:smsg,btn:null,btnAct:null,ico:sIco});
+    }
+    if(tr<lr) slides.push({cor:'var(--red)',bg:'var(--red3)',label:'Reservas críticas',title:'Reservas abaixo do limite crítico',body:'Você tem '+fmt(tr)+' em reservas, mas o limite configurado é '+fmt(lr)+'. Em caso de imprevisto, o colchão atual pode não ser suficiente para cobrir o impacto. Priorize recompor antes de qualquer gasto extra.',btn:'Ver reservas',btnAct:"gt('res')",ico:'bank'});
+    if(tpm>lp){const exc=tpm-lp;const pp=eM>0?Math.round(tpm/eM*100):0;slides.push({cor:'var(--orange)',bg:'var(--orange3)',label:'Limite de parcelamentos',title:'Parcelas comprometem '+pp+'% da renda',body:'Seus parcelamentos somam '+fmt(tpm)+' este mês — '+fmt(exc)+' acima do limite configurado de '+fmt(lp)+'. Avalie se dá para antecipar alguma parcela ou evite novos compromissos.',btn:'Ver parcelamentos',btnAct:"gt('parc')",ico:'card'});}
+    if(tpa>tr&&tr>0) slides.push({cor:'var(--red)',bg:'var(--red3)',label:'Risco de liquidez',title:'Parcelas superam reservas',body:'O total de parcelas ('+fmt(tpa)+') é maior que suas reservas ('+fmt(tr)+'). Se precisar quitar tudo de uma vez, as reservas não cobrem — avalie acelerar os pagamentos ou aumentar o fundo de reserva.',btn:'Ver reservas',btnAct:"gt('res')",ico:'dollar'});
+    const dHm=(S.dividas||[]).filter(d=>!d.quitada);const aHm=getAtrasados();
+    if(dHm.length>0||aHm.length>0){
+      const totD=dHm.reduce((s,d)=>s+calcDividaAtual(d),0);const totA=aHm.reduce((s,a)=>s+a.val,0);
+      const pts=[];if(dHm.length>0)pts.push(dHm.length+' dívida(s) ativa(s) totalizando '+fmt(totD));if(aHm.length>0)pts.push(aHm.length+' conta(s) em atraso somando '+fmt(totA));
+      slides.push({cor:'var(--red)',bg:'var(--red3)',label:'Pendências financeiras',title:'Dívidas e contas em atraso',body:pts.join(' · '),btn:'Ver dívidas',btnAct:"gt('div')",ico:'bolt'});
+    }
+    if(S.config.heroLimiteConsumo!==false&&!anoEncerrado&&eM>0){
+      const corDisp=disp>=0?'var(--green)':'var(--red)';
+      const bgDisp=disp>=0?'var(--bg3)':'var(--red3)';
+      const pctComidaH=eM<2000?0.30:eM<4000?0.25:eM<7000?0.20:0.15;
+      const porFdsH=Math.max(0,disp/4);const porDiaH=(eM*pctComidaH)/30;
+      slides.push({cor:corDisp,bg:bgDisp,label:'Limite de Consumo · '+MONTHS[m0].toUpperCase()+'/'+S.anoAtivo,title:fmt(disp)+' disponível',body:'Entradas: '+fmt(eM)+' · Fixas+D.A.: '+fmt(despF)+' · Parcelas: '+fmt(tpm)+'<br>Fim de semana: <strong>'+fmt(porFdsH)+'</strong> · Alimentação/dia: <strong>'+fmt(porDiaH)+'</strong>',btn:null,btnAct:null,ico:'calc'});
+    }
+    (S.avisos||[]).filter(a=>a.on&&a.naHome).forEach(a=>{
+      const cor=a.cor||'#5B8AF0';
+      slides.push({cor,bg:cor+'18',label:'Aviso',title:a.titulo||a.txt,body:a.obs||'',btn:null,btnAct:null,ico:a.ico||'bell',img:a.img||''});
+    });
+    if(!slides.length) return '';
+    const n=slides.length;
+    _heroIdx=Math.min(_heroIdx,n-1);
+    const SH=slides.map((s,i)=>{
+      const btnH=s.btn?'<button onclick="'+s.btnAct+'" class="btn bsm" style="margin-top:16px;background:'+s.bg+';color:'+s.cor+';border:1px solid '+s.cor+';border-radius:var(--radius-sm)">'+s.btn+' →</button>':'';
+      const icoHtml='<div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:'+s.bg+';border:1.5px solid '+s.cor+'40;opacity:.85">'+_ico(s.ico,36,s.cor)+'</div>';
+      return '<div class="hero-s" data-cor="'+s.cor+'" data-bg="'+s.bg+'" data-img="'+(s.img||'')+'" style="min-width:100%;display:flex;gap:22px;align-items:center;box-sizing:border-box">'+(s.img?'':icoHtml)+'<div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:'+s.cor+';margin-bottom:8px">'+s.label+'</div><div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.15">'+s.title+'</div><div style="font-size:13px;color:var(--text2);line-height:1.65">'+s.body+'</div>'+btnH+'</div></div>';
+    }).join('');
+    const dotsH=slides.map((s,i)=>'<div id="hd-'+i+'" onclick="heroGoto('+i+')" style="width:'+(i===_heroIdx?'22':'7')+'px;height:7px;border-radius:4px;background:'+(i===_heroIdx?'var(--purple)':'var(--border)')+';cursor:pointer;transition:width .2s,background .2s;flex-shrink:0"></div>').join('');
+    const s0=slides[_heroIdx];
+    const s0bg=s0.img?'linear-gradient(rgba(10,13,20,.72),rgba(10,13,20,.72)),url('+s0.img+') center / cover no-repeat':s0.bg;
+    return '<div id="hero-card" class="card" style="margin-bottom:12px;padding:22px 26px 20px;transition:background .4s,border-color .4s;border-color:'+s0.cor+';background:'+s0bg+'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'
+      +'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Central de avisos</span>'+(n>1?'<span style="font-size:10px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1px 8px" id="hero-ctr">'+(_heroIdx+1)+' / '+n+'</span>':'')+'</div>'
+      +(n>1?'<div style="display:flex;gap:6px"><button onclick="heroNav(-1)" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1">←</button><button onclick="heroNav(1)" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1">→</button></div>':'')
+      +'</div>'
+      +'<div style="overflow:hidden;min-height:110px"><div id="hero-track" style="display:flex;transition:transform .4s cubic-bezier(.4,0,.2,1)">'+SH+'</div></div>'
+      +(n>1?'<div style="display:flex;align-items:center;gap:6px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)" id="hero-dots">'+dotsH+'</div>':'')
+      +'</div>'+(n>1?'<img src onerror="heroStartTimer()" style="display:none">':'');
   })()}
+
 
   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:0 2px">
     <span style="font-size:10px;color:var(--text3)">🕐 Última atualização:</span>
@@ -1371,13 +1474,7 @@ function rHome(mc){
     <button class="btn bg bsm" onclick="gdToken?driveSalvar():driveAction()">Salvar no Drive</button><button class="btn bo bsm" onclick="exportarDados()" style="margin-left:4px">Local</button>
   </div>
 
-  <div id="card-atrasados" class="card" style="margin-bottom:12px;border-color:var(--red2);display:none">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <span style="color:var(--red);display:flex"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg></span>
-      <div class="ctit" style="margin:0;color:var(--red)">CONTAS EM ATRASO</div>
-    </div>
-    <div id="sec-atrasados"></div>
-  </div>
+  <div id="card-atrasados" style="display:none"><div id="sec-atrasados"></div></div>
 
   <div class="card" style="margin-bottom:12px;border-color:var(--blue2);${anoEncerrado?'opacity:0.6':''}">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -1387,7 +1484,7 @@ function rHome(mc){
       </div>
       <button class="btn bxs bg" onclick="mAddE()">+ Entrada</button>
         <button class="btn bxs br" onclick="mAddD()">+ Despesa</button>
-        <button class="btn bxs bgh" onclick="limparChkMes()">Limpar</button>
+
       <button class="sec-tog" data-tog="sec-chk" onclick="toggleSec('sec-chk')">−</button>
     </div>
     <div id="sec-chk" style="display:block;margin-top:10px"><div id="chk-section"></div></div>
@@ -1420,11 +1517,93 @@ function rHome(mc){
           <div class="met b"><div class="mlbl">D.A. do mês</div><div class="mval">${fmt(daM)}</div><div class="msub">Precisa em caixa</div></div>
         </div>
       </div>
-      <div class="card"><div class="ctit">LIMITE DE CONSUMO — ${anoEncerrado?S.anoAtivo:MONTHS[m0].toUpperCase()+"/"+S.anoAtivo}</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Após fixas + D.A. + parcelas</div>
+      ${(()=>{
+        if(anoEncerrado||eM<=0) return '';
+        const pctDisp=disp/eM;
+        const parcOk=tpm<=lp,resOk=tr>=lr;
+        let score=2;
+        if(sM<-500||pctDisp<-0.1) score=0;
+        else if(sM<0||pctDisp<0.05||!parcOk||!resOk) score=1;
+        const COR=score===0?'var(--red)':score===1?'var(--orange)':'var(--green)';
+        const BGCOR=score===0?'rgba(240,82,82,.08)':score===1?'rgba(240,154,64,.08)':'rgba(45,212,160,.07)';
+        const LABEL=score===0?'Mês difícil':score===1?'Atenção':'Mês positivo';
+        const MSGS_RED=[
+          `Seu saldo está negativo em ${fmt(Math.abs(sM))}. As reservas podem precisar cobrir o déficit — revise os gastos agora.`,
+          `Despesas ${Math.round((dM/eM-1)*100)}% acima das entradas. Esse ritmo não é sustentável — corte o que for possível.`,
+          `Limite de consumo esgotado. Não há margem para nenhum gasto extra este mês.`,
+          `Contas no vermelho. Avalie o que pode ser adiado ou cortado antes que o impacto chegue nas reservas.`,
+        ];
+        const MSGS_YEL=[
+          `Mês apertado — só ${fmt(disp)} de folga após todos os compromissos. Nada de gastos por impulso.`,
+          `Tudo no limite. Um imprevisto pode desestabilizar o mês — deixe uma margem antes de gastar.`,
+          `Parcelas acima do limite (${fmt(tpm)} vs ${fmt(lp)}). Evite novos parcelamentos até equilibrar.`,
+          `Reservas abaixo do nível crítico. Priorize recompô-las antes de qualquer gasto extra.`,
+          `Equilíbrio frágil. As contas fecham, mas a folga é pequena — cautela com gastos variáveis.`,
+        ];
+        const MSGS_GRN=[
+          `Mês tranquilo — ${fmt(disp)} disponíveis após todos os compromissos. Aproveite com moderação.`,
+          `Finanças em dia! Se sobrar ao final do mês, considere aportar nas reservas.`,
+          `Bom momento para antecipar parcelas ou reforçar a reserva de emergência.`,
+          `Você está com ${Math.round(pctDisp*100)}% da renda disponível este mês. Continue nesse ritmo!`,
+          `Mês folgado. Pode ser uma boa oportunidade para uma compra planejada ou investimento pontual.`,
+        ];
+        let msg;
+        if(score===0){
+          if(sM<-1000) msg=MSGS_RED[0];
+          else if(eM>0&&dM/eM>1.2) msg=MSGS_RED[1];
+          else if(disp<-200) msg=MSGS_RED[2];
+          else msg=MSGS_RED[3];
+        } else if(score===1){
+          if(!parcOk&&!resOk) msg=MSGS_YEL[4];
+          else if(!parcOk) msg=MSGS_YEL[2];
+          else if(!resOk) msg=MSGS_YEL[3];
+          else if(pctDisp<0.05) msg=MSGS_YEL[0];
+          else msg=MSGS_YEL[1];
+        } else {
+          if(pctDisp>0.3) msg=MSGS_GRN[3];
+          else if(tr<lr*1.5) msg=MSGS_GRN[1];
+          else msg=MSGS_GRN[0];
+        }
+        return `<div class="card" style="border:1.5px solid ${COR};background:${BGCOR};padding:20px 18px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <div style="width:14px;height:14px;border-radius:50%;background:${COR};flex-shrink:0;box-shadow:0 0 10px ${COR}"></div>
+            <div style="font-size:10px;font-weight:700;color:${COR};text-transform:uppercase;letter-spacing:.07em">Semáforo financeiro · ${MONTHS[m0].toUpperCase()}/${S.anoAtivo}</div>
+          </div>
+          <div style="font-size:22px;font-weight:700;color:${COR};margin-bottom:8px">${LABEL}</div>
+          <div style="font-size:14px;color:var(--text);line-height:1.6">${msg}</div>
+        </div>`;
+      })()}
+      <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px"><div class="ctit" style="margin:0">LIMITE DE CONSUMO — ${anoEncerrado?S.anoAtivo:MONTHS[m0].toUpperCase()+"/"+S.anoAtivo}</div><button onclick="S.config.heroLimiteConsumo=!S.config.heroLimiteConsumo;save();render()" class="btn bxs" style="font-size:10px;padding:3px 8px;background:${S.config.heroLimiteConsumo?'var(--purple3)':'var(--bg3)'};color:${S.config.heroLimiteConsumo?'var(--purple)':'var(--text3)'};border:1px solid ${S.config.heroLimiteConsumo?'var(--purple2)':'var(--border)'};border-radius:10px">${S.config.heroLimiteConsumo?'● Na Central':'○ Na Central'}</button></div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px;margin-top:6px">Após fixas + D.A. + parcelas</div>
         <div style="font-size:26px;font-weight:700;color:${disp>=0?'var(--green)':'var(--red)'};margin-bottom:6px">${fmt(disp)}</div>
         <div class="pw"><div class="pb" style="width:${pct.toFixed(0)}%;background:${pct>50?'var(--green)':pct>20?'var(--orange)':'var(--red)'}"></div></div>
         <div style="font-size:11px;color:var(--text2);margin-top:4px">Entradas: ${fmt(eM)} · Fixas+D.A.: ${fmt(despF)} · Parcelas: ${fmt(tpm)}</div>
+        ${(()=>{
+          if(anoEncerrado||eM<=0) return '';
+          const porFds=Math.max(0,disp/4);
+          const pctComida=eM<2000?0.30:eM<4000?0.25:eM<7000?0.20:0.15;
+          const budgetComida=eM*pctComida;
+          const porDia=budgetComida/30;
+          const corFds=porFds>200?'var(--green)':porFds>80?'var(--orange)':'var(--red)';
+          const labelFds=porFds<=0?'Sem margem este mês':porFds<50?'Bem apertado':'';
+          const icoFds='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l7 9 7-9H5z"/><line x1="12" y1="12" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/><circle cx="15" cy="5" r="1" fill="currentColor"/></svg>';
+          const icoFood='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2s2-.9 2-2V2"/><line x1="7" y1="11" x2="7" y2="22"/><path d="M17 3a5 5 0 015 4.5V11h-5V3z"/><line x1="19" y1="11" x2="19" y2="22"/></svg>';
+          return `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;margin-bottom:8px">Sugestões de gasto</div>
+            <div style="display:flex;gap:8px">
+              <div style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px">
+                <div style="font-size:10px;color:var(--text2);margin-bottom:4px;display:flex;align-items:center;gap:4px">${icoFds} Por fim de semana</div>
+                <div style="font-size:18px;font-weight:700;color:${corFds}">${fmt(porFds)}</div>
+                ${labelFds?`<div style="font-size:10px;color:var(--text3);margin-top:2px">${labelFds}</div>`:''}
+              </div>
+              <div style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px">
+                <div style="font-size:10px;color:var(--text2);margin-bottom:4px;display:flex;align-items:center;gap:4px">${icoFood} Alimentação/dia</div>
+                <div style="font-size:18px;font-weight:700;color:var(--blue)">${fmt(porDia)}</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px">${(pctComida*100).toFixed(0)}% da renda · ${fmt(budgetComida)}/mês</div>
+              </div>
+            </div>
+          </div>`;
+        })()}
       </div>
     </div>
     <div>
@@ -3585,28 +3764,153 @@ function toggleFiltroCat(cartaoId, cat){
 }
 
 
+const _AVI_ICOS=['bell','warning','alert','star','bolt','calendar','check-circle','dollar','bank','card','lock','person','bulb','rocket','clipboard','chart','pie','sliders','tag','box','folder','save','gear','pencil','eye'];
+const _AVI_CORES=['#9B59FC','#5B8AF0','#2DD4A0','#F09A40','#F05252','#F59E0B','#EC4899','#64748B'];
+
+function _aviIcoGrid(selId,selVal){
+  return _AVI_ICOS.map(n=>`<button type="button" onclick="document.querySelectorAll('.aig-${selId}').forEach(b=>b.style.outline='none');this.style.outline='2px solid var(--purple)';document.getElementById('${selId}').value='${n}'" class="aig-${selId}" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);cursor:pointer;outline:${selVal===n?'2px solid var(--purple)':'none'}">${_ico(n,16,'currentColor')}</button>`).join('');
+}
+function _aviCoresPaleta(inputId,selVal){
+  return _AVI_CORES.map(c=>`<button type="button" onclick="document.getElementById('${inputId}').value='${c}';this.parentNode.querySelectorAll('button').forEach(b=>b.style.outline='none');this.style.outline='2px solid white'" style="width:22px;height:22px;border-radius:50%;background:${c};border:none;cursor:pointer;outline:${selVal===c?'2px solid white':'none'}"></button>`).join('');
+}
+
 function rAvi(mc){
-  mc.innerHTML=mobileHeader('Avisos','Alertas & lembretes')+`<div style="font-size:18px;font-weight:700;margin-bottom:16px"${isMobile()?` hidden`:''}>Avisos & Lembretes</div>
+  const ICOS=_AVI_ICOS;
+  mc.innerHTML=mobileHeader('Avisos','Alertas & lembretes')+`
+  <div style="font-size:18px;font-weight:700;margin-bottom:16px"${isMobile()?` hidden`:''}>Avisos & Lembretes</div>
+
   <div class="card" style="margin-bottom:12px">
-    <div class="ctit">Me Avisar Quando…</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6">Escreva o que você quer ser lembrado. A IA vai monitorar e exibir alertas na Home.<br><strong>Exemplos:</strong> "Me avisa quando a reserva Emergência atingir 10000" · "Me avisa quando a compra Ventilador acabar" · "Aniversário da mãe em 5 de maio, me lembra 1 mês antes"</div>
-    <textarea id="AVI" class="inp" rows="3" style="resize:vertical;margin-bottom:8px" placeholder="Escreva seu aviso…"></textarea>
-    <div style="display:flex;gap:8px">
-      <button class="btn bg bsm" onclick="salAviso()">Salvar Aviso</button>
-      <button class="btn bb bsm" onclick="analisarIA()">✨ Analisar com IA</button>
+    <div class="ctit">Criar aviso</div>
+    <div class="fr c2" style="gap:12px">
+      <div><div class="fl">Frase de destaque</div><input id="avi-titulo" class="inp" placeholder="Ex: Revisar parcelados"/></div>
+      <div><div class="fl">Cor</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviCoresPaleta('avi-cor','#9B59FC')}<input id="avi-cor" type="color" value="#9B59FC" style="width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;padding:0;margin-left:2px"/></div></div>
     </div>
-    <div id="AIR" style="margin-top:10px"></div>
+    <div class="fr"><div><div class="fl">Observação / texto</div><textarea id="avi-obs" class="inp" rows="2" style="resize:vertical" placeholder="Detalhes adicionais…"></textarea></div></div>
+    <div class="fr"><div>
+      <div class="fl">Ícone</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviIcoGrid('avi-ico','bell')}</div>
+      <input id="avi-ico" type="hidden" value="bell"/>
+    </div></div>
+    <div class="fr"><div>
+      <div class="fl">Imagem (opcional — arraste ou clique)</div>
+      <div id="avi-drop" onclick="document.getElementById('avi-img-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--purple)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';_aviLoadImg(event.dataTransfer.files[0],'avi-img-b64','avi-img-prev')" style="border:2px dashed var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;color:var(--text3);font-size:12px;transition:border-color .2s">
+        Arraste uma imagem aqui<div id="avi-img-prev" style="margin-top:8px"></div>
+      </div>
+      <input id="avi-img-file" type="file" accept="image/*" style="display:none" onchange="_aviLoadImg(this.files[0],'avi-img-b64','avi-img-prev')"/>
+      <input id="avi-img-b64" type="hidden" value=""/>
+    </div></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 4px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2)">
+        <input type="checkbox" id="avi-nahome" checked style="width:15px;height:15px;accent-color:var(--purple)"/>
+        Exibir na Central de Avisos (home)
+      </label>
+    </div>
+    <button class="btn bb bsm" onclick="salAvisoCustom()">Salvar aviso</button>
   </div>
+
   <div class="card">
-    <div class="ctit">Avisos Salvos</div>
+    <div class="ctit">Avisos salvos</div>
     ${S.avisos.length===0?`<div style="color:var(--text3);font-size:12px;font-style:italic;padding:8px">Nenhum aviso cadastrado</div>`:''}
-    ${S.avisos.map((a,i)=>`<div class="av"><div class="rdot" style="background:${a.on?'var(--blue)':'var(--text3)'}"></div><span style="flex:1;font-size:12px">${a.txt}</span><button class="btn bxs bgh" onclick="S.avisos[${i}].on=!S.avisos[${i}].on;save();render()">${a.on?'Pausar':'Ativar'}</button><button class="del" onclick="S.avisos.splice(${i},1);save();render()">✕</button></div>`).join('')}
+    ${S.avisos.map((a,i)=>{
+      const cor=a.cor||'var(--blue)';
+      const ico=a.ico||'bell';
+      const titulo=a.titulo||a.txt;
+      const obs=a.obs||(a.titulo?a.txt:'');
+      return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start">
+        <div style="width:38px;height:38px;border-radius:50%;background:${cor}22;border:1px solid ${cor}55;display:flex;align-items:center;justify-content:center;flex-shrink:0">${_ico(ico,17,cor)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;color:var(--text);margin-bottom:2px">${titulo}</div>
+          ${obs?`<div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px">${obs}</div>`:''}
+          <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap">
+            <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${a.on?'var(--blue3)':'var(--bg2)'};color:${a.on?'var(--blue)':'var(--text3)'};border:1px solid ${a.on?'var(--blue2)':'var(--border)'}">${a.on?'Ativo':'Pausado'}</span>
+            ${a.naHome?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--purple3);color:var(--purple);border:1px solid var(--purple2)">Na Home</span>`:''}
+          </div>
+        </div>
+        ${a.img?`<img src="${a.img}" style="width:52px;height:52px;object-fit:cover;border-radius:var(--radius-sm);flex-shrink:0"/>`:''}
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button class="btn bxs bgh" onclick="mEditAviso(${i})" style="display:inline-flex;align-items:center;gap:4px">${_ico('pencil',12,'currentColor')} Editar</button>
+          <button class="btn bxs bgh" onclick="S.avisos[${i}].on=!S.avisos[${i}].on;save();render()">${a.on?'Pausar':'Ativar'}</button>
+          <button class="del" onclick="S.avisos.splice(${i},1);save();render()">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
   </div>`;
 }
 
+function _aviLoadImg(file,b64id,prevId){
+  if(!file||!file.type.startsWith('image/'))return;
+  const r=new FileReader();
+  r.onload=e=>{
+    document.getElementById(b64id).value=e.target.result;
+    document.getElementById(prevId).innerHTML=`<img src="${e.target.result}" style="max-height:80px;max-width:100%;border-radius:var(--radius-sm);margin-top:4px"/>`;
+  };
+  r.readAsDataURL(file);
+}
+
+function salAvisoCustom(){
+  const titulo=document.getElementById('avi-titulo').value.trim();
+  if(!titulo){toast('Escreva a frase de destaque','orange');return;}
+  const obs=document.getElementById('avi-obs').value.trim();
+  const cor=document.getElementById('avi-cor').value;
+  const ico=document.getElementById('avi-ico').value||'bell';
+  const img=document.getElementById('avi-img-b64').value||'';
+  const naHome=document.getElementById('avi-nahome').checked;
+  S.avisos.push({id:nid(),txt:titulo,titulo,obs,cor,ico,img,on:true,naHome,criado:td()});
+  save();render();toast('Aviso salvo!','green');
+}
+
 function salAviso(){
-  const t=document.getElementById('AVI').value.trim();if(!t)return;
-  S.avisos.push({id:nid(),txt:t,on:true,criado:td()});save();document.getElementById('AVI').value='';render();toast('Aviso salvo!','green');
+  const t=document.getElementById('AVI')?document.getElementById('AVI').value.trim():'';if(!t)return;
+  S.avisos.push({id:nid(),txt:t,on:true,naHome:false,criado:td()});save();render();toast('Aviso salvo!','green');
+}
+
+function mEditAviso(i){
+  const a=S.avisos[i];
+  const cor=a.cor||'#5B8AF0';
+  const ico=a.ico||'bell';
+  const titulo=(a.titulo||a.txt).replace(/"/g,'&quot;');
+  const obs=(a.obs||'').replace(/</g,'&lt;');
+  om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:500px">
+    <div class="mtitle">${_ico('pencil',15,'currentColor')} Editar aviso<button class="mclose" onclick="cm()">×</button></div>
+    <div class="fr c2" style="gap:12px">
+      <div><div class="fl">Frase de destaque</div><input id="ea-titulo" class="inp" value="${titulo}"/></div>
+      <div><div class="fl">Cor</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviCoresPaleta('ea-cor',cor)}<input id="ea-cor" type="color" value="${cor}" style="width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;padding:0;margin-left:2px"/></div></div>
+    </div>
+    <div class="fr"><div><div class="fl">Observação</div><textarea id="ea-obs" class="inp" rows="2" style="resize:vertical">${obs}</textarea></div></div>
+    <div class="fr"><div>
+      <div class="fl">Ícone</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviIcoGrid('ea-ico',ico)}</div>
+      <input id="ea-ico" type="hidden" value="${ico}"/>
+    </div></div>
+    <div class="fr"><div>
+      <div class="fl">Imagem</div>
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <div onclick="document.getElementById('ea-img-file').click()" ondragover="event.preventDefault()" ondrop="event.preventDefault();_aviLoadImg(event.dataTransfer.files[0],'ea-img-b64','ea-img-prev')" style="flex:1;border:2px dashed var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;color:var(--text3);font-size:12px">
+          <div id="ea-img-prev">${a.img?`<img src="${a.img}" style="max-height:60px;border-radius:var(--radius-sm)"/>`:' Arraste ou clique para adicionar imagem'}</div>
+        </div>
+        ${a.img?`<button type="button" class="btn bxs br" style="flex-shrink:0;margin-top:2px" onclick="document.getElementById('ea-img-b64').value='REMOVE';document.getElementById('ea-img-prev').innerHTML='<span style=\\'font-size:11px;color:var(--text3)\\'>Imagem removida</span>'">✕ Remover</button>`:''}
+      </div>
+      <input id="ea-img-file" type="file" accept="image/*" style="display:none" onchange="_aviLoadImg(this.files[0],'ea-img-b64','ea-img-prev')"/>
+      <input id="ea-img-b64" type="hidden" value="${a.img||''}"/>
+    </div></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 14px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2)">
+        <input type="checkbox" id="ea-nahome" ${a.naHome?'checked':''} style="width:15px;height:15px;accent-color:var(--purple)"/>
+        Exibir na Central de Avisos (home)
+      </label>
+    </div>
+    <button class="btn bb" onclick="
+      const a2=S.avisos[${i}];
+      a2.titulo=document.getElementById('ea-titulo').value.trim()||a2.titulo;
+      a2.txt=a2.titulo;
+      a2.obs=document.getElementById('ea-obs').value.trim();
+      a2.cor=document.getElementById('ea-cor').value;
+      a2.ico=document.getElementById('ea-ico').value||'bell';
+      const img2=document.getElementById('ea-img-b64').value;a2.img=img2==='REMOVE'?'':img2||a2.img||'';
+      a2.naHome=document.getElementById('ea-nahome').checked;
+      save();cm();render();toast('Aviso atualizado!','green');
+    ">Salvar</button>
+  </div>`);
 }
 
 async function analisarIA(){
@@ -4330,8 +4634,8 @@ function driveLogin(){
       document.getElementById('drive-btn-txt').textContent='Drive ✓';
       document.getElementById('drive-btn').style.borderColor='var(--green)';
       _driveFabConnected();
-      toast('Google Drive conectado!','green');
       showDriveMenu();
+      driveCarregar();
     }
   });
   client.requestAccessToken();
@@ -4940,6 +5244,59 @@ function renderMobileShell(mc){
   else if(_basicTab.startsWith('card_')) rCartaoTab(mc, _basicTab.replace('card_',''));
 }
 
+let _hts=0;
+function rMobileHero(mesIdx){
+  const eM2=tE(mesIdx),dM2=tD(mesIdx),sM2=sal(mesIdx);
+  const tr2=rTot(),lr2=S.config.limiteReserva||3000;
+  const tpm2=tPM(mesIdx),lp2=S.config.limiteParcMensal||800;
+  const tpa2=tPA();
+  const despF2=D().despesas.filter(d=>d.da||d.fixa).reduce((s,d)=>s+(d.vals[mesIdx]||0),0);
+  const disp2=eM2-despF2-tpm2;
+  const anoEnc2=S.anoAtivo<new Date().getFullYear();
+  const slides=[];
+  const semDados2=eM2===0&&dM2===0&&tpm2===0&&tr2===0&&(S.dividas||[]).filter(d=>!d.quitada).length===0;
+  if(semDados2){
+    slides.push({cor:'#A075F0',bg:'#A075F022',label:'Bem-vindo',title:'Tudo pronto para começar',body:'Adicione suas entradas e despesas na aba Orçamento.',ico:'star',img:''});
+  } else {
+    if(!anoEnc2&&eM2>0){
+      const pD=disp2/eM2;let sc=2;
+      if(sM2<-500||pD<-0.1) sc=0;
+      else if(sM2<0||pD<0.05||tpm2>lp2||tr2<lr2) sc=1;
+      const sCor=sc===0?'#F05252':sc===1?'#F09A40':'#2DD4A0';
+      const sLbl=sc===0?'Mês difícil':sc===1?'Atenção':'Mês positivo';
+      const smsg=sc===0?'Saldo negativo em '+fmt(Math.abs(sM2))+'. Revise os gastos.':sc===1?'Folga reduzida. Evite gastos extras este mês.':fmt(disp2)+' disponíveis após todos os compromissos.';
+      slides.push({cor:sCor,bg:sCor+'22',label:'Semáforo · '+MONTHS[mesIdx].toUpperCase()+'/'+S.anoAtivo,title:sLbl,body:smsg,ico:sc===0?'alert':sc===1?'warning':'check-circle',img:''});
+    }
+    const temDados2=tr2>0||tpa2>0||tpm2>0;
+    if(temDados2&&tr2<lr2) slides.push({cor:'#F05252',bg:'#F0525222',label:'Reservas críticas',title:'Abaixo do limite crítico',body:fmt(tr2)+' de '+fmt(lr2)+' configurado.',ico:'bank',img:''});
+    if(temDados2&&tpm2>lp2) slides.push({cor:'#F09A40',bg:'#F09A4022',label:'Limite de parcelamentos',title:'Parcelas acima do limite',body:fmt(tpm2)+' em parcelas vs limite de '+fmt(lp2)+'.',ico:'card',img:''});
+    if(temDados2&&tpa2>tr2&&tr2>0) slides.push({cor:'#F05252',bg:'#F0525222',label:'Risco de liquidez',title:'Parcelas superam reservas',body:'Total parcelado ('+fmt(tpa2)+') supera as reservas ('+fmt(tr2)+').',ico:'dollar',img:''});
+    const dH2=(S.dividas||[]).filter(d=>!d.quitada);const aH2=getAtrasados();
+    if(dH2.length>0||aH2.length>0){const pts=[];if(dH2.length>0)pts.push(dH2.length+' dívida(s)');if(aH2.length>0)pts.push(aH2.length+' em atraso');slides.push({cor:'#F05252',bg:'#F0525222',label:'Pendências',title:'Dívidas e atraso',body:pts.join(' · '),ico:'bolt',img:''});}
+    if(S.config.heroLimiteConsumo!==false&&!anoEnc2&&eM2>0) slides.push({cor:disp2>=0?'#2DD4A0':'#F05252',bg:disp2>=0?'#2DD4A022':'#F0525222',label:'Limite de Consumo',title:fmt(disp2)+' disponível',body:'Entradas: '+fmt(eM2)+' · Parcelas: '+fmt(tpm2),ico:'calc',img:''});
+    (S.avisos||[]).filter(a=>a.on&&a.naHome).forEach(a=>{slides.push({cor:a.cor||'#5B8AF0',bg:(a.cor||'#5B8AF0')+'22',label:'Aviso',title:a.titulo||a.txt,body:a.obs||'',ico:a.ico||'bell',img:a.img||''});});
+  }
+  if(!slides.length) return '';
+  const n=slides.length;
+  _heroIdx=Math.min(_heroIdx,n-1);
+  const s0=slides[_heroIdx];
+  const MC_RENDER="renderMobileShell(document.getElementById('MC'))";
+  const SH=slides.map((s,i)=>{
+    const iH=s.img?'':`<div style="width:42px;height:42px;border-radius:50%;background:${s.bg};border:1.5px solid ${s.cor}55;display:flex;align-items:center;justify-content:center;flex-shrink:0">${_ico(s.ico,20,s.cor)}</div>`;
+    return `<div class="hero-s" data-cor="${s.cor}" data-bg="${s.bg}" data-img="${s.img||''}" style="min-width:100%;display:flex;gap:14px;align-items:center;box-sizing:border-box">${s.img?'':iH}<div style="flex:1;min-width:0"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${s.cor};margin-bottom:4px">${s.label}</div><div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.2">${s.title}</div><div style="font-size:12px;color:var(--text2);line-height:1.5">${s.body}</div></div></div>`;
+  }).join('');
+  const dotsH=n>1?slides.map((s,i)=>`<div id="hd-${i}" onclick="heroGoto(${i});${MC_RENDER}" style="width:${i===_heroIdx?'18':'6'}px;height:6px;border-radius:3px;background:${i===_heroIdx?'var(--purple)':'rgba(255,255,255,.2)'};cursor:pointer;transition:width .2s,background .2s;flex-shrink:0"></div>`).join(''):'';
+  const s0bg=s0.img?`linear-gradient(rgba(10,13,20,.78),rgba(10,13,20,.78)),url(${s0.img}) center/cover no-repeat`:`#13161F`;
+  return `<div id="hero-card" style="margin:0 16px 14px;border-radius:16px;padding:14px 16px 12px;border:1.5px solid ${s0.cor};background:${s0bg};transition:background .4s,border-color .4s;overflow:hidden" ontouchstart="_hts=event.touches[0].clientX" ontouchend="if(Math.abs(event.changedTouches[0].clientX-_hts)>40){heroNav(event.changedTouches[0].clientX<_hts?1:-1);${MC_RENDER}}">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:9px;font-weight:700;letter-spacing:.07em;color:rgba(255,255,255,.5);text-transform:uppercase">Central de avisos</span>
+      ${n>1?`<div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:rgba(255,255,255,.4)" id="hero-ctr">${_heroIdx+1} / ${n}</span><button onclick="heroNav(-1);${MC_RENDER}" style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">←</button><button onclick="heroNav(1);${MC_RENDER}" style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">→</button></div>`:''}
+    </div>
+    <div style="overflow:hidden"><div id="hero-track" style="display:flex;transform:translateX(-${_heroIdx*100}%);transition:transform .4s cubic-bezier(.4,0,.2,1)">${SH}</div></div>
+    ${n>1?`<div style="display:flex;gap:5px;align-items:center;margin-top:10px">${dotsH}</div>`:''}
+  </div>`;
+}
+
 function rBasicoHome(mc){
   const m0=new Date().getMonth();
   const anoAtivo=S.anoAtivo;
@@ -5055,7 +5412,7 @@ function rBasicoHome(mc){
     </div>
   </div>
 
-  ${alertsHtml}
+  ${rMobileHero(mesIdx)}
 
   <div class="basic-stitle">A receber este mês</div>
   <div class="bc" style="padding:4px 20px">
