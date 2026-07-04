@@ -194,7 +194,7 @@ body.modo-mobile .basic-nav{display:flex}
 .basic-hero{background:#1E293B;border-radius:24px;padding:28px 24px 22px;margin:12px 16px 14px;position:relative;overflow:hidden}
 .basic-hero::after{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;background:rgba(45,212,160,.06);pointer-events:none}
 .basic-hero-lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:6px}
-.basic-hero-val{font-size:38px;font-weight:700;color:#fff;line-height:1;letter-spacing:-.02em}
+.basic-hero-val{font-size:56px;font-weight:800;color:#fff;line-height:1;letter-spacing:-.03em}
 .basic-hero-val.neg{color:#F87171}
 .basic-hero-val.pos{color:#34D399}
 .basic-hero-sub{font-size:12px;color:rgba(255,255,255,.35);margin-top:8px}
@@ -703,13 +703,13 @@ function addAno(){
 }
 
 // nav
-const TABS=[{id:'home',l:'Home'},{id:'ob',l:'Orçamento'},{id:'contas',l:'Contas'},{id:'anual',l:'Anual'},{id:'parc',l:'Parcelados'},{id:'res',l:'Reservas'},{id:'free',l:'Freelas'},{id:'graf',l:'Gráficos'},{id:'avi',l:'Avisos'}];
+const TABS=[{id:'home',l:'Home'},{id:'ob',l:'Orçamento'},{id:'contas',l:'Contas'},{id:'anual',l:'Anual'},{id:'parc',l:'Parcelados'},{id:'res',l:'Reservas'},{id:'free',l:'Freelas'},{id:'graf',l:'Gráficos'},{id:'avi',l:'Avisos'},{id:'sim',l:'Simuladores'},{id:'ext',l:'Extraordinários'}];
 function hasDividas(){
   if(!S.dividas) S.dividas=[];
   return S.dividas.some(d=>!d.quitada)||getAtrasados().length>0;
 }
 // Tabs básicas (sempre visíveis) vs avançadas (só no modo avançado)
-const TABS_ADV_IDS=['ob','parc','res','free','graf','avi'];
+const TABS_ADV_IDS=['ob','parc','res','free','graf','avi','sim','ext'];
 function renderNav(){
   const nav=document.getElementById('NAV');if(!nav)return;
   const tabsOcultas=S.config.tabsOcultas||[];
@@ -766,6 +766,8 @@ function render(){
   else if(tab==='graf')rGraf(mc);
   else if(tab==='avi')rAvi(mc);
   else if(tab==='div')rDiv(mc);
+  else if(tab==='sim')rSim(mc);
+  else if(tab==='ext')rExt(mc);
   else if(tab.startsWith('custom_'))rCustomTab(mc,tab.replace('custom_',''));
   else if(tab.startsWith('card_'))rCartaoTab(mc,tab.replace('card_',''));
 }
@@ -1223,7 +1225,7 @@ function renderChkSection(){
         return`<div class="chk-row${ok?' done':''}" onclick="toggleChk('${item.id}')">
           <div class="chk-box${ok?' checked-r':''}"><span style="color:#fff;font-size:11px;font-weight:700">${ok?'✓':''}</span></div>
           ${dia?`<span style="font-size:10px;font-weight:700;color:var(--text3);min-width:18px;text-align:center">${dia}</span>`:''}
-          <span class="chk-label">${item.nome}${item.da?' <span class="tag tda" style="font-size:9px;padding:1px 4px">D.A.</span>':''}</span>
+          <span class="chk-label">${item.nome}${item.da?' <span class="tag tda" style="font-size:9px;padding:1px 4px">Déb. Aut.</span>':''}</span>
           <span class="chk-val r" title="Clique para editar" onclick="event.stopPropagation();mEditChkVal('d','${item.id}')" style="cursor:pointer;border-bottom:1px dashed var(--red)">${fmt(item.vals[m0])}</span>
         </div>`;
       }).join('')}
@@ -1256,7 +1258,7 @@ function anualTableHtml(m0,anoEncerrado){
         </tr>
         <tr><td colspan="14" style="height:6px"></td></tr>
         ${d.despesas.map((dd,di)=>`<tr>
-          <td style="color:var(--text2);font-size:11px">${dd.nome}${dd.da?' <span class="tag tda" style="font-size:9px;padding:1px 5px">D.A.</span>':''}</td>
+          <td style="color:var(--text2);font-size:11px">${dd.nome}${dd.da?' <span class="tag tda" style="font-size:9px;padding:1px 5px">Déb. Aut.</span>':''}</td>
           ${dd.vals.map((v,mi)=>`<td class="rv${mi===m0?' ann-cur-col':''}" style="padding:3px 2px"><input class="ann-cell" style="color:${v>0?'var(--red)':'var(--text3)'}" value="${v>0?fabs(v):''}" placeholder="—" title="Editar ${dd.nome} em ${MONTHS[mi]}" onfocus="this.select()" onblur="annEdit('d',${di},${mi},this)"/></td>`).join('')}
           <td class="rv" style="color:var(--red);font-weight:600;font-size:11px">${fabs(dd.vals.reduce((a,b)=>a+b,0))}</td>
         </tr>`).join('')}
@@ -1441,7 +1443,7 @@ function rHome(mc){
       const bgDisp=disp>=0?'var(--bg3)':'var(--red3)';
       const pctComidaH=eM<2000?0.30:eM<4000?0.25:eM<7000?0.20:0.15;
       const porFdsH=Math.max(0,disp/4);const porDiaH=(eM*pctComidaH)/30;
-      slides.push({cor:corDisp,bg:bgDisp,label:'Limite de Consumo · '+MONTHS[m0].toUpperCase()+'/'+S.anoAtivo,title:fmt(disp)+' disponível',body:'Entradas: '+fmt(eM)+' · Fixas+D.A.: '+fmt(despF)+' · Parcelas: '+fmt(tpm)+'<br>Fim de semana: <strong>'+fmt(porFdsH)+'</strong> · Alimentação/dia: <strong>'+fmt(porDiaH)+'</strong>',btn:null,btnAct:null,ico:'calc'});
+      slides.push({cor:corDisp,bg:bgDisp,label:'Limite de Consumo · '+MONTHS[m0].toUpperCase()+'/'+S.anoAtivo,title:fmt(disp)+' disponível',body:'Entradas: '+fmt(eM)+' · Fixas+Déb. Aut.: '+fmt(despF)+' · Parcelas: '+fmt(tpm)+'<br>Fim de semana: <strong>'+fmt(porFdsH)+'</strong> · Alimentação/dia: <strong>'+fmt(porDiaH)+'</strong>',btn:null,btnAct:null,ico:'calc'});
     }
     (S.avisos||[]).filter(a=>a.on&&a.naHome).forEach(a=>{
       const cor=a.cor||'#5B8AF0';
@@ -1468,6 +1470,21 @@ function rHome(mc){
       +'</div>'+(n>1?'<img src onerror="heroStartTimer()" style="display:none">':'');
   })()}
 
+
+  <div class="card met ${sM>=0?'g':'r'}" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div>
+      <div class="mlbl">Saldo do mês — ${MONTHS[m0]}/${S.anoAtivo}</div>
+      <div class="mval" style="font-size:32px;margin-top:4px">${fmt(sM)}</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:10px;color:var(--text2)">Entradas</div>
+      <div style="font-size:13px;font-weight:600;color:var(--green)">${fmt(eM)}</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px">Despesas</div>
+      <div style="font-size:13px;font-weight:600;color:var(--red)">${fmt(dM)}</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px">Déb. Auto.</div>
+      <div style="font-size:13px;font-weight:600;color:var(--blue)">${fmt(daM)}</div>
+    </div>
+  </div>
 
   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:0 2px">
     <span style="font-size:10px;color:var(--text3)">🕐 Última atualização:</span>
@@ -1515,14 +1532,6 @@ function rHome(mc){
     <div id="sec-met" style="display:block;margin-top:10px">
   <div class="g2">
     <div>
-      <div class="card"><div class="ctit">Resumo</div>
-        <div class="g2">
-          <div class="met g"><div class="mlbl">Entradas</div><div class="mval">${fmt(eM)}</div></div>
-          <div class="met r"><div class="mlbl">Despesas</div><div class="mval">${fmt(dM)}</div></div>
-          <div class="met ${sM>=0?'g':'r'}"><div class="mlbl">Saldo</div><div class="mval">${fmt(sM)}</div></div>
-          <div class="met b"><div class="mlbl">D.A. do mês</div><div class="mval">${fmt(daM)}</div><div class="msub">Precisa em caixa</div></div>
-        </div>
-      </div>
       ${(()=>{
         if(anoEncerrado||eM<=0) return '';
         const pctDisp=disp/eM;
@@ -1580,10 +1589,10 @@ function rHome(mc){
         </div>`;
       })()}
       <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px"><div class="ctit" style="margin:0">LIMITE DE CONSUMO — ${anoEncerrado?S.anoAtivo:MONTHS[m0].toUpperCase()+"/"+S.anoAtivo}</div><button onclick="S.config.heroLimiteConsumo=!S.config.heroLimiteConsumo;save();render()" class="btn bxs" style="font-size:10px;padding:3px 8px;background:${S.config.heroLimiteConsumo?'var(--purple3)':'var(--bg3)'};color:${S.config.heroLimiteConsumo?'var(--purple)':'var(--text3)'};border:1px solid ${S.config.heroLimiteConsumo?'var(--purple2)':'var(--border)'};border-radius:10px">${S.config.heroLimiteConsumo?'● Na Central':'○ Na Central'}</button></div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:6px;margin-top:6px">Após fixas + D.A. + parcelas</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px;margin-top:6px">Após fixas + Déb. Aut. + parcelas</div>
         <div style="font-size:26px;font-weight:700;color:${disp>=0?'var(--green)':'var(--red)'};margin-bottom:6px">${fmt(disp)}</div>
         <div class="pw"><div class="pb" style="width:${pct.toFixed(0)}%;background:${pct>50?'var(--green)':pct>20?'var(--orange)':'var(--red)'}"></div></div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">Entradas: ${fmt(eM)} · Fixas+D.A.: ${fmt(despF)} · Parcelas: ${fmt(tpm)}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Entradas: ${fmt(eM)} · Fixas+Déb. Aut.: ${fmt(despF)} · Parcelas: ${fmt(tpm)}</div>
         ${(()=>{
           if(anoEncerrado||eM<=0) return '';
           const porFds=Math.max(0,disp/4);
@@ -1665,15 +1674,74 @@ function rHome(mc){
 }
 
 
+// Helpers de freq para OBE/OBD
+function _obFreq(r){return r.freq||(r.fixa?'mensal':'variavel');}
+function _obMensais(arr){return arr.filter(r=>_obFreq(r)==='mensal');}
+function _obAnuais(arr){return arr.filter(r=>_obFreq(r)==='anual');}
+function _obVariaveis(arr){return arr.filter(r=>_obFreq(r)==='variavel');}
+
 function rOb(mc){
-  const tE2=OBE().reduce((s,r)=>s+(r.fixa?r.v:0),0);
-  const tD2fixed=OBD().reduce((s,r)=>s+(r.fixa?r.v:0),0);
-  const tD2extras=OBD().filter(r=>r.parc&&!r.fixa);
-  const tDA2=OBD().filter(d=>d.da&&d.fixa).reduce((s,d)=>s+d.v,0);
-  const saldo=tE2-tD2fixed;
+  const eM=_obMensais(OBE()),eA=_obAnuais(OBE()),eV=_obVariaveis(OBE());
+  const dM=_obMensais(OBD()),dA=_obAnuais(OBD()),dV=_obVariaveis(OBD());
+  const tE2=eM.reduce((s,r)=>s+r.v,0);
+  const tD2=dM.reduce((s,r)=>s+r.v,0);
+  const tDA2=dM.filter(d=>d.da).reduce((s,d)=>s+d.v,0);
+  const saldo=tE2-tD2;
+
+  function secRow(arr,tipo,filter){
+    const items=filter?arr.filter(filter):arr;
+    if(items.length===0) return `<div style="font-size:12px;color:var(--text3);padding:6px 0;font-style:italic">Nenhum item</div>`;
+    return items.map((r,_)=>{const i=OBE()===arr?OBE().indexOf(r):OBD().indexOf(r);return tipo==='e'?obRE(r,i):obRD(r,i);}).join('');
+  }
+
+  function secCard(title,cor,eArr,dArr,extra=''){
+    return `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="ctit" style="margin:0;color:${cor}">${title}</div>
+        <div style="display:flex;gap:6px">${extra}</div>
+      </div>
+      <div class="g2">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">↓ Entradas</div>
+          ${eArr.map(r=>obRE(r,OBE().indexOf(r))).join('')||'<div style="font-size:11px;color:var(--text3);font-style:italic">—</div>'}
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">↑ Despesas</div>
+          ${dArr.map(r=>obRD(r,OBD().indexOf(r))).join('')||'<div style="font-size:11px;color:var(--text3);font-style:italic">—</div>'}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Seção Extras (parcelados da aba Parcelados)
+  const pcAtivos=D().pc.filter(p=>{const ai=p.anoIni||S.anoAtivo;return ai*12+p.ini+p.n-1>=S.anoAtivo*12;});
+  const extrasHTML=`<div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="ctit" style="margin:0;color:var(--purple)">🎲 Extras — Parcelamentos Extraordinários</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Compras parceladas e despesas pontuais — não entram no saldo mensal base</div>
+      </div>
+      <button class="btn bxs bgh" onclick="gt('parc')">Gerenciar →</button>
+    </div>
+    ${pcAtivos.length===0?`<div style="font-size:12px;color:var(--text3);font-style:italic;padding:4px">Nenhum parcelamento ativo — gerencie na aba Parcelados.</div>`
+    :pcAtivos.map(p=>{
+      const ai=p.anoIni||S.anoAtivo;
+      const fimAbs=ai*12+p.ini+p.n-1;
+      const fimAno=Math.floor(fimAbs/12),fimMes=fimAbs%12;
+      const restantes=fimAbs-(S.anoAtivo*12+new Date().getMonth())+1;
+      return`<div class="er" style="margin-bottom:6px">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--purple);flex-shrink:0;margin-top:2px"></div>
+        <span style="flex:1;font-size:13px">${p.desc}</span>
+        <span class="tag" style="background:rgba(160,117,240,.15);color:var(--purple);border:1px solid rgba(160,117,240,.3)">${p.n-(p.ant||0)}x restantes</span>
+        <span class="ev rv">${fabs(p.vp)}/mês</span>
+        ${fimAno>S.anoAtivo?`<span style="font-size:10px;color:var(--orange)">até ${MONTHS[fimMes]}/${fimAno}</span>`:''}
+      </div>`;
+    }).join('')}
+  </div>`;
+
   mc.innerHTML=mobileHeader('Orçamento','Template mensal de contas')+`
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-    <div${isMobile()?' hidden':''}><div style="font-size:18px;font-weight:700">Orçamento Base</div><div style="font-size:12px;color:var(--text2)">Template mensal — fixas se repetem todo ano, extras só nos meses configurados</div></div>
+    <div${isMobile()?' hidden':''}><div style="font-size:18px;font-weight:700">Orçamento Base</div><div style="font-size:12px;color:var(--text2)">Fixas repetem todo mês/ano — Variáveis são só previsão — Extras são parcelamentos pontual</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn bg" onclick="apObFuturo()">→ Aplicar daqui pra frente</button>
       <button class="btn bgh bsm" onclick="mObE()">+ Entrada</button>
@@ -1682,50 +1750,42 @@ function rOb(mc){
   </div>
   <div class="g4" style="margin-bottom:16px">
     <div class="met g"><div class="mlbl">Entradas fixas/mês</div><div class="mval">${fmt(tE2)}</div></div>
-    <div class="met r"><div class="mlbl">Despesas fixas/mês</div><div class="mval">${fmt(tD2fixed)}</div></div>
+    <div class="met r"><div class="mlbl">Despesas fixas/mês</div><div class="mval">${fmt(tD2)}</div></div>
     <div class="met ${saldo>=0?'g':'r'}"><div class="mlbl">Saldo mensal base</div><div class="mval">${fmt(saldo)}</div></div>
-    <div class="met b"><div class="mlbl">Total D.A./mês</div><div class="mval">${fmt(tDA2)}</div><div class="msub">Manter em caixa</div></div>
+    <div class="met b"><div class="mlbl">Total Déb. Aut./mês</div><div class="mval">${fmt(tDA2)}</div><div class="msub">Manter em caixa</div></div>
   </div>
-  <div class="card" style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;margin-bottom:12px"><div class="ctit" style="margin:0">↓ Entradas</div><span style="font-size:13px;font-weight:600;color:var(--green)">${fmt(tE2)}/mês</span></div>
-    ${OBE().map((r,i)=>obRE(r,i)).join('')}
-  </div>
-  <div class="card" style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;margin-bottom:12px"><div class="ctit" style="margin:0">↑ Despesas Fixas</div><span style="font-size:13px;font-weight:600;color:var(--red)">${fmt(tD2fixed)}/mês</span></div>
-    ${OBD().filter(r=>r.fixa).map((r,i)=>{const realIdx=OBD().indexOf(r);return obRD(r,realIdx);}).join('')}
-  </div>
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-      <div class="ctit" style="margin:0">↑ Despesas Extras <span style="font-size:10px;font-weight:400;color:var(--text3)">(parceladas — não se repetem nos anos seguintes)</span></div>
-      <button class="btn bxs bgh" onclick="gt('parc')">Gerenciar →</button>
+  ${secCard('🔄 Fixas Mensais','var(--blue)',eM,dM,'')}
+  ${secCard('📅 Fixas Anuais','var(--orange)',eA,dA,'')}
+  <div class="card" style="margin-bottom:12px;border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.03)">
+    <div style="margin-bottom:10px">
+      <div class="ctit" style="margin:0 0 2px;color:var(--green)">📊 Variáveis — Previsão</div>
+      <div style="font-size:11px;color:var(--text2)">Não entram nos cálculos — servem como referência de gastos esperados</div>
     </div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Vêm da aba Parcelados. Aparecem só nos meses configurados e não entram no saldo mensal base.</div>
-    ${D().pd.length===0
-      ?`<div style="font-size:12px;color:var(--text3);font-style:italic;padding:8px">Nenhuma despesa parcelada cadastrada — adicione na aba Parcelados.</div>`
-      :D().pd.map(p=>{
-        const fim=Math.min(p.ini+p.n-1,11);
-        const totalP=p.valor*p.n;
-        return`<div class="er">
-          <div style="width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0"></div>
-          <span class="ed" style="flex:1;color:var(--text)">${p.desc}</span>
-          <span class="tag tpa">${MONTHS[p.ini]}→${MONTHS[fim]} ${p.n}×</span>
-          <span class="ev rv">${fabs(p.valor)}/mês</span>
-          <span style="font-size:10px;color:var(--text3);padding:0 8px">Total: ${fmt(totalP)}</span>
-        </div>`;
-      }).join('')}
-  </div>`;
+    <div class="g2">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">↓ Entradas variáveis</div>
+        ${eV.map(r=>obRE(r,OBE().indexOf(r))).join('')||'<div style="font-size:11px;color:var(--text3);font-style:italic">—</div>'}
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">↑ Despesas variáveis</div>
+        ${dV.map(r=>obRD(r,OBD().indexOf(r))).join('')||'<div style="font-size:11px;color:var(--text3);font-style:italic">—</div>'}
+      </div>
+    </div>
+  </div>
+  ${extrasHTML}`;
 }
 
-function obTagE(r){return [r.tag==='freela'?'<span class="tag tfr">Freela</span>':'',r.fixa?`<span class="tag tfi">${r.sc==='always'?'Sempre':r.sc}</span>`:'',r.parc?`<span class="tag tpa">${MONTHS[r.pi||0]}→${MONTHS[Math.min((r.pi||0)+(r.pn||1)-1,11)]} ${r.pn}×</span>`:''].filter(Boolean).join('');}
+function _freqTag(r){
+  const freq=_obFreq(r);
+  if(freq==='anual'){const mn=r.mes!=null?MONTHS[r.mes].charAt(0).toUpperCase()+MONTHS[r.mes].slice(1,3):'?';return`<span class="tag" style="background:rgba(240,154,64,.15);color:var(--orange);border:1px solid rgba(240,154,64,.3)">📅 ${mn}</span>`;}
+  if(freq==='variavel') return`<span class="tag" style="background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)">📊 Variável</span>`;
+  return`<span class="tag" style="background:rgba(91,138,240,.15);color:var(--blue);border:1px solid rgba(91,138,240,.3)">🔄 Mensal</span>`;
+}
+function obTagE(r){return [r.tag==='freela'?'<span class="tag tfr">Freela</span>':'',_freqTag(r)].filter(Boolean).join('');}
 function obTagD(r){
   const tags=[];
-  if(r.da) tags.push('<span class="tag tda">D.A.</span>');
-  if(r.fixa) tags.push(`<span class="tag tfi">${r.sc==='always'?'Sempre':r.sc||'Fixa'}</span>`);
-  if(r.parc&&!r.fixa){
-    const fim=Math.min((r.pi||0)+(r.pn||1)-1,11);
-    tags.push(`<span class="tag tpa">${MONTHS[r.pi||0]}→${MONTHS[fim]} ${r.pn}×</span>`);
-    tags.push('<span class="tag" style="background:var(--bg4);color:var(--text2);border:1px solid var(--border)">Extra</span>');
-  }
+  if(r.da) tags.push('<span class="tag tda">Déb. Aut.</span>');
+  tags.push(_freqTag(r));
   return tags.join('');
 }
 
@@ -1753,33 +1813,29 @@ function apObFuturo(){
   const d2=D();
   let criados=0,atualizados=0;
 
-  OBE().forEach(ob=>{
-    if(!ob.fixa&&!ob.parc)return;
-    let m=d2.entradas.find(e=>e.nome===ob.nome);
-    if(!m){
-      // Cria o item nas contas se não existe ainda
-      m={id:nid(),nome:ob.nome,vals:Array(12).fill(0),tag:ob.tag||'',fixa:ob.fixa,sc:ob.sc||'always'};
-      d2.entradas.push(m);criados++;
-    } else { atualizados++; }
-    if(ob.fixa) for(let i=m0;i<12;i++) m.vals[i]=ob.v;
-    else if(ob.parc) for(let i=ob.pi||0;i<Math.min((ob.pi||0)+(ob.pn||1),12);i++) if(i>=m0) m.vals[i]=ob.v;
-  });
+  function applyItem(ob,arr,newFn){
+    const freq=_obFreq(ob);
+    if(freq==='variavel') return; // variáveis não entram nos cálculos
+    let m=arr.find(e=>e.nome===ob.nome);
+    if(!m){m=newFn();arr.push(m);criados++;}
+    else{atualizados++;}
+    if(freq==='mensal'){
+      for(let i=m0;i<12;i++) m.vals[i]=ob.v;
+    } else if(freq==='anual'){
+      const mes=ob.mes!=null?ob.mes:0;
+      if(mes>=m0) m.vals[mes]=ob.v; // só aplica se o mês ainda não passou
+    }
+  }
 
-  OBD().forEach(ob=>{
-    if(!ob.fixa)return;
-    let m=d2.despesas.find(e=>e.nome===ob.nome);
-    if(!m){
-      m={id:nid(),nome:ob.nome,vals:Array(12).fill(0),da:ob.da||false,fixa:ob.fixa,sc:ob.sc||'always'};
-      d2.despesas.push(m);criados++;
-    } else { atualizados++; }
-    for(let i=m0;i<12;i++) m.vals[i]=ob.v;
-  });
+  OBE().forEach(ob=>applyItem(ob,d2.entradas,()=>({id:nid(),nome:ob.nome,vals:Array(12).fill(0),tag:ob.tag||'',fixa:_obFreq(ob)==='mensal',freq:_obFreq(ob),mes:ob.mes})));
+  OBD().forEach(ob=>applyItem(ob,d2.despesas,()=>({id:nid(),nome:ob.nome,vals:Array(12).fill(0),da:ob.da||false,fixa:_obFreq(ob)==='mensal',freq:_obFreq(ob),mes:ob.mes})));
 
   save();render();
   const msg=[];
   if(criados) msg.push(`${criados} novo(s) criado(s)`);
   if(atualizados) msg.push(`${atualizados} atualizado(s)`);
-  const _m0ap=(new Date().getFullYear()>S.anoAtivo)?11:new Date().getMonth();toast(`✓ ${msg.join(', ')} — ${MONTHS[_m0ap]} em diante!`,'green');
+  const _m0ap=(new Date().getFullYear()>S.anoAtivo)?11:new Date().getMonth();
+  toast(`✓ ${msg.join(', ')} — ${MONTHS[_m0ap]} em diante!`,'green');
 }
 
 
@@ -1889,15 +1945,30 @@ function rContas(mc){
 
   mc.innerHTML=`
   <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px">${MONTHS.map((m,j)=>`<button class="mtab${j===i?' on':''}" onclick="mes=${j};render()">${m}${j<m0&&j===i?'<span style="font-size:8px;color:var(--red);margin-left:2px">✓?</span>':''}</button>`).join('')}</div>
+  ${(()=>{
+    if(!S.ext) return '';
+    const extMes=(S.ext[i])||[];
+    if(!extMes.length) return '';
+    const itensStr=extMes.filter(x=>x.desc).map(x=>x.desc+(x.v<0?' ('+fmt(Math.abs(x.v))+')':'')).join(', ');
+    const totExt=extMes.reduce((a,x)=>a+x.v,0);
+    return `<div style="background:rgba(240,154,64,.08);border:1px solid var(--orange2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:18px;flex-shrink:0">📅</span>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:2px">Atenção — Extraordinários em ${MONTHS[i]}</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.5">${itensStr}${totExt<0?` · Estimativa: <strong style="color:var(--red)">${fmt(Math.abs(totExt))}</strong>`:''}</div>
+        <button class="btn bxs bgh" style="margin-top:6px;font-size:10px" onclick="gt('ext')">Ver Extraordinários →</button>
+      </div>
+    </div>`;
+  })()}
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
     ${_semMes()}
     ${_resMov()}
   </div>
   <div class="g4" style="margin-bottom:16px">
+    <div class="met ${s>=0?'g':'r'}" style="grid-column:span 2"><div class="mlbl">Saldo do mês</div><div class="mval" style="font-size:32px;margin-top:4px">${fmt(s)}</div></div>
     <div class="met g"><div class="mlbl">Entradas</div><div class="mval">${fmt(e)}</div></div>
     <div class="met r"><div class="mlbl">Despesas</div><div class="mval">${fmt(d)}</div></div>
-    <div class="met ${s>=0?'g':'r'}"><div class="mlbl">Saldo</div><div class="mval">${fmt(s)}</div></div>
-    <div class="met b"><div class="mlbl">D.A. do mês</div><div class="mval">${fmt(tDA(i))}</div></div>
+    <div class="met b"><div class="mlbl">Débito Automático</div><div class="mval">${fmt(tDA(i))}</div></div>
   </div>
   <div class="g2">
     <div class="card">
@@ -1927,7 +1998,7 @@ function rContas(mc){
           const realIdx=d2.despesas.indexOf(r);
           const dia=getDia(r.id,'d');
           return`<div class="er"><span class="dia-badge" title="Dia do vencimento" onclick="editDiaContas(this,'d',${realIdx})">${dia||'—'}</span>
-          ${r.da?'<span class="tag tda" style="flex-shrink:0">D.A.</span>':''}
+          ${r.da?'<span class="tag tda" style="flex-shrink:0">Déb. Aut.</span>':''}
           <input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="D().despesas[${realIdx}].nome=this.value;save()"/>
           <input class="ev rv" value="${fabs(r.vals[i]||0)}" onfocus="this.select()" onblur="editContaVal('d',${realIdx},${i},this)"/>
           ${togBtn(r.id,'d')}
@@ -2388,6 +2459,23 @@ function svgHeatmap(el){
 
 function rParc(mc){
   const d2=D();const lp=S.config.limiteParcMensal||800;
+  // Inclui parcelados de anos anteriores que ainda estão ativos em S.anoAtivo
+  const idsJaNesseAno=new Set((d2.pc||[]).map(p=>p.id).concat((d2.pc||[]).map(p=>p._origemId).filter(Boolean)));
+  Object.entries(S.dados||{}).forEach(([yrStr,yd])=>{
+    const yr=parseInt(yrStr);
+    if(yr>=S.anoAtivo)return;
+    (yd.pc||[]).forEach(p=>{
+      if(idsJaNesseAno.has(p.id)||idsJaNesseAno.has(p._origemId))return;
+      const anoIni=p.anoIni||yr;
+      const mFimAbs=anoIni*12+p.ini+p.n-1;
+      if(mFimAbs>=S.anoAtivo*12){
+        // Parcelado ainda ativo: calcular ant para o ano ativo
+        const ant=Math.max(0,S.anoAtivo*12-(anoIni*12+p.ini));
+        d2.pc.push({...p,ant,anoIni,_origemId:p.id});
+        idsJaNesseAno.add(p.id);
+      }
+    });
+  });
   const isMobileParc=isMobile();
   const mTabs=isMobileParc
     ?'<div class="basic-month-scroll" style="margin-bottom:12px">'+MONTHS.map(function(m,j){const isCur=j===new Date().getMonth();return'<button class="basic-month-btn'+(j===mes?' on':''+(isCur?' cur':''))+'" onclick="mes='+j+';renderMobileShell(document.getElementById(\'MC\'));">'+m+'</button>';}).join('')+'</div>'
@@ -2422,12 +2510,13 @@ function rParc(mc){
   const nCompras=d2.pc.length+d2.pd.length;
 
   if(isMobileParc){
-    const ativos=d2.pc.filter(function(p){const anoIni=p.anoIni||S.anoAtivo;const ef=p.n-(p.ant||0);return anoIni*12+p.ini+ef-1>=S.anoAtivo*12;});
-    const quitados=d2.pc.filter(function(p){const anoIni=p.anoIni||S.anoAtivo;const ef=p.n-(p.ant||0);return anoIni*12+p.ini+ef-1<S.anoAtivo*12;});
+    const _mHoje=S.anoAtivo*12+(new Date().getFullYear()===S.anoAtivo?new Date().getMonth():11);
+    const ativos=d2.pc.filter(function(p){const anoIni=p.anoIni||S.anoAtivo;return anoIni*12+p.ini+p.n-1>=_mHoje;});
+    const quitados=d2.pc.filter(function(p){const anoIni=p.anoIni||S.anoAtivo;return anoIni*12+p.ini+p.n-1<_mHoje;});
     function cardPc(p){
       const anoIni=p.anoIni||S.anoAtivo;
-      const mIniAbs=anoIni*12+p.ini;const ef=p.n-(p.ant||0);
-      const mFimAbs=mIniAbs+ef-1;const mAbs=S.anoAtivo*12+mes;
+      const mIniAbs=anoIni*12+p.ini;
+      const mFimAbs=mIniAbs+p.n-1;const mAbs=S.anoAtivo*12+mes;
       const rest=Math.max(0,mFimAbs-mAbs+1);
       const sc=rest<=0?'var(--green)':rest<=3?'var(--orange)':'var(--text2)';
       const realIdx=d2.pc.indexOf(p);
@@ -2553,20 +2642,15 @@ function rParc(mc){
     '<div class="ctit">Compras Parceladas no Cartao</div>'+
     '<table class="tbl"><thead><tr><th>Descricao</th><th>Cartao</th><th class="rv">Total</th><th class="cv">Parc.</th><th class="rv">Valor/mes</th><th class="cv">Status</th><th></th></tr></thead>'+
     '<tbody>'+(function(){
-      const ativos=d2.pc.filter(function(p){
-        const anoIni=p.anoIni||S.anoAtivo;const ef=p.n-(p.ant||0);
-        return anoIni*12+p.ini+ef-1>=S.anoAtivo*12;
-      });
-      const quitados=d2.pc.filter(function(p){
-        const anoIni=p.anoIni||S.anoAtivo;const ef=p.n-(p.ant||0);
-        return anoIni*12+p.ini+ef-1<S.anoAtivo*12;
-      });
+      const _mHojeT=S.anoAtivo*12+(new Date().getFullYear()===S.anoAtivo?new Date().getMonth():11);
+      const ativos=d2.pc.filter(function(p){const anoIni=p.anoIni||S.anoAtivo;return anoIni*12+p.ini+p.n-1>=_mHojeT;});
+      const quitados=d2.pc.filter(function(p){const anoIni=p.anoIni||S.anoAtivo;return anoIni*12+p.ini+p.n-1<_mHojeT;});
       if(ativos.length===0&&quitados.length===0)return'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px">Nenhum parcelado</td></tr>';
       const grpId='pcq'+Date.now();
       function rowP(p, isQuit){
         const anoIni=p.anoIni||S.anoAtivo;
-        const mIniAbs=anoIni*12+p.ini;const ef=p.n-(p.ant||0);
-        const mFimAbs=mIniAbs+ef-1;const mAbs=S.anoAtivo*12+mes;
+        const mIniAbs=anoIni*12+p.ini;
+        const mFimAbs=mIniAbs+p.n-1;const mAbs=S.anoAtivo*12+mes;
         const rest=Math.max(0,mFimAbs-mAbs+1);
         const sc=rest<=0?'var(--green)':rest<=3?'var(--orange)':'var(--text2)';
         const realIdx=d2.pc.indexOf(p);
@@ -2637,6 +2721,74 @@ function rRes(mc){
       ${resDoAno().map(r=>{const s=r.sr!=null&&String(r.srd||'').startsWith(String(S.anoAtivo))?r.sr:rSaldo(r);return`<div style="background:var(--bg4);border-radius:var(--radius-sm);padding:8px 12px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text2);margin-bottom:2px">${r.nome}</div><div style="font-size:14px;font-weight:700;color:${s>0?'var(--green)':s===0?'var(--text2)':'var(--red)'}">${fmt(s)}</div>${r.sr!=null&&String(r.srd||'').startsWith(String(S.anoAtivo))?`<div style="font-size:9px;color:var(--blue)">real·${fd(r.srd)}</div>`:''}</div>`;}).join('')}
     </div>
   </div>
+  ${(()=>{
+    const rs=resDoAno();
+    if(rs.length===0) return '';
+    // Monta tabela resumo: linhas = cada reserva + total; colunas = meses
+    const mesesRows=rs.map(r=>{
+      const cols=MONTHS.map((_,mi)=>{
+        const e=rE(r,mi),s=rS(r,mi),liq=e-s;
+        return {e,s,liq};
+      });
+      return {nome:r.nome,cols};
+    });
+    // Totais gerais por mês
+    const totCols=MONTHS.map((_,mi)=>({
+      e:rs.reduce((a,r)=>a+rE(r,mi),0),
+      s:rs.reduce((a,r)=>a+rS(r,mi),0),
+      liq:rs.reduce((a,r)=>a+rE(r,mi)-rS(r,mi),0),
+    }));
+    const totalAno={e:totCols.reduce((a,c)=>a+c.e,0),s:totCols.reduce((a,c)=>a+c.s,0),liq:totCols.reduce((a,c)=>a+c.liq,0)};
+    const m0cur=new Date().getMonth();
+
+    const thStyle='font-size:10px;padding:5px 6px;text-align:center;color:var(--text2);font-weight:600;white-space:nowrap';
+    const tdE=(v)=>v>0?`<span style="color:var(--green);font-size:10px">+${fabs(v)}</span>`:`<span style="color:var(--text3);font-size:10px">—</span>`;
+    const tdS=(v)=>v>0?`<span style="color:var(--red);font-size:10px">−${fabs(v)}</span>`:`<span style="color:var(--text3);font-size:10px">—</span>`;
+    const tdL=(liq,hasAny)=>hasAny?`<span style="font-weight:700;font-size:10px;color:${liq>0?'var(--green)':liq<0?'var(--red)':'var(--text3)'}">${liq>0?'+':''}${fabs(liq)}</span>`:`<span style="color:var(--text3);font-size:10px">—</span>`;
+
+    const headerCols=MONTHS.map((m,mi)=>`<th style="${thStyle};${mi===m0cur?'color:var(--blue)':''}">${m}</th>`).join('');
+    const totalCol=`<th style="${thStyle}">Ano</th>`;
+
+    const bodyRows=mesesRows.map(row=>{
+      const cells=row.cols.map((c,mi)=>{
+        const hasAny=c.e>0||c.s>0;
+        const bg=mi===m0cur?'background:var(--bg4);':'';
+        return `<td style="padding:3px 6px;text-align:center;${bg}"><div>${tdE(c.e)}</div><div>${tdS(c.s)}</div><div style="border-top:1px solid var(--border);margin-top:2px;padding-top:2px">${tdL(c.liq,hasAny)}</div></td>`;
+      }).join('');
+      const rAno={e:row.cols.reduce((a,c)=>a+c.e,0),s:row.cols.reduce((a,c)=>a+c.s,0),liq:row.cols.reduce((a,c)=>a+c.liq,0)};
+      const hasAnyAno=rAno.e>0||rAno.s>0;
+      return `<tr><td style="font-size:11px;font-weight:600;color:var(--text);padding:4px 8px;white-space:nowrap;min-width:90px">${row.nome}</td>${cells}<td style="padding:3px 8px;text-align:center;background:var(--bg3)"><div>${tdE(rAno.e)}</div><div>${tdS(rAno.s)}</div><div style="border-top:1px solid var(--border);margin-top:2px;padding-top:2px">${tdL(rAno.liq,hasAnyAno)}</div></td></tr>`;
+    }).join('');
+
+    const totalRow=(()=>{
+      const cells=totCols.map((c,mi)=>{
+        const hasAny=c.e>0||c.s>0;
+        const bg=mi===m0cur?'background:var(--bg4);':'background:var(--bg3);';
+        return `<td style="padding:3px 6px;text-align:center;${bg}border-top:2px solid var(--border)"><div>${tdE(c.e)}</div><div>${tdS(c.s)}</div><div style="border-top:1px solid var(--border);margin-top:2px;padding-top:2px">${tdL(c.liq,hasAny)}</div></td>`;
+      }).join('');
+      const hasAnyAno=totalAno.e>0||totalAno.s>0;
+      return `<tr><td style="font-size:11px;font-weight:700;color:var(--text2);padding:4px 8px;white-space:nowrap;background:var(--bg3);border-top:2px solid var(--border)">TOTAL</td>${cells}<td style="padding:3px 8px;text-align:center;background:var(--bg3);border-top:2px solid var(--border)"><div>${tdE(totalAno.e)}</div><div>${tdS(totalAno.s)}</div><div style="border-top:1px solid var(--border);margin-top:2px;padding-top:2px">${tdL(totalAno.liq,hasAnyAno)}</div></td></tr>`;
+    })();
+
+    return `<div class="card" style="margin-bottom:12px">
+      <div class="ctit" style="margin-bottom:10px">Resumo Anual · ${S.anoAtivo}</div>
+      <div style="overflow-x:auto">
+        <table style="border-collapse:collapse;width:100%;min-width:700px">
+          <thead><tr>
+            <th style="${thStyle};text-align:left;min-width:90px">Reserva</th>
+            ${headerCols}
+            ${totalCol}
+          </tr></thead>
+          <tbody>${bodyRows}${totalRow}</tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:10px;font-size:10px;color:var(--text3)">
+        <span><span style="color:var(--green)">+</span> Aportes</span>
+        <span><span style="color:var(--red)">−</span> Retiradas</span>
+        <span style="font-weight:700">Saldo líquido do mês</span>
+      </div>
+    </div>`;
+  })()}
   ${resDoAno().map((r)=>{const ri=S.res.indexOf(r);return rCard(r,ri);}).join('')}`;
 }
 
@@ -2706,6 +2858,7 @@ function rCard(r,ri){
       <tbody>
         <tr><td style="color:var(--green);font-size:11px">↑</td>${MONTHS.map((_,mi)=>{const v=rE(r,mi);return`<td class="cv" style="font-size:11px;color:${v>0?'var(--green)':'var(--text3)'}">${v>0?fabs(v):'—'}</td>`;}).join('')}</tr>
         <tr><td style="color:var(--red);font-size:11px">↓</td>${MONTHS.map((_,mi)=>{const v=rS(r,mi);return`<td class="cv" style="font-size:11px;color:${v>0?'var(--red)':'var(--text3)'}">${v>0?fabs(v):'—'}</td>`;}).join('')}</tr>
+        <tr style="background:var(--bg4)"><td style="font-size:10px;font-weight:700;color:var(--text2);border-top:2px solid var(--border)">Saldo</td>${MONTHS.map((_,mi)=>{const e=rE(r,mi),s=rS(r,mi),liq=e-s;return(e||s)?`<td class="cv" style="font-size:11px;font-weight:700;color:${liq>=0?'var(--green)':'var(--red)'};border-top:2px solid var(--border)">${liq>=0?'+':''}${fabs(liq)}</td>`:`<td class="cv" style="font-size:11px;color:var(--text3);border-top:2px solid var(--border)">—</td>`;}).join('')}</tr>
       </tbody></table>
     </div>
   </div>`;
@@ -3081,6 +3234,300 @@ function mEditDivida(idx){
   </div>`);
 }
 function quitarDivida(idx){const d=getDividas()[idx];if(!d)return;om(`<div class="modal" onclick="event.stopPropagation()"><div class="mtitle" style="color:var(--green)">${_ico('check-circle',15,'var(--green)')} Quitar Dívida<button class="mclose" onclick="cm()">×</button></div><div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Confirma quitar <strong>${d.nome}</strong>?</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn bg" onclick="getDividas()[${idx}].quitada=true;getDividas()[${idx}].dataQuitacao=td();save();cm();renderNav();if(!hasDividas()&&tab==='div'){gt('home');}else{render();}toast('Quitada!','green')">${_ico('check',13)} Quitar</button></div></div>`);}
+// ── SIMULADORES ──────────────────────────────────────────────────────────────
+if(!window._simTipo) window._simTipo='calc';
+function _novoSim(tipo,ano){
+  if(!S.simuladores)S.simuladores={};
+  if(!S.simuladores[ano])S.simuladores[ano]=[];
+  const m0=new Date().getMonth();
+  const base={id:nid(),nome:'Nova simulação',tipo};
+  if(tipo==='calc') Object.assign(base,{despesas:[],entradas:[]});
+  else if(tipo==='compra') Object.assign(base,{vTotal:0,n:12,iniM:m0,juros:0});
+  else if(tipo==='antec') Object.assign(base,{caixa:0,parcelas:[]});
+  S.simuladores[ano].unshift(base);
+  save();render();
+}
+
+function rSim(mc){
+  const ano=S.anoAtivo;
+  if(!S.simuladores)S.simuladores={};
+  if(!S.simuladores[ano])S.simuladores[ano]=[];
+  const tipo=window._simTipo||'calc';
+
+  const TIPOS=[
+    {id:'calc',  ico:'🧮', label:'Calculadora Rápida',      sub:'Acertos de contas e saldos',         cor:'#10B981',bg:'rgba(16,185,129,.1)',bord:'rgba(16,185,129,.35)'},
+    {id:'compra',ico:'💳', label:'Simulador de Compra',      sub:'Veja como uma compra afeta seu orçamento', cor:'#5B8AF0',bg:'rgba(91,138,240,.1)',bord:'rgba(91,138,240,.35)'},
+    {id:'antec', ico:'⚡', label:'Simulador de Antecipação', sub:'Calcule o impacto de antecipar parcelas',  cor:'#F09A40',bg:'rgba(240,154,64,.1)', bord:'rgba(240,154,64,.35)'},
+  ];
+  const tc=TIPOS.find(t=>t.id===tipo);
+
+  // ─ CARD CALC ────────────────────────────────────────────────────────────────
+  function cardCalc(sim,si){
+    const totD=sim.despesas.reduce((a,x)=>a+x.v,0);
+    const totE=sim.entradas.reduce((a,x)=>a+x.v,0);
+    const saldo=totE-Math.abs(totD);
+    const pos=saldo>=0;
+    return `<div class="card" style="margin-bottom:12px;border-color:${pos?'rgba(16,185,129,.4)':'var(--red2)'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+        <input class="inp" style="font-size:15px;font-weight:700;flex:1;min-width:120px" value="${sim.nome}" onblur="S.simuladores[${ano}][${si}].nome=this.value;save()" placeholder="Nome"/>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span style="font-size:20px;font-weight:800;color:${pos?'var(--green)':'var(--red)'}">${pos?'+':''}${fmt(saldo)}</span>
+          <button class="del" onclick="if(confirm('Remover?')){S.simuladores[${ano}].splice(${si},1);save();render()}">✕</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--red);margin-bottom:6px">Despesas · ${fmt(Math.abs(totD))}</div>
+          ${sim.despesas.map((x,xi)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">
+            <input class="inp isml" style="flex:1" value="${x.desc}" onblur="S.simuladores[${ano}][${si}].despesas[${xi}].desc=this.value;save()" placeholder="Item"/>
+            <input class="inp isml" style="width:90px;text-align:right" value="${fabs(Math.abs(x.v))}" onblur="S.simuladores[${ano}][${si}].despesas[${xi}].v=-Math.abs(pv(this.value));save();render()" placeholder="0,00"/>
+            <button class="del" style="padding:3px 7px" onclick="S.simuladores[${ano}][${si}].despesas.splice(${xi},1);save();render()">✕</button>
+          </div>`).join('')}
+          <button class="btn bxs bgh" style="width:100%;margin-top:4px" onclick="S.simuladores[${ano}][${si}].despesas.push({desc:'',v:0});save();render()">+ Despesa</button>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:6px">Entradas · ${fmt(totE)}</div>
+          ${sim.entradas.map((x,xi)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">
+            <input class="inp isml" style="flex:1" value="${x.desc}" onblur="S.simuladores[${ano}][${si}].entradas[${xi}].desc=this.value;save()" placeholder="Item"/>
+            <input class="inp isml" style="width:90px;text-align:right" value="${fabs(x.v)}" onblur="S.simuladores[${ano}][${si}].entradas[${xi}].v=Math.abs(pv(this.value));save();render()" placeholder="0,00"/>
+            <button class="del" style="padding:3px 7px" onclick="S.simuladores[${ano}][${si}].entradas.splice(${xi},1);save();render()">✕</button>
+          </div>`).join('')}
+          <button class="btn bxs bgh" style="width:100%;margin-top:4px" onclick="S.simuladores[${ano}][${si}].entradas.push({desc:'',v:0});save();render()">+ Entrada</button>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:${pos?'rgba(16,185,129,.06)':'var(--red3)'};margin:-1px -1px -1px;padding:10px 14px;border-radius:0 0 var(--radius) var(--radius)">
+        <span style="font-size:11px;color:var(--text2)">Resultado</span>
+        <span style="font-size:18px;font-weight:800;color:${pos?'var(--green)':'var(--red)'}">${pos?'Sobra':'Tira da reserva'}: ${fmt(Math.abs(saldo))}</span>
+      </div>
+    </div>`;
+  }
+
+  // ─ CARD COMPRA ──────────────────────────────────────────────────────────────
+  function cardCompra(sim,si){
+    const vTotal=sim.vTotal||0;
+    const n=sim.n||1;
+    const juros=sim.juros||0;
+    const iniM=sim.iniM!=null?sim.iniM:new Date().getMonth();
+    // Cálculo: se juros=0, parcela = vTotal/n; se juros>0, tabela Price
+    let vParc;
+    if(juros>0){const i=juros/100;vParc=vTotal*(i*Math.pow(1+i,n))/(Math.pow(1+i,n)-1);}
+    else{vParc=n>0?vTotal/n:0;}
+    const vTotalPago=vParc*n;
+    const jurosTotal=vTotalPago-vTotal;
+    const mesOpts=MONTHS.map((m,i)=>`<option value="${i}"${i===iniM?' selected':''}>${m.charAt(0).toUpperCase()+m.slice(1,3)}</option>`).join('');
+    const iniAbs=ano*12+iniM;
+    const fimAbs=iniAbs+n-1;
+    // Helper: retorna dados mensais de um ano para projeção
+    // Anos reais: usa dados exatos. Anos futuros: usa orçamento base (ano ativo) com tipo
+    function _getMesData(yr,mi){
+      const isBase=!S.dados[yr];
+      const yd=isBase?D():S.dados[yr];
+      let e=0,d=0,da=0;
+      (yd.entradas||[]).forEach(item=>{
+        const tp=item.tipo||'mensal';
+        if(isBase&&tp==='pontual') return;
+        if(isBase&&tp==='anual'){
+          // só conta no mês primário (primeiro mês com valor)
+          const primoMes=item.vals.findIndex(v=>v>0);
+          if(primoMes===mi) e+=item.vals[primoMes]||0;
+        } else {
+          e+=item.vals[mi]||0;
+        }
+      });
+      (yd.despesas||[]).forEach(item=>{
+        const tp=item.tipo||'mensal';
+        if(isBase&&tp==='pontual') return;
+        let v=0;
+        if(isBase&&tp==='anual'){
+          const primoMes=item.vals.findIndex(v=>v>0);
+          if(primoMes===mi) v=item.vals[primoMes]||0;
+        } else {
+          v=item.vals[mi]||0;
+        }
+        d+=v;
+        if(item.da) da+=v;
+      });
+      // parcelas já registradas (cross-year)
+      const mAbsRef=yr*12+mi;
+      let pm=0;
+      Object.entries(S.dados||{}).forEach(([yrStr,ydd])=>{
+        (ydd.pc||[]).forEach(p=>{
+          const ai=p.anoIni||parseInt(yrStr);
+          const pIni=ai*12+p.ini;
+          const pFim=pIni+p.n-1;
+          if(mAbsRef>=pIni&&mAbsRef<=pFim) pm+=p.vp;
+        });
+      });
+      return {e,d,da,pm};
+    }
+    // Gera linhas para todos os meses da simulação
+    let mesesNeg=0;
+    let lastYr=-1;
+    const rows=[];
+    for(let pi=0;pi<n;pi++){
+      const mAbs=iniAbs+pi;
+      const yr=Math.floor(mAbs/12);
+      const mi=mAbs%12;
+      const mn=MONTHS[mi];
+      const isFuture=yr!==ano;
+      if(yr!==lastYr){
+        lastYr=yr;
+        rows.push(`<tr><td colspan="5" style="padding:4px 8px;background:var(--bg4);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em">${yr}${isFuture?' · orçamento base':''}</td></tr>`);
+      }
+      const {e,d,da,pm}=_getMesData(yr,mi);
+      const totalParc=pm+vParc;
+      const saldo=e-d-da-totalParc;
+      const negativo=saldo<0;
+      if(negativo) mesesNeg++;
+      const rowBg=negativo?'rgba(240,82,82,.10)':'';
+      rows.push(`<tr style="background:${rowBg}">
+        <td style="padding:5px 8px;font-weight:600;font-size:12px;color:var(--text2)">${mn.charAt(0).toUpperCase()+mn.slice(1,3)}</td>
+        <td style="padding:5px 8px;text-align:right;font-size:12px;font-weight:700;color:var(--blue)">${fmt(vParc)}</td>
+        <td style="padding:5px 8px;text-align:right;font-size:12px;color:var(--text)">${fmt(totalParc)}</td>
+        <td style="padding:5px 8px;text-align:right;font-size:12px;font-weight:700;color:${negativo?'var(--red)':'var(--green)'}">${fmt(saldo)}</td>
+        ${negativo?`<td style="padding:5px 6px;font-size:10px;font-weight:700;color:var(--red)">Limite!</td>`:'<td></td>'}
+      </tr>`);
+    }
+    const cruza=fimAbs>ano*12+11;
+    const ok=mesesNeg===0;
+    return `<div class="card" style="margin-bottom:12px;border-color:${ok?'rgba(91,138,240,.4)':'var(--red2)'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap">
+        <input class="inp" style="font-size:15px;font-weight:700;flex:1;min-width:120px" value="${sim.nome}" onblur="S.simuladores[${ano}][${si}].nome=this.value;save()" placeholder="Nome"/>
+        <button class="del" onclick="if(confirm('Remover?')){S.simuladores[${ano}].splice(${si},1);save();render()}">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div><div class="fl">Valor (R$)</div><input class="inp" value="${vTotal?fabs(vTotal):''}" onblur="S.simuladores[${ano}][${si}].vTotal=pv(this.value);save();render()" placeholder="0,00"/></div>
+        <div><div class="fl">Parcelas</div><input class="inp" type="number" min="1" value="${n}" onblur="S.simuladores[${ano}][${si}].n=+this.value||1;save();render()"/></div>
+        <div><div class="fl">Mês início</div><select class="inp" onchange="S.simuladores[${ano}][${si}].iniM=+this.value;save();render()">${mesOpts}</select></div>
+        <div><div class="fl">Juros % a.m.</div><input class="inp" type="number" step="0.01" value="${juros||''}" placeholder="0" onblur="S.simuladores[${ano}][${si}].juros=+this.value||0;save();render()"/></div>
+      </div>
+      <div style="background:rgba(91,138,240,.07);border:1px solid rgba(91,138,240,.2);border-radius:var(--radius-sm);padding:12px 14px;display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+        <div><div style="font-size:10px;color:var(--text2)">Parcela mensal</div><div style="font-size:22px;font-weight:800;color:var(--blue)">${fmt(vParc)}</div></div>
+        <div><div style="font-size:10px;color:var(--text2)">Impacto total</div><div style="font-size:18px;font-weight:700;color:${juros>0?'var(--orange)':'var(--text)'}">${fmt(vTotalPago)}${juros>0?` <span style="font-size:10px;color:var(--orange)">(+${fmt(jurosTotal)} juros)</span>`:''}</div></div>
+        ${mesesNeg>0?`<div style="background:rgba(240,82,82,.12);border:1px solid var(--red2);border-radius:var(--radius-sm);padding:6px 12px;font-size:12px;font-weight:700;color:var(--red)">⚠ Ultrapassa o limite em ${mesesNeg} mês(es). Considere reduzir ou postergar.</div>`:''}
+        ${cruza?`<div style="font-size:11px;color:var(--orange)">↪ Parcelas continuam em ${ano+1}</div>`:''}
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:var(--bg4)">
+          <th style="padding:6px 8px;text-align:left;font-size:10px;color:var(--text3);font-weight:700">MÊS</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;color:var(--text3);font-weight:700">+PARCELA</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;color:var(--text3);font-weight:700">TOTAL PARC.</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;color:var(--text3);font-weight:700">SALDO</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  // ─ CARD ANTECIPAÇÃO ─────────────────────────────────────────────────────────
+  function cardAntec(sim,si){
+    const caixa=sim.caixa||0;
+    const parcelas=sim.parcelas||[];
+    const totAntecipar=parcelas.reduce((a,p)=>a+(p.restantes||0)*(p.vp||0),0);
+    const totalEconomia=parcelas.reduce((a,p)=>a+(p.vp||0),0); // libera por mês
+    const saldoCaixa=caixa-totAntecipar;
+    const ok=saldoCaixa>=0;
+    const d2=D();const m0=new Date().getMonth();
+    const pcAtivos=d2.pc.filter(p=>{const ai=p.anoIni||S.anoAtivo;return ai*12+p.ini+p.n-1>=S.anoAtivo*12+m0;});
+    return `<div class="card" style="margin-bottom:12px;border-color:${ok?'rgba(240,154,64,.4)':'var(--red2)'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap">
+        <input class="inp" style="font-size:15px;font-weight:700;flex:1;min-width:120px" value="${sim.nome}" onblur="S.simuladores[${ano}][${si}].nome=this.value;save()" placeholder="Nome"/>
+        <button class="del" onclick="if(confirm('Remover?')){S.simuladores[${ano}].splice(${si},1);save();render()}">✕</button>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="fl">Caixa disponível para antecipar (R$)</div>
+        <input class="inp" value="${caixa?fabs(caixa):''}" onblur="S.simuladores[${ano}][${si}].caixa=pv(this.value);save();render()" placeholder="0,00"/>
+      </div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--orange);margin-bottom:8px">Parcelas a antecipar</div>
+      ${parcelas.map((p,pi)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;flex-wrap:wrap">
+        <input class="inp isml" style="flex:2;min-width:100px" value="${p.desc||''}" onblur="S.simuladores[${ano}][${si}].parcelas[${pi}].desc=this.value;save()" placeholder="Descrição"/>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <input class="inp isml" style="width:50px;text-align:center" type="number" min="1" value="${p.restantes||''}" onblur="S.simuladores[${ano}][${si}].parcelas[${pi}].restantes=+this.value||0;save();render()" placeholder="Parc."/>
+          <span style="font-size:11px;color:var(--text3)">×</span>
+          <input class="inp isml" style="width:80px;text-align:right" value="${p.vp?fabs(p.vp):''}" onblur="S.simuladores[${ano}][${si}].parcelas[${pi}].vp=pv(this.value);save();render()" placeholder="0,00"/>
+          <span style="font-size:11px;color:var(--orange);font-weight:600;min-width:70px;text-align:right">= ${fmt((p.restantes||0)*(p.vp||0))}</span>
+        </div>
+        <button class="del" style="padding:3px 7px" onclick="S.simuladores[${ano}][${si}].parcelas.splice(${pi},1);save();render()">✕</button>
+      </div>`).join('')}
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn bxs bgh" onclick="S.simuladores[${ano}][${si}].parcelas.push({desc:'',restantes:0,vp:0});save();render()">+ Manual</button>
+        ${pcAtivos.length?`<select class="inp isml" onchange="if(this.value>=0){const p=D().pc[+this.value];S.simuladores[${ano}][${si}].parcelas.push({desc:p.desc,restantes:p.n-(p.ant||0),vp:p.vp});save();render();this.value=''}"style="max-width:200px"><option value="">Importar parcelado…</option>${pcAtivos.map((p,pi)=>`<option value="${d2.pc.indexOf(p)}">${p.desc} (${p.n-(p.ant||0)}x ${fmt(p.vp)})</option>`).join('')}</select>`:''}</div>
+      <div style="background:${ok?'rgba(240,154,64,.08)':'var(--red3)'};border:1px solid ${ok?'var(--orange2)':'var(--red2)'};border-radius:var(--radius-sm);padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
+        <div><div style="font-size:10px;color:var(--text2)">Total a desembolsar</div><div style="font-size:20px;font-weight:800;color:var(--orange)">${fmt(totAntecipar)}</div></div>
+        <div><div style="font-size:10px;color:var(--text2)">Caixa restante</div><div style="font-size:16px;font-weight:700;color:${ok?'var(--green)':'var(--red)'}">${fmt(saldoCaixa)}</div></div>
+        <div><div style="font-size:10px;color:var(--text2)">Economia/mês (libera)</div><div style="font-size:16px;font-weight:700;color:var(--green)">${fmt(totalEconomia)}</div></div>
+      </div>
+      <div style="margin-top:10px;text-align:right;font-size:12px;font-weight:600;color:${ok?'var(--orange)':'var(--red)'}">${ok?`✓ Caixa suficiente — sobram ${fmt(saldoCaixa)} após antecipar`:'✗ Caixa insuficiente — faltam '+fmt(Math.abs(saldoCaixa))}</div>
+    </div>`;
+  }
+
+  const NOVO={calc:{nome:'Nova calculadora',tipo:'calc',despesas:[],entradas:[]},compra:{nome:'Nova compra',tipo:'compra',vTotal:0,n:12,juros:0,renda:tE(new Date().getMonth()),despF:tD(new Date().getMonth())+tPM(new Date().getMonth())},antec:{nome:'Nova antecipação',tipo:'antec',caixa:0,parcelas:[]}};
+  const filtrados=S.simuladores[ano].filter(s=>(s.tipo||'calc')===tipo);
+  const allIdx=S.simuladores[ano].map((s,i)=>({s,i})).filter(({s})=>(s.tipo||'calc')===tipo);
+
+  mc.innerHTML=`
+  <div style="font-size:18px;font-weight:700;margin-bottom:14px">Simuladores · ${ano}</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px">
+    ${TIPOS.map(t=>`<div onclick="window._simTipo='${t.id}';render()" style="cursor:pointer;border:2px solid ${t.id===tipo?t.bord:'var(--border)'};background:${t.id===tipo?t.bg:'var(--bg3)'};border-radius:var(--radius);padding:14px 16px;transition:.15s">
+      <div style="font-size:26px;margin-bottom:6px">${t.ico}</div>
+      <div style="font-size:13px;font-weight:700;color:${t.id===tipo?t.cor:'var(--text)'}">${t.label}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px;line-height:1.4">${t.sub}</div>
+      <div style="font-size:10px;color:${t.cor};margin-top:6px;font-weight:600">${S.simuladores[ano].filter(s=>(s.tipo||'calc')===t.id).length} simulações</div>
+    </div>`).join('')}
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div style="font-size:14px;font-weight:700;color:${tc.cor}">${tc.ico} ${tc.label}</div>
+    <button class="btn bsm" style="background:${tc.cor};border-color:${tc.cor};color:#fff" onclick="_novoSim('${tipo}',${ano})">+ Nova simulação</button>
+  </div>
+  ${filtrados.length===0?`<div class="card" style="text-align:center;padding:40px 16px;color:var(--text3)">
+    <div style="font-size:36px;margin-bottom:8px">${tc.ico}</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text2)">Nenhuma simulação de ${tc.label.toLowerCase()} ainda</div>
+    <div style="font-size:12px">${tc.sub}</div>
+  </div>`:allIdx.map(({s,i})=>tipo==='calc'?cardCalc(s,i):tipo==='compra'?cardCompra(s,i):cardAntec(s,i)).join('')}`;
+}
+
+// ── EXTRAORDINÁRIOS ───────────────────────────────────────────────────────────
+function rExt(mc){
+  // S.ext é único (sem ano): { 0:[{desc,v,data}], 1:[...], ... } — 0..11 = meses
+  if(!S.ext||Array.isArray(S.ext)||typeof S.ext[0]==='undefined'&&Object.keys(S.ext).some(k=>isNaN(k))){S.ext={};}
+  const ext=S.ext;
+  const totPorMes=MONTHS.map((_,mi)=>(ext[mi]||[]).reduce((a,x)=>a+x.v,0));
+  const totAno=totPorMes.reduce((a,v)=>a+v,0);
+  const hoje=new Date();
+
+  mc.innerHTML=`
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+    <div>
+      <div style="font-size:18px;font-weight:700">Extraordinários Anuais</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">Eventos recorrentes que acontecem todo ano — registre aqui para se planejar</div>
+    </div>
+    <div style="font-size:12px;color:var(--text2)">Total estimado/ano: <strong style="color:var(--red)">${fmt(Math.abs(totAno))}</strong></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+    ${MONTHS.map((m,mi)=>{
+      const itens=ext[mi]||[];
+      const tot=totPorMes[mi];
+      const isMesAtual=hoje.getMonth()===mi;
+      return `<div class="card" style="border-color:${isMesAtual?'var(--blue2)':tot<0?'var(--orange2)':'var(--border)'}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:700;color:${isMesAtual?'var(--blue)':'var(--text)'}">${m}${isMesAtual?` <span style="font-size:10px;background:var(--blue3);color:var(--blue);border:1px solid var(--blue2);border-radius:3px;padding:0 4px">atual</span>`:''}</div>
+          ${tot<0?`<span style="font-size:12px;font-weight:700;color:var(--red)">${fmt(Math.abs(tot))}</span>`:'<span style="font-size:11px;color:var(--text3)">—</span>'}
+        </div>
+        ${itens.map((x,xi)=>`<div style="margin-bottom:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
+            <input class="inp isml" style="flex:1;font-size:11px" value="${x.desc}" onblur="if(!S.ext[${mi}])S.ext[${mi}]=[];S.ext[${mi}][${xi}].desc=this.value;save()" placeholder="Evento"/>
+            <input class="inp isml" style="width:80px;text-align:right;font-size:11px" value="${x.v<0?fabs(Math.abs(x.v)):''}" onblur="if(!S.ext[${mi}])S.ext[${mi}]=[];S.ext[${mi}][${xi}].v=-Math.abs(pv(this.value));save();render()" placeholder="0,00"/>
+            <button class="del" style="padding:3px 6px;font-size:10px" onclick="S.ext[${mi}].splice(${xi},1);save();render()">✕</button>
+          </div>
+          ${x.data?`<div style="font-size:9px;color:var(--text3)">Registrado em ${fdf(x.data)}</div>`:''}
+        </div>`).join('')}
+        <button class="btn bxs bgh" style="width:100%;font-size:11px;margin-top:2px" onclick="if(!S.ext[${mi}])S.ext[${mi}]=[];S.ext[${mi}].push({desc:'',v:0,data:'${td()}'});save();render()">+ Evento</button>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
 function rDiv(mc){
   if(!S.dividas)S.dividas=[];
   const divAtivas=S.dividas.filter(d=>!d.quitada);const divQuitadas=S.dividas.filter(d=>d.quitada);
@@ -3339,6 +3786,12 @@ function processImportFatura(e, cartaoId, cartaoNome){
     const iDate=cols.indexOf('date'),iTitle=cols.indexOf('title'),iAmount=cols.indexOf('amount');
     if(iDate<0||iTitle<0||iAmount<0){toast('Colunas não encontradas','red');return;}
 
+    // Determina a fatura pelo nome do arquivo (ex: Nubank_2026-08-03.csv → 2026-08)
+    // Todos os lançamentos do mesmo CSV pertencem à mesma fatura (ciclo de cobrança)
+    let faturaGlobal=null;
+    const fnMatch=file.name.match(/(\d{4})-(\d{2})-\d{2}/);
+    if(fnMatch) faturaGlobal=fnMatch[1]+'-'+fnMatch[2];
+
     const rows=[];
     for(let i=1;i<lines.length;i++){
       const parts=csvSplitLine(lines[i]);
@@ -3355,22 +3808,29 @@ function processImportFatura(e, cartaoId, cartaoNome){
         // en-US format: 1234.56 → parse directly
         amount=parseFloat(rawAmt.replace(/,/g,''));
       }
-      if(!date||!title||isNaN(amount)||amount<=0) continue;
+      if(!date||!title||isNaN(amount)) continue;
+      // "Pagamento recebido" = quitação de fatura anterior → ignorar
+      // Outros negativos (estorno, cashback) = crédito na fatura atual → incluir
+      const isPagamento=title.toLowerCase().includes('pagamento recebido');
+      if(isPagamento||amount===0) continue;
+      const isCredito=amount<0;
 
       const [y,m,d]=date.split('-').map(Number);
+      // Se não conseguiu detectar pelo nome do arquivo, usa o mês da última transação (max date)
       const fatM=m<10?'0'+m:String(m);
-      const fatura=y+'-'+fatM;
-      const pm=title.match(/Parcela\s+(\d+)\/(\d+)/i);
+      const fatura=faturaGlobal||(y+'-'+fatM);
+      const pm=!isCredito&&title.match(/Parcela\s+(\d+)\/(\d+)/i);
       const is_parcela=!!pm;
-      const is_antecipada=title.toLowerCase().includes('antecipada');
+      const is_antecipada=!isCredito&&title.toLowerCase().includes('antecipada');
 
       rows.push({
         id:'imp_'+Date.now()+'_'+i,
         date,title,amount,
         cartao:cartaoNome,
         fatura,
-        categoria:autoCategoria(title),
+        categoria:isCredito?'Crédito':autoCategoria(title),
         is_parcela,is_antecipada,
+        is_credito:isCredito,
         parcela_num:pm?+pm[1]:null,
         parcela_tot:pm?+pm[2]:null,
         _y:y,_m:m-1,_d:d,
@@ -3379,11 +3839,13 @@ function processImportFatura(e, cartaoId, cartaoNome){
 
     if(!rows.length){toast('Nenhum lançamento encontrado','red');return;}
 
-    // Detect Parcela 1/N from this CSV
-    const parc1=rows.filter(r=>r.is_parcela&&r.parcela_num===1&&!r.is_antecipada);
-    // Dedupe by clean title + total parcelas
+    // Coleta todos pc[] de todos os anos para checar duplicatas
+    const allPcDesc=new Set();
+    Object.values(S.dados||{}).forEach(d=>{(d.pc||[]).forEach(p=>allPcDesc.add((p.desc||'').toLowerCase().trim()));});
+
+    // Detect Parcela 1/N from this CSV (novas compras)
     const parcMap={};
-    parc1.forEach(r=>{
+    rows.filter(r=>r.is_parcela&&r.parcela_num===1&&!r.is_antecipada).forEach(r=>{
       const cleanTitle=r.title.replace(/\s*-?\s*Parcela\s+\d+\/\d+/i,'').trim();
       const key=cleanTitle+'|'+r.parcela_tot;
       if(!parcMap[key]) parcMap[key]={
@@ -3395,6 +3857,46 @@ function processImportFatura(e, cartaoId, cartaoNome){
         iniYear:r._y,
         cartao:cartaoNome,
         _key:key,
+        emAndamento:false,
+      };
+    });
+    // Detect parcelas em andamento (parcela_num > 1) que não estão cadastradas
+    rows.filter(r=>r.is_parcela&&r.parcela_num>1&&!r.is_antecipada).forEach(r=>{
+      const cleanTitle=r.title.replace(/\s*-?\s*Parcela\s+\d+\/\d+/i,'').trim();
+      const key=cleanTitle+'|'+r.parcela_tot;
+      if(parcMap[key]) return; // já detectado como nova compra
+      if(allPcDesc.has(cleanTitle.toLowerCase().trim())) return; // já cadastrado
+      // Detectar se CSV usa data-de-compra (MP) ou data-de-cobrança (Nubank)
+      // Se a data da transação é > 2 meses antes da fatura = data-de-compra (MP)
+      let iniM,iniY;
+      if(faturaGlobal){
+        const [fatY,fatMRaw]=faturaGlobal.split('-').map(Number);
+        const fatAbs=fatY*12+(fatMRaw-1);
+        const txAbs=r._y*12+r._m;
+        const isDataCompra=(fatAbs-txAbs)>2;
+        if(isDataCompra){
+          // MP: a data já é o mês de início da compra
+          iniM=r._m;iniY=r._y;
+        } else {
+          // Nubank: data é a data de cobrança, calcular início retroativamente
+          iniM=(fatMRaw-1)-(r.parcela_num-1);iniY=fatY;
+          while(iniM<0){iniM+=12;iniY--;}
+        }
+      } else {
+        iniM=r._m-(r.parcela_num-1);iniY=r._y;
+        while(iniM<0){iniM+=12;iniY--;}
+      }
+      parcMap[key]={
+        desc:cleanTitle,
+        n:r.parcela_tot,
+        vp:r.amount,
+        total:Math.round(r.amount*r.parcela_tot*100)/100,
+        ini:iniM,
+        iniYear:iniY,
+        cartao:cartaoNome,
+        _key:key,
+        emAndamento:true,
+        parcAtual:r.parcela_num,
       };
     });
     const parcDetected=Object.values(parcMap);
@@ -3413,13 +3915,34 @@ function processImportFatura(e, cartaoId, cartaoNome){
       // Add selected parcelas to pc[]
       if(selectedParcs&&selectedParcs.length>0){
         selectedParcs.forEach(p=>{
-          const ano=p.iniYear;
-          if(!S.dados[ano]){S.dados[ano]={entradas:[],despesas:[],pc:[],pd:[],cc:{nubank:0,itau:0,mp:0},obE:[],obD:[]};}
-          S.dados[ano].pc.push({
-            id:nid(),desc:p.desc,cartao:p.cartao,
+          const anoIni=p.iniYear;
+          const anoAtv=S.anoAtivo;
+          // Garante que o ano de origem existe (para histórico)
+          if(!S.dados[anoIni]){S.dados[anoIni]={entradas:[],despesas:[],pc:[],pd:[],cc:{nubank:0,itau:0,mp:0},obE:[],obD:[]};}
+          if(!S.anos.includes(anoIni))S.anos.push(anoIni);
+          const mIniAbs=anoIni*12+p.ini;
+          const mAtivoIni=anoAtv*12;
+          // ant = parcelas que já ocorreram antes do ano ativo
+          const antBase=Math.max(0,mAtivoIni-mIniAbs);
+          const novoId=nid();
+          // Salva no ano de início
+          S.dados[anoIni].pc.push({
+            id:novoId,desc:p.desc,cartao:p.cartao,
             total:p.total,n:p.n,vp:p.vp,
-            ini:p.ini,anoIni:ano,ant:0,
+            ini:p.ini,anoIni:anoIni,ant:0,
           });
+          // Se o parcelado vai além do ano de início, propaga para o ano ativo
+          if(anoIni<anoAtv&&antBase<p.n){
+            if(!S.dados[anoAtv]){S.dados[anoAtv]={entradas:[],despesas:[],pc:[],pd:[],cc:{nubank:0,itau:0,mp:0},obE:[],obD:[]};}
+            const jaExiste=S.dados[anoAtv].pc.some(x=>x._origemId===novoId);
+            if(!jaExiste){
+              S.dados[anoAtv].pc.push({
+                id:nid(),_origemId:novoId,desc:p.desc,cartao:p.cartao,
+                total:p.total,n:p.n,vp:p.vp,
+                ini:p.ini,anoIni:anoIni,ant:antBase,
+              });
+            }
+          }
         });
       }
 
@@ -3435,22 +3958,27 @@ function processImportFatura(e, cartaoId, cartaoNome){
       window._parcOnConfirm=onConfirm;
 
       const rowsHtml=parcDetected.map((p,i)=>`
-        <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid ${p.emAndamento?'var(--orange2)':'var(--border)'};border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px">
           <input type="checkbox" id="parc_chk_${i}" data-key="${p._key}" checked style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0"
             onchange="window._parcSel[this.dataset.key]=this.checked"/>
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.desc}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">${p.n}x de R$${p.vp.toLocaleString('pt-BR',{minimumFractionDigits:2})} = <strong>R$${p.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong> · início ${MONTHS[p.ini]}/${p.iniYear}</div>
+            <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.desc}${p.emAndamento?` <span style="font-size:10px;background:var(--orange3);color:var(--orange);border:1px solid var(--orange2);border-radius:3px;padding:0 4px;vertical-align:middle">${p.parcAtual}/${p.n} em andamento</span>`:''}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">${p.n}x de R$${p.vp.toLocaleString('pt-BR',{minimumFractionDigits:2})} = <strong>R$${p.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong> · início ${MONTHS[p.ini]}/${p.iniYear}${p.emAndamento?` <span style="color:var(--orange)">(estimado)</span>`:''}</div>
           </div>
-          <span class="tag tpa" style="flex-shrink:0">Nubank</span>
+          <span class="tag tpa" style="flex-shrink:0">${p.cartao}</span>
         </div>`).join('');
 
+      const temAndamento=parcDetected.some(p=>p.emAndamento);
       om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:520px">
         <div class="mtitle">${_ico('box',15)} Parcelados detectados<button class="mclose" onclick="cm()">×</button></div>
-        <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
-          Encontrei <strong>${parcDetected.length}</strong> compra(s) parcelada(s) iniciando nesta fatura.<br>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
+          Encontrei <strong>${parcDetected.length}</strong> compra(s) parcelada(s) nesta fatura.<br>
           Selecione quais deseja adicionar à aba <strong>Parcelados</strong>:
         </div>
+        ${temAndamento?`<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(240,154,64,.08);border:1px solid var(--orange2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--text2);line-height:1.5">
+          <span style="font-size:15px;flex-shrink:0">⚠️</span>
+          <span>Itens marcados como <strong style="color:var(--orange)">em andamento</strong> tiveram o mês de início estimado automaticamente — o CSV não informa a data exata. Após importar, <strong>revise na aba Parcelados</strong> e edite se o mês de início estiver errado.</span>
+        </div>`:''}
         <div style="max-height:300px;overflow-y:auto;margin-bottom:14px">${rowsHtml}</div>
         <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn bxs bgh" onclick="document.querySelectorAll('[id^=parc_chk_]').forEach(el=>{el.checked=true;window._parcSel[el.dataset.key]=true;})">Selecionar todos</button>
@@ -3570,11 +4098,15 @@ function rCartaoTab(mc, cartaoId){
 
   const txFatura=byFatura[faturaAtiva]||[];
   const txFiltered=txFatura.filter(matchFiltro);
-  const totalFatura=txFiltered.reduce((s,t)=>s+t.amount,0);
+  // Total líquido = cobranças - créditos - antecipação manual (bate com o PDF do banco)
+  const _ajKey=cartaoId+'_'+faturaAtiva;
+  const _ajVal=(S.faturaAjuste&&S.faturaAjuste[_ajKey])||0;
+  const totalFatura=txFiltered.reduce((s,t)=>s+t.amount,0)-_ajVal;
+  const totalCreditos=txFiltered.filter(t=>t.is_credito).reduce((s,t)=>s+Math.abs(t.amount),0);
 
-  // Cat breakdown for active fatura
+  // Cat breakdown — exclui créditos do donut/categorias
   const catTotals={};
-  txFiltered.forEach(t=>{const c=getTxCat(t);catTotals[c]=(catTotals[c]||0)+t.amount;});
+  txFiltered.filter(t=>!t.is_credito).forEach(t=>{const c=getTxCat(t);catTotals[c]=(catTotals[c]||0)+t.amount;});
   const catItems=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
 
   // ── DONUT with hover tooltip ─────────────────────────────────────────────
@@ -3701,9 +4233,13 @@ function rCartaoTab(mc, cartaoId){
   // Which faturas are from S.faturas (imported, deletable) vs TX_DATA (embedded)
   const importedFaturas=new Set((S.faturas||[]).filter(t=>t.cartao===cartao.nome).map(t=>t.fatura));
 
+  if(!S.faturaAjuste)S.faturaAjuste={};
   const faturasPills=faturas.map(fat=>{
     const txF=(byFatura[fat]||[]).filter(matchFiltro);
-    const tot=txF.reduce((s,t)=>s+t.amount,0);
+    const totBruto=txF.reduce((s,t)=>s+t.amount,0);
+    const ajKey=cartaoId+'_'+fat;
+    const aj=S.faturaAjuste[ajKey]||0;
+    const tot=totBruto-aj;
     const isAtiva=fat===faturaAtiva;
     const isDeletable=importedFaturas.has(fat);
     return `<div style="display:inline-flex;flex-direction:column;align-items:stretch;flex-shrink:0">
@@ -3730,6 +4266,14 @@ function rCartaoTab(mc, cartaoId){
   const txHtml=txFiltered.length===0
     ?'<div style="text-align:center;color:var(--text3);padding:20px;font-size:12px">Nenhum lançamento com os filtros atuais.</div>'
     :txFiltered.map(t=>{
+      if(t.is_credito){
+        return `<div class="tx-row" style="opacity:.75">
+          <span class="tx-date">${t.date.slice(8)+"/"+t.date.slice(5,7)}</span>
+          <span class="tx-title" style="color:var(--green)">${getTxTitle(t).replace(/</g,'&lt;')}</span>
+          <span class="tx-cat"><span class="cat-pill" style="background:var(--green3);color:var(--green);border-color:var(--green2)">Crédito</span></span>
+          <span class="tx-val" style="color:var(--green)">− R$${Math.abs(t.amount).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+        </div>`;
+      }
       const cat=getTxCat(t);
       const col=getCatColorDyn(cat,0);const bgCol=getCatColorDyn(cat,1);
       const isParcLabel=t.is_parcela?`<span style="font-size:9px;color:var(--orange);background:var(--orange3);border:1px solid var(--orange2);border-radius:3px;padding:0 4px;flex-shrink:0">${t.parcela_num}/${t.parcela_tot}</span>`:'';
@@ -3751,9 +4295,16 @@ function rCartaoTab(mc, cartaoId){
       <div style="font-size:12px;color:var(--text2);margin-top:2px">${faturas.length} faturas · ${txAll.length} lançamentos</div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button class="btn bb bsm" onclick="triggerImportFatura('${cartaoId}','${cartao.nome}')">📂 Importar fatura</button>
       <button class="btn bgh bsm" style="display:inline-flex;align-items:center;gap:4px" onclick="mGerenciarCats()">${_ico('tag',13)} Categorias</button>
     </div>
+  </div>
+
+  <div id="fat-drop-${cartaoId}" onclick="triggerImportFatura('${cartaoId}','${cartao.nome}')"
+    ondragover="event.preventDefault();document.getElementById('fat-drop-${cartaoId}').style.borderColor='var(--blue)';document.getElementById('fat-drop-${cartaoId}').style.background='var(--bg3)'"
+    ondragleave="document.getElementById('fat-drop-${cartaoId}').style.borderColor='';document.getElementById('fat-drop-${cartaoId}').style.background=''"
+    ondrop="event.preventDefault();document.getElementById('fat-drop-${cartaoId}').style.borderColor='';document.getElementById('fat-drop-${cartaoId}').style.background='';processImportFatura({target:{files:event.dataTransfer.files}},'${cartaoId}','${cartao.nome}')"
+    style="border:2px dashed var(--border2);border-radius:var(--radius);padding:14px 16px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:12px;color:var(--text3);font-size:12px;user-select:none">
+    📂 Arraste o CSV aqui ou clique para importar fatura
   </div>
 
   <div class="card" style="margin-bottom:12px">
@@ -3766,7 +4317,28 @@ function rCartaoTab(mc, cartaoId){
       <div>
         <div style="font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Fatura ${fmtFatura(faturaAtiva)}</div>
         <div style="font-size:36px;font-weight:800;color:var(--red);line-height:1">R$${totalFatura.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px">${txFiltered.length} lançamentos</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">${txFiltered.filter(t=>!t.is_credito).length} lançamentos${totalCreditos>0?` · <span style="color:var(--green)">− R$${totalCreditos.toLocaleString('pt-BR',{minimumFractionDigits:2})} créditos</span>`:''}</div>
+        ${(()=>{
+          const ajKey=cartaoId+'_'+faturaAtiva;
+          if(!S.faturaAjuste)S.faturaAjuste={};
+          const ajVal=S.faturaAjuste[ajKey]||0;
+          return `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:11px;color:var(--text2)">Antecipado:</span>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="font-size:12px;color:var(--text3)">R$</span>
+                <input id="fat-ajuste-inp" class="inp isml" style="width:100px;text-align:right" placeholder="0,00" value="${ajVal>0?fabs(ajVal):''}"
+                  onblur="if(!S.faturaAjuste)S.faturaAjuste={};S.faturaAjuste['${ajKey}']=pv(this.value);save();render()"
+                  onkeydown="if(event.key==='Enter')this.blur()"/>
+              </div>
+              ${ajVal>0?`<span style="font-size:13px;font-weight:700;color:var(--green)">✓ Total ajustado</span>`:''}
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:6px;margin-top:8px;background:rgba(240,154,64,.08);border:1px solid var(--orange2);border-radius:8px;padding:8px 10px">
+              <span style="font-size:14px;flex-shrink:0">⚠️</span>
+              <span style="font-size:11px;color:var(--orange);line-height:1.5">Se o total da fatura aqui não bate com o app do banco, informe aqui o valor que você <strong>antecipou</strong> — o desconto de antecipação não é exportado no CSV.</span>
+            </div>
+          </div>`;
+        })()}
       </div>
       <div style="text-align:right">
         ${catItems.slice(0,3).map(([cat,val])=>`<div style="font-size:12px;color:var(--text2)"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${getCatColorDyn(cat,0)};margin-right:4px"></span>${cat}: <strong style="color:var(--text)">R$${val.toLocaleString('pt-BR',{minimumFractionDigits:0})}</strong></div>`).join('')}
@@ -4066,10 +4638,10 @@ function fechaDetalhes(){
 // ── MODAIS ──
 
 // tipo selector helper
-const _tipo={adT:'fixa',aeT:'fixa'};
+const _tipo={adT:'fixa',aeT:'fixa',oeT:'fm',odT:'fm'};
 function selT(pref,t){
   _tipo[pref+'T']=t;
-  ['fixa','parc','unica'].forEach(x=>{
+  ['fixa','parc','unica','fm','fa','fv'].forEach(x=>{
     const el=document.getElementById(pref+'-'+x);if(el)el.classList.toggle('on',x===t);
     const op=document.getElementById(pref+'_'+x);if(op)op.style.display=x===t?'block':'none';
   });
@@ -4090,7 +4662,7 @@ function mAddD(defaultMes){
     <div class="fr c2">
       <div><div class="fl">Valor (R$)</div><input id="ad-v" class="inp" placeholder="0,00"/></div>
       <div><div class="fl">Tags</div><div style="display:flex;gap:8px;margin-top:6px">
-        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="ad-da"/> <span class="tag tda">D.A.</span></label>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="ad-da"/> <span class="tag tda">Déb. Aut.</span></label>
       </div></div>
     </div>
     <div class="fr"><div><div class="fl">Tipo</div>
@@ -4131,8 +4703,11 @@ function svAddD(){
 }
 
 // ADD ENTRADA
-function mAddE(){
-  _tipo.aeT='fixa';
+function mAddE(defaultMes){
+  const fromMes=defaultMes!=null;
+  const initT=fromMes?'unica':'fixa';
+  _tipo.aeT=initT;
+  const mIniSel=(id,sel)=>`<select id="${id}" class="inp">${MONTHS.map((m,i)=>`<option value="${i}"${i===sel?' selected':''}>${m}</option>`).join('')}</select>`;
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">${_ico('import',15)} Adicionar Entrada<button class="mclose" onclick="cm()">×</button></div>
     <div class="fr"><div><div class="fl">Nome</div><input id="ae-n" class="inp" placeholder="Ex: Freela Design"/></div></div>
@@ -4141,11 +4716,11 @@ function mAddE(){
       <div><div class="fl">Tag Freela</div><label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-size:12px"><input type="checkbox" id="ae-fr"/> <span class="tag tfr">Freela</span></label></div>
     </div>
     <div class="fr"><div><div class="fl">Tipo</div>
-      <div class="tgr"><div class="tgo on" id="ae-fixa" onclick="selT('ae','fixa')">🔒 Fixa</div><div class="tgo" id="ae-parc" onclick="selT('ae','parc')"> Parcelada</div><div class="tgo" id="ae-unica" onclick="selT('ae','unica')">1× Única</div></div>
+      <div class="tgr"><div class="tgo${initT==='fixa'?' on':''}" id="ae-fixa" onclick="selT('ae','fixa')">🔒 Fixa</div><div class="tgo" id="ae-parc" onclick="selT('ae','parc')"> Parcelada</div><div class="tgo${initT==='unica'?' on':''}" id="ae-unica" onclick="selT('ae','unica')">1× Única</div></div>
     </div></div>
-    <div id="ae_fixa"><div class="fr"><div><div class="fl">Válida em</div>${scopeOpts('ae-sc')}</div></div></div>
-    <div id="ae_parc" style="display:none"><div class="fr c2"><div><div class="fl">Mês início</div>${mIni('ae-pi')}</div><div><div class="fl">Nº meses</div><input id="ae-pn" class="inp" type="number" min="1" max="12" value="1"/></div></div></div>
-    <div id="ae_unica" style="display:none"><div class="fr"><div><div class="fl">Mês</div>${mIni('ae-um')}</div></div></div>
+    <div id="ae_fixa"${initT!=='fixa'?' style="display:none"':''}><div class="fr"><div><div class="fl">Válida em</div>${scopeOpts('ae-sc')}</div></div></div>
+    <div id="ae_parc" style="display:none"><div class="fr c2"><div><div class="fl">Mês início</div>${mIniSel('ae-pi',defaultMes??new Date().getMonth())}</div><div><div class="fl">Nº meses</div><input id="ae-pn" class="inp" type="number" min="1" max="12" value="1"/></div></div></div>
+    <div id="ae_unica"${initT==='unica'?' ':'style="display:none"'}><div class="fr"><div><div class="fl">Mês</div>${mIniSel('ae-um',defaultMes??new Date().getMonth())}</div></div></div>
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
       <button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn bg" onclick="svAddE()">Adicionar</button>
     </div>
@@ -4541,39 +5116,60 @@ function svAddPD(){
 }
 
 // OB EDIT MODALS
+function _mesOpts(selId,def){return MONTHS.map((m,i)=>`<option value="${i}"${i===(def||0)?' selected':''}>${m.charAt(0).toUpperCase()+m.slice(1)}</option>`).join('');}
+function _freqToggle(pfx){return `<div style="margin-top:4px">
+  <div class="fl">Categoria</div>
+  <div class="tgr">
+    <div class="tgo on" id="${pfx}-fm" onclick="selT('${pfx}','fm')">🔄 Mensal</div>
+    <div class="tgo" id="${pfx}-fa" onclick="selT('${pfx}','fa')">📅 Anual</div>
+    <div class="tgo" id="${pfx}-fv" onclick="selT('${pfx}','fv')">📊 Variável</div>
+  </div>
+  <div id="${pfx}_fa" style="display:none;margin-top:8px">
+    <div class="fl">Mês de ocorrência</div>
+    <select id="${pfx}-mes" class="inp">${_mesOpts(pfx+'-mes',new Date().getMonth())}</select>
+  </div>
+</div>`;}
 function mObE(){
+  _tipo.oeT='fm';
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">+ Entrada no Orçamento<button class="mclose" onclick="cm()">×</button></div>
-    <div class="fr"><div><div class="fl">Nome</div><input id="oe-n" class="inp" placeholder="Ex: Renda extra"/></div></div>
+    <div class="fr"><div><div class="fl">Nome</div><input id="oe-n" class="inp" placeholder="Ex: Salário, PL Bônus"/></div></div>
     <div class="fr c2"><div><div class="fl">Valor (R$)</div><input id="oe-v" class="inp" placeholder="0,00"/></div><div><div class="fl">Tag Freela</div><label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-size:12px"><input type="checkbox" id="oe-fr"/> <span class="tag tfr">Freela</span></label></div></div>
-    <div class="fr"><div><div class="fl">Modo</div><select id="oe-m" class="inp"><option value="fixa">Fixa</option><option value="parc">Parcelada</option><option value="none">Manual</option></select></div></div>
+    ${_freqToggle('oe')}
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
       <button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn bg" onclick="svObE()">Adicionar</button>
     </div>
   </div>`);
 }
 function svObE(){
-  const nome=document.getElementById('oe-n').value.trim();const val=pv(document.getElementById('oe-v').value);const fr=document.getElementById('oe-fr').checked;const modo=document.getElementById('oe-m').value;
+  const nome=document.getElementById('oe-n').value.trim();const val=pv(document.getElementById('oe-v').value);const fr=document.getElementById('oe-fr').checked;
+  const t=_tipo.oeT||'fm';
+  const freq=t==='fa'?'anual':t==='fv'?'variavel':'mensal';
+  const mes=freq==='anual'?+document.getElementById('oe-mes').value:null;
   if(!nome){toast('Informe o nome','orange');return;}
-  OBE().push({id:nid(),nome,v:val,fixa:modo==='fixa',sc:'always',parc:modo==='parc',pi:0,pn:1,tag:fr?'freela':''});
+  OBE().push({id:nid(),nome,v:val,freq,mes,fixa:freq==='mensal',sc:'always',tag:fr?'freela':''});
   save();cm();render();toast('Entrada adicionada!','green');
 }
 
 function mObD(){
+  _tipo.odT='fm';
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">+ Despesa no Orçamento<button class="mclose" onclick="cm()">×</button></div>
-    <div class="fr"><div><div class="fl">Nome</div><input id="od-n" class="inp" placeholder="Ex: Streaming"/></div></div>
-    <div class="fr c2"><div><div class="fl">Valor (R$)</div><input id="od-v" class="inp" placeholder="0,00"/></div><div><div class="fl">D.A.</div><label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-size:12px"><input type="checkbox" id="od-da"/> <span class="tag tda">D.A.</span></label></div></div>
-    <div class="fr"><div><div class="fl">Modo</div><select id="od-m" class="inp"><option value="fixa">Fixa</option><option value="parc">Parcelada</option><option value="none">Manual</option></select></div></div>
+    <div class="fr"><div><div class="fl">Nome</div><input id="od-n" class="inp" placeholder="Ex: Aluguel, IPTU"/></div></div>
+    <div class="fr c2"><div><div class="fl">Valor (R$)</div><input id="od-v" class="inp" placeholder="0,00"/></div><div><div class="fl">Déb. Automático</div><label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-size:12px"><input type="checkbox" id="od-da"/> <span class="tag tda">D.A.</span></label></div></div>
+    ${_freqToggle('od')}
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
       <button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn br" onclick="svObD()">Adicionar</button>
     </div>
   </div>`);
 }
 function svObD(){
-  const nome=document.getElementById('od-n').value.trim();const val=pv(document.getElementById('od-v').value);const da=document.getElementById('od-da').checked;const modo=document.getElementById('od-m').value;
+  const nome=document.getElementById('od-n').value.trim();const val=pv(document.getElementById('od-v').value);const da=document.getElementById('od-da').checked;
+  const t=_tipo.odT||'fm';
+  const freq=t==='fa'?'anual':t==='fv'?'variavel':'mensal';
+  const mes=freq==='anual'?+document.getElementById('od-mes').value:null;
   if(!nome){toast('Informe o nome','orange');return;}
-  OBD().push({id:nid(),nome,v:val,fixa:modo==='fixa',sc:'always',parc:modo==='parc',pi:0,pn:1,da});
+  OBD().push({id:nid(),nome,v:val,freq,mes,fixa:freq==='mensal',sc:'always',da});
   save();cm();render();toast('Despesa adicionada!','green');
 }
 
@@ -4587,9 +5183,9 @@ function mEditPc(realIdx){
         <input id="epc-desc" class="inp" value="${p.desc.replace(/"/g,'&quot;')}"/></div>
       <div class="g2">
         <div><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Valor/mês</div>
-          <input id="epc-vp" class="inp" value="${fabs(p.vp)}" type="number" step="0.01"/></div>
+          <input id="epc-vp" class="inp" value="${fabs(p.vp)}" placeholder="0,00"/></div>
         <div><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Total</div>
-          <input id="epc-total" class="inp" value="${fabs(p.total||p.vp*p.n)}" type="number" step="0.01"/></div>
+          <input id="epc-total" class="inp" value="${fabs(p.total||p.vp*p.n)}" placeholder="0,00"/></div>
       </div>
       <div class="g2">
         <div><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Nº parcelas</div>
@@ -4692,7 +5288,7 @@ function mEditOD(idx){
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">⚙ Configurar Despesa<button class="mclose" onclick="cm()">×</button></div>
     <div class="fr"><div><div class="fl">Nome</div><input id="eod-n" class="inp" value="${r.nome.replace(/"/g,'&quot;')}"/></div></div>
-    <div class="fr c2"><div><div class="fl">Valor/parcela (R$)</div><input id="eod-v" class="inp" value="${fabs(r.v)}"/></div><div><div class="fl">D.A.</div><label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-size:12px"><input type="checkbox" id="eod-da" ${r.da?'checked':''}/> <span class="tag tda">D.A.</span></label></div></div>
+    <div class="fr c2"><div><div class="fl">Valor/parcela (R$)</div><input id="eod-v" class="inp" value="${fabs(r.v)}"/></div><div><div class="fl">D.A.</div><label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-size:12px"><input type="checkbox" id="eod-da" ${r.da?'checked':''}/> <span class="tag tda">Déb. Aut.</span></label></div></div>
     <div class="fr"><div><div class="fl">Modo</div>
       <select id="eod-m" class="inp" onchange="toggleObdOpts(this.value)">
         <option value="fixa" ${modoAtual==='fixa'?'selected':''}>🔒 Fixa (todo mês, todo ano)</option>
@@ -5653,7 +6249,7 @@ function rBasicoContas(mc){
     <div class="basic-item">
       <div class="basic-item-dot r"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
       <div class="basic-item-info">
-        <div class="basic-item-name">${r.nome}${r.da?' <span style="font-size:10px;background:#EFF6FF;color:#3B82F6;border-radius:4px;padding:1px 5px;font-weight:600">D.A.</span>':''}</div>
+        <div class="basic-item-name">${r.nome}${r.da?' <span style="font-size:10px;background:#EFF6FF;color:#3B82F6;border-radius:4px;padding:1px 5px;font-weight:600">Déb. Aut.</span>':''}</div>
         <div class="basic-item-day">${getDia(r.id,'d')?'Vence dia '+getDia(r.id,'d'):'Sem data'}</div>
       </div>
       <div class="basic-item-val r">${fmt(r.vals[i])}</div>
