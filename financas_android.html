@@ -117,6 +117,15 @@ input,select,textarea{-webkit-tap-highlight-color:transparent;font-size:16px!imp
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin-bottom:0}
 .sec-hdr:hover .sec-tog{color:var(--text)}
 .sec-tog{background:none;border:1px solid var(--border);border-radius:4px;color:var(--text2);width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex-shrink:0;line-height:1}
+.hsec{margin-bottom:12px;transition:opacity .15s}
+.hsec.hsec-dragging{opacity:.4}
+.hsec.hsec-over{outline:2px dashed var(--blue);outline-offset:3px;border-radius:var(--radius)}
+.hgrip{cursor:grab;color:var(--border2);font-size:17px;margin-right:6px;flex-shrink:0;user-select:none;line-height:1;display:flex;align-items:center}
+.hgrip:hover{color:var(--text2)}
+.hgrip:active{cursor:grabbing}
+.widget-opt{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:background .15s,border-color .15s}
+.widget-opt:hover{background:var(--bg2);border-color:var(--blue)}
+.widget-opt .wo-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
 .sec-body{overflow:hidden;transition:max-height .25s ease}
 .sec-body.collapsed{max-height:0!important}
 
@@ -279,6 +288,9 @@ body.modo-mobile #basic-fab-group{display:flex}
 svg{display:inline-block;vertical-align:middle;flex-shrink:0}
 .year-add-btn svg{display:block}
 .topbar-logo svg{flex-shrink:0}
+.year-add-btn[title]{position:relative}
+.year-add-btn[title]::after{content:attr(title);position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1a1f2e;color:#e2e8f0;font-size:11px;white-space:nowrap;padding:4px 8px;border-radius:5px;border:1px solid rgba(255,255,255,.1);pointer-events:none;opacity:0;transition:opacity .15s;z-index:999}
+.year-add-btn[title]:hover::after{opacity:1}
 /* badge de modo no topbar */
 .modo-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;letter-spacing:.04em}
 .modo-badge.desktop{background:var(--green3);color:var(--green);border:1px solid var(--green2)}
@@ -419,13 +431,16 @@ svg{display:inline-block;vertical-align:middle;flex-shrink:0}
       <select id="YS" onchange="setAno(+this.value)"></select>
     </div>
     <div style="display:flex;gap:6px;margin-left:auto;flex-shrink:0">
-      <button class="year-add-btn" id="drive-btn" onclick="driveAction()" title="Google Drive" style="display:flex;align-items:center;gap:4px;padding:4px 8px">
+      <button class="year-add-btn" id="drive-btn" onclick="driveAction()" title="Logar sua conta Google" style="display:flex;align-items:center;gap:4px;padding:4px 8px">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4.5 20L1 14l5.5-9.5h11L23 14l-3.5 6H4.5z" fill="#4285F4" opacity=".3"/><path d="M8.5 4.5L3 14h6l5.5-9.5H8.5z" fill="#0066DA"/><path d="M15.5 4.5H9L14.5 14H21L15.5 4.5z" fill="#00AC47"/><path d="M3 14l3.5 6h11l3.5-6H3z" fill="#FFBA00"/></svg>
         <span id="drive-btn-txt">Entrar</span>
       </button>
+      <button class="year-add-btn" id="top-save-btn" onclick="gdToken?driveSalvar():driveAction()" title="Salvar no Drive" style="display:flex;align-items:center;gap:4px;padding:4px 8px;color:var(--green);border-color:var(--green2)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+      </button>
       <button class="year-add-btn" onclick="abrirPopupPagamentos()" title="Atualizar pagamentos" style="color:var(--orange);border-color:var(--orange2)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></button>
-      <button class="year-add-btn" onclick="importarDados()" title="Importar arquivo local"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></button>
-      <button class="year-add-btn" id="local-export-btn" onclick="exportarDados()" title="Exportar local" style="color:var(--green);border-color:var(--green2)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
+      <button class="year-add-btn" onclick="importarDados()" title="Abrir suas contas localmente"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></button>
+      <button class="year-add-btn" id="local-export-btn" onclick="exportarDados()" title="Salvar suas contas localmente" style="color:var(--green);border-color:var(--green2)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
     </div>
   </div>
   <div class="topbar-row2">
@@ -520,7 +535,8 @@ const CARTOES_DEFAULT=[{nome:'Nubank',cor:'#9B59FC',emoji:'🟣'},{nome:'Mercado
 const CTAG={Nubank:'tnu','Mercado Pago':'tmp','Itaú':'tit',Outro:'tou'};
 function getCartoesParc(){return S.config.cartoesParc&&S.config.cartoesParc.length>0?S.config.cartoesParc:[];}
 function getCartaoParcCor(nome){const c=getCartoesParc().find(x=>x.nome===nome);return c?c.cor:'#5B8AF0';}
-function getCartaoParcEmoji(nome){const c=getCartoesParc().find(x=>x.nome===nome);return c?c.emoji:'💳';}
+function getCartaoParcEmoji(nome){const c=getCartoesParc().find(x=>x.nome===nome);return c?(c.ico?_ico(c.ico,16,c.cor||'#5B8AF0'):c.emoji||'💳'):'💳';}
+function _cIco(c,size){size=size||18;const cor=(c&&c.cor)||'#5B8AF0';const ico=(c&&c.ico)||'card';return`<span style="display:inline-flex;align-items:center;justify-content:center;width:${size+4}px;height:${size+4}px;border-radius:6px;background:${cor}22">${_ico(ico,size,cor)}</span>`;}
 // Retorna todos os cartões disponíveis (parcelados + fatura) para uso em dropdowns
 function getAllCartoesOpcoes(){
   const parc=getCartoesParc();
@@ -715,6 +731,7 @@ function renderNav(){
   const tabsOcultas=S.config.tabsOcultas||[];
   const tabsCustom=S.config.tabsCustom||[];
   let tabs=TABS.filter(t=>!tabsOcultas.includes(t.id));
+  const _tord=S.config.tabsOrder;if(_tord&&_tord.length)tabs.sort((a,b)=>{const ai=_tord.indexOf(a.id),bi=_tord.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi);});
   // No modo básico, esconder abas avançadas
   if(isBasico()) tabs=tabs.filter(t=>!TABS_ADV_IDS.includes(t.id));
   if(hasDividas()) tabs.push({id:'div',l:'Dívidas'});
@@ -723,11 +740,11 @@ function renderNav(){
     // Abas de cartão
     const tabsOcultasCartoes=S.config.tabsOcultasCartoes||[];
     const cartoesComFatura=getCartoesComFatura();
-    cartoesComFatura.forEach(c=>{if(!tabsOcultasCartoes.includes(c.id))tabs.push({id:'card_'+c.id,l:c.emoji+' '+c.nome});});
+    cartoesComFatura.forEach(c=>{if(!tabsOcultasCartoes.includes(c.id))tabs.push({id:'card_'+c.id,l:c.nome,cor:c.cor});});
   }
   // Se tab atual ficou oculta, volta pra home
   if(!tabs.find(t=>t.id===tab)) tab='home';
-  nav.innerHTML=tabs.map(t=>`<button class="nbtn${tab===t.id?' on':''}${t.id==='div'?' div-tab':''}" onclick="gt('${t.id}')">${t.l}</button>`).join('');
+  nav.innerHTML=tabs.map(t=>{const cor=t.cor;return`<button class="nbtn${tab===t.id?' on':''}${t.id==='div'?' div-tab':''}"${cor?` style="color:${cor};border-bottom-color:${cor}"`:''}  onclick="gt('${t.id}')">${t.l}</button>`;}).join('');
 }
 function gt(id){
   tab=id;dc();renderNav();
@@ -1286,10 +1303,36 @@ function anualTableHtml(m0,anoEncerrado){
 }
 
 // ── ABA ANUAL (visível no modo básico) ──
+// ── NOTAS COLAPSÁVEIS (reutilizável) ──────────────────────────────────────────
+function _getNotas(key){const d=D();if(!d.notas)d.notas={};if(!d.notas[key])d.notas[key]=[];return d.notas[key];}
+function _notaAdd(key){_getNotas(key).push({id:nid(),titulo:'',texto:'',collapsed:false});save();render();}
+function _notaToggle(key,ni){const n=_getNotas(key)[ni];if(n){n.collapsed=!n.collapsed;save();render();}}
+function _notaDel(key,ni){if(confirm('Remover nota?')){_getNotas(key).splice(ni,1);save();render();}}
+function _notaSave(key,ni,field,val){const n=_getNotas(key)[ni];if(n){n[field]=val;save();}}
+function _notasHTML(key){
+  const notas=_getNotas(key);
+  const rows=notas.map((n,ni)=>{
+    const col=!!n.collapsed;
+    return `<div class="card" style="margin-bottom:10px;padding:0;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;${col?'':'border-bottom:1px solid var(--border);'}background:var(--bg3)">
+        <input class="inp" style="flex:1;font-size:13px;font-weight:600;background:transparent;border:none;padding:0" value="${(n.titulo||'').replace(/"/g,'&quot;')}" placeholder="Título da nota…" onblur="_notaSave('${key}',${ni},'titulo',this.value)"/>
+        <button class="btn bxs bgh" onclick="_notaToggle('${key}',${ni})" style="flex-shrink:0">${col?'▼':'▲'}</button>
+        <button class="del" onclick="_notaDel('${key}',${ni})">✕</button>
+      </div>
+      ${col?'':`<textarea style="width:100%;box-sizing:border-box;padding:12px 14px;background:transparent;border:none;resize:vertical;font-size:13px;color:var(--text);font-family:inherit;min-height:90px;outline:none" placeholder="Escreva aqui…" onblur="_notaSave('${key}',${ni},'texto',this.value);toast('Nota salva','green')">${(n.texto||'').replace(/</g,'&lt;')}</textarea>`}
+    </div>`;
+  }).join('');
+  return `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:4px">
+    <div style="font-size:14px;font-weight:700">Notas</div>
+    <button class="btn bgh bsm" onclick="_notaAdd('${key}')">+ Nova nota</button>
+  </div>
+  ${notas.length===0?`<div class="card" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:12px;margin-bottom:12px">Nenhuma nota — clique em <strong>+ Nova nota</strong></div>`:rows}`;
+}
+
 function rAnualTab(mc){
   const m0=new Date().getMonth();
   const anoEncerrado=S.anoAtivo<new Date().getFullYear();
-  mc.innerHTML=`<div class="card">
+  mc.innerHTML=`<div class="card" style="margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
       <div class="ctit" style="margin:0">Contas ${S.anoAtivo} — Visão Anual</div>
       <div style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px">
@@ -1297,7 +1340,8 @@ function rAnualTab(mc){
       </div>
     </div>
     ${anualTableHtml(m0,anoEncerrado)}
-  </div>`;
+  </div>
+  ${_notasHTML('anual')}`;
 }
 
 
@@ -1499,22 +1543,26 @@ function rHome(mc){
 
   <div id="card-atrasados" style="display:none"><div id="sec-atrasados"></div></div>
 
-  <div class="card" style="margin-bottom:12px;border-color:var(--blue2);${anoEncerrado?'opacity:0.6':''}">
+  <div id="home-secs">
+  <div class="hsec" data-sec="chk">
+  <div class="card" style="border-color:var(--blue2);${anoEncerrado?'opacity:0.6':''}">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span class="hgrip" title="Arrastar para reordenar">⠿</span>
       <div onclick="toggleSec('sec-chk')" style="cursor:pointer;flex:1">
         <div class="ctit" style="margin:0;color:var(--blue)">Contas ${anoEncerrado?"do ano":"de "+MONTHS[m0]} / ${S.anoAtivo}</div>
         <div style="font-size:11px;color:var(--text2);margin-top:3px">Marque o que já recebeu e pagou</div>
       </div>
       <button class="btn bxs bg" onclick="mAddE()">+ Entrada</button>
-        <button class="btn bxs br" onclick="mAddD()">+ Despesa</button>
-
+      <button class="btn bxs br" onclick="mAddD()">+ Despesa</button>
       <button class="sec-tog" data-tog="sec-chk" onclick="toggleSec('sec-chk')">−</button>
     </div>
     <div id="sec-chk" style="display:block;margin-top:10px"><div id="chk-section"></div></div>
   </div>
+  </div>
 
+  <div class="hsec" data-sec="qa">
   <div class="card">
-    <div class="sec-hdr" onclick="toggleSec('sec-qa')"><div class="ctit" style="margin:0">Ações Rápidas</div><button class="sec-tog" data-tog="sec-qa">−</button></div>
+    <div class="sec-hdr" onclick="toggleSec('sec-qa')"><span class="hgrip" title="Arrastar para reordenar">⠿</span><div class="ctit" style="margin:0">Ações Rápidas</div><button class="sec-tog" data-tog="sec-qa">−</button></div>
     <div id="sec-qa" style="display:block;margin-top:10px"><div class="qa">
       <div class="qab" onclick="mAddD()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div><div class="ql">Adicionar Despesa</div></div>
       <div class="qab" onclick="mAddE()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div><div class="ql">Adicionar Entrada</div></div>
@@ -1527,8 +1575,11 @@ function rHome(mc){
       <div class="qab" id="qa-drive-btn" onclick="_driveFabClick()"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4.5 20L1 14l5.5-9.5h11L23 14l-3.5 6H4.5z" fill="#4285F4" opacity=".3"/><path d="M8.5 4.5L3 14h6l5.5-9.5H8.5z" fill="#0066DA"/><path d="M15.5 4.5H9L14.5 14H21L15.5 4.5z" fill="#00AC47"/><path d="M3 14l3.5 6h11l3.5-6H3z" fill="#FFBA00"/></svg></div><div class="ql" id="qa-drive-lbl">Salvar no Drive</div></div>
     </div></div>
   </div>
-  <div class="card" style="margin-bottom:12px">
-    <div class="sec-hdr" onclick="toggleSec('sec-met')"><div class="ctit" style="margin:0">📊 ${anoEncerrado?"ANO "+S.anoAtivo:"ESTE MÊS — "+MONTHS[m0].toUpperCase()+"/"+S.anoAtivo}</div><button class="sec-tog" data-tog="sec-met">−</button></div>
+  </div>
+
+  <div class="hsec" data-sec="met">
+  <div class="card">
+    <div class="sec-hdr" onclick="toggleSec('sec-met')"><span class="hgrip" title="Arrastar para reordenar">⠿</span><div class="ctit" style="margin:0">📊 ${anoEncerrado?"ANO "+S.anoAtivo:"ESTE MÊS — "+MONTHS[m0].toUpperCase()+"/"+S.anoAtivo}</div><button class="sec-tog" data-tog="sec-met">−</button></div>
     <div id="sec-met" style="display:block;margin-top:10px">
   <div class="g2">
     <div>
@@ -1641,29 +1692,52 @@ function rHome(mc){
     </div>
   </div>
   </div></div>
-  ${!isBasico()?`<div class="card" style="margin-bottom:12px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-      <div onclick="toggleSec('sec-ann')" style="cursor:pointer" class="ctit" style="margin:0">Contas ${S.anoAtivo} — Visão Anual</div>
-      <button class="sec-tog" data-tog="sec-ann" onclick="toggleSec('sec-ann')">−</button>
-      <div style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px">
-        <span style="color:var(--blue)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span> Clique para editar
+  </div>
+
+  ${!isBasico()?`<div class="hsec" data-sec="ann"><div class="card">
+    <div class="sec-hdr" onclick="toggleSec('sec-ann')">
+      <span class="hgrip" title="Arrastar para reordenar">⠿</span>
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+        <div class="ctit" style="margin:0">Contas ${S.anoAtivo} — Visão Anual</div>
+        <span style="font-size:11px;color:var(--text2);white-space:nowrap;display:flex;align-items:center;gap:4px"><span style="color:var(--blue)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>Clique para editar</span>
       </div>
+      <button class="sec-tog" data-tog="sec-ann">−</button>
     </div>
     <div id="sec-ann" style="display:block;margin-top:8px">${anualTableHtml(m0,anoEncerrado)}</div>
-  </div>`:''}
-  <div class="card" style="margin-bottom:12px">
-    <div class="sec-hdr" onclick="toggleSec('sec-graf')"><div class="ctit" style="margin:0">Visão Anual ${S.anoAtivo} — Gráfico</div><button class="sec-tog" data-tog="sec-graf">−</button></div>
-    <div id="sec-graf" style="display:block;margin-top:8px"><div id="hc-svg"></div></div>
-  </div>
-  ${S.avisos.filter(a=>a.on).length>0?`<div class="card"><div class="ctit">Avisos Ativos</div>${S.avisos.filter(a=>a.on).map(a=>`<div class="av"><div class="rdot" style="background:var(--blue)"></div><span style="flex:1;font-size:12px">${a.txt}</span></div>`).join('')}</div>`:''}
+  </div></div>`:''}
 
-  <div style="display:flex;gap:10px;margin-top:8px;margin-bottom:4px">
-    <button class="btn br" style="flex:1;justify-content:center;padding:12px;font-size:13px" onclick="mAddDivida()">Adicionar Dívida</button>
-    <button class="btn bgh" style="padding:12px 18px;font-size:13px;display:inline-flex;align-items:center;gap:6px" onclick="mConfig()">${_ico('gear',13)} Config</button>
+  <div class="hsec" data-sec="graf"><div class="card">
+    <div class="sec-hdr" onclick="toggleSec('sec-graf')"><span class="hgrip" title="Arrastar para reordenar">⠿</span><div class="ctit" style="margin:0">Visão Anual ${S.anoAtivo} — Gráfico</div><button class="sec-tog" data-tog="sec-graf">−</button></div>
+    <div id="sec-graf" style="display:block;margin-top:8px"><div id="hc-svg"></div></div>
+  </div></div>
+
+  ${S.avisos.filter(a=>a.on).length>0?`<div class="hsec" data-sec="avisos"><div class="card">
+    <div class="sec-hdr" onclick="toggleSec('sec-avisos')"><span class="hgrip" title="Arrastar para reordenar">⠿</span><div class="ctit" style="margin:0">Avisos Ativos</div><button class="sec-tog" data-tog="sec-avisos">−</button></div>
+    <div id="sec-avisos" style="display:block;margin-top:8px">${S.avisos.filter(a=>a.on).map(a=>`<div class="av"><div class="rdot" style="background:var(--blue)"></div><span style="flex:1;font-size:12px">${a.txt}</span></div>`).join('')}</div>
+  </div></div>`:''}
+
+  ${(_hWidgets()).map(w=>_widgetHtml(w)).join('')}
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:8px;margin-bottom:4px;flex-wrap:wrap">
+    <button class="btn br" style="flex:1;justify-content:center;padding:12px;font-size:13px;min-width:120px" onclick="mAddDivida()">Adicionar Dívida</button>
+    <button class="btn bgh" style="padding:12px 14px;font-size:13px;display:inline-flex;align-items:center;gap:5px" onclick="mAddWidget()">＋ Widget</button>
+    <button class="btn bgh" style="padding:12px 14px;font-size:13px;display:inline-flex;align-items:center;gap:6px" onclick="mConfig()">${_ico('gear',13)} Config</button>
   </div>
 
 `;
   requestAnimationFrame(()=>{
+    const hs=mc.querySelector('#home-secs');
+    if(hs){
+      const hidden=S.config.homeHidden||[];
+      hs.querySelectorAll('.hsec[data-sec]').forEach(el=>{if(hidden.includes(el.dataset.sec))el.remove();});
+      const dflt=['chk','qa','met','ann','graf','avisos'];
+      const ord=S.config.homeOrder||dflt;
+      const els=[...hs.querySelectorAll('.hsec[data-sec]')];
+      els.sort((a,b)=>{const ai=ord.indexOf(a.dataset.sec),bi=ord.indexOf(b.dataset.sec);return(ai<0?99:ai)-(bi<0?99:bi);});
+      els.forEach(el=>hs.appendChild(el));
+      _setupHomeDrag(hs);
+    }
     renderChkSection();
     const hcEl=document.getElementById('hc-svg');
     if(hcEl) svgBarDual(hcEl,MONTHS,[
@@ -1673,12 +1747,189 @@ function rHome(mc){
   });
 }
 
+// ── HOME WIDGETS ─────────────────────────────────────────────────────────────
+function _homeHide(secId){
+  if(!S.config.homeHidden)S.config.homeHidden=[];
+  if(!S.config.homeHidden.includes(secId))S.config.homeHidden.push(secId);
+  save();render();
+}
+function _homeShow(secId){
+  if(!S.config.homeHidden)return;
+  S.config.homeHidden=S.config.homeHidden.filter(x=>x!==secId);
+  save();render();
+}
+function _hWidgets(){return S.config.homeWidgets||[];}
+function _hwSave(id,field,val){const w=_hWidgets().find(w=>w.id===id);if(w){w[field]=val;save();}}
+function _hwDelItem(wid,ii){const w=_hWidgets().find(w=>w.id===wid);if(w&&w.items){w.items.splice(ii,1);save();render();}}
+function _hwTogItem(wid,ii){const w=_hWidgets().find(w=>w.id===wid);if(w&&w.items){w.items[ii].done=!w.items[ii].done;save();render();}}
+function _hwAddItem(wid){const w=_hWidgets().find(w=>w.id===wid);if(w){if(!w.items)w.items=[];w.items.push({text:'',done:false});save();render();}}
+function _hwDelLink(wid,li){const w=_hWidgets().find(w=>w.id===wid);if(w&&w.links){w.links.splice(li,1);save();render();}}
+function _hwAddLink(wid){const w=_hWidgets().find(w=>w.id===wid);if(w){if(!w.links)w.links=[];w.links.push({label:'',url:''});save();render();}}
+function _hwDelWidget(id){
+  if(!confirm('Remover widget?'))return;
+  S.config.homeWidgets=(S.config.homeWidgets||[]).filter(w=>w.id!==id);
+  S.config.homeOrder=(S.config.homeOrder||[]).filter(x=>x!=='widget-'+id);
+  save();render();
+}
+
+function _widgetHtml(w){
+  const secId='widget-'+w.id;
+  const togId='wtog-'+w.id;
+  const col=!!w.collapsed;
+  let body='';
+  if(w.type==='nota'){
+    body=`<textarea style="width:100%;box-sizing:border-box;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;font-size:13px;color:var(--text);font-family:inherit;min-height:90px;outline:none" placeholder="Escreva aqui…" onblur="_hwSave('${w.id}','text',this.value)">${(w.text||'').replace(/</g,'&lt;')}</textarea>`;
+  } else if(w.type==='checklist'){
+    const items=(w.items||[]);
+    const rows=items.map((it,ii)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <input type="checkbox" ${it.done?'checked':''} onchange="_hwTogItem('${w.id}',${ii})" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0"/>
+      <input class="inp" value="${(it.text||'').replace(/"/g,'&quot;')}" placeholder="Item…" style="flex:1;font-size:13px;${it.done?'text-decoration:line-through;color:var(--text3)':''}" onblur="_hwSave('${w.id}','items',((()=>{const w=_hWidgets().find(w=>w.id==='${w.id}');if(w){w.items[${ii}].text=this.value;}return w&&w.items;})()||[]))"/>
+      <button class="del" onclick="_hwDelItem('${w.id}',${ii})">✕</button>
+    </div>`).join('');
+    body=rows+`<button class="btn bgh bsm" style="margin-top:4px" onclick="_hwAddItem('${w.id}')">+ Item</button>`;
+  } else if(w.type==='links'){
+    const links=(w.links||[]);
+    const rows=links.map((lk,li)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <input class="inp" value="${(lk.label||'').replace(/"/g,'&quot;')}" placeholder="Nome…" style="flex:1;font-size:13px" onblur="(()=>{const w=_hWidgets().find(w=>w.id==='${w.id}');if(w&&w.links)w.links[${li}].label=this.value;save();})()"/>
+      <input class="inp" value="${(lk.url||'').replace(/"/g,'&quot;')}" placeholder="https://…" style="flex:2;font-size:12px" onblur="(()=>{const w=_hWidgets().find(w=>w.id==='${w.id}');if(w&&w.links)w.links[${li}].url=this.value;save();})()"/>
+      ${lk.url?`<a href="${lk.url.replace(/"/g,'')}" target="_blank" class="btn bgh bsm" style="padding:0 8px;text-decoration:none;font-size:16px">↗</a>`:''}
+      <button class="del" onclick="_hwDelLink('${w.id}',${li})">✕</button>
+    </div>`).join('');
+    body=rows+`<button class="btn bgh bsm" style="margin-top:4px" onclick="_hwAddLink('${w.id}')">+ Link</button>`;
+  }
+  const wCor=w.cor||'#5B8AF0';
+  const wIcoSvg=_ico(w.ico||'star',15,wCor);
+  return `<div class="hsec" data-sec="${secId}"><div class="card" style="border-color:${wCor}30">
+    <div class="sec-hdr" onclick="toggleSec('${togId}')">
+      <span class="hgrip" title="Arrastar para reordenar">⠿</span>
+      <span style="display:flex;align-items:center;margin-right:6px;flex-shrink:0">${wIcoSvg}</span>
+      <input class="inp" style="flex:1;font-size:13px;font-weight:600;background:transparent;border:none;padding:0" value="${(w.titulo||'').replace(/"/g,'&quot;')}" placeholder="${w.type==='nota'?'Nota':w.type==='checklist'?'Lista':'Links'}…" onclick="event.stopPropagation()" onblur="_hwSave('${w.id}','titulo',this.value)"/>
+      <button class="sec-tog" data-tog="${togId}">${col?'+':'−'}</button>
+    </div>
+    ${col?'':`<div id="${togId}" style="margin-top:10px">${body}</div>`}
+  </div></div>`;
+}
+
+function _svAddWidget(){
+  const type=_tipo.wtT||'nota';
+  const titulo=(document.getElementById('w-titulo')?.value||'').trim();
+  const cor=document.getElementById('w-cor')?.value||'#5B8AF0';
+  const ico=document.getElementById('w-ico')?.value||'star';
+  if(!S.config.homeWidgets)S.config.homeWidgets=[];
+  const w={id:nid(),type,titulo,cor,ico,collapsed:false};
+  if(type==='checklist')w.items=[];
+  if(type==='links')w.links=[];
+  if(type==='nota')w.text='';
+  S.config.homeWidgets.push(w);
+  save();cm();render();
+}
+
+function mAddWidget(){
+  _tipo.wtT='nota';
+  om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
+    <div class="mtitle">Adicionar Widget<button class="mclose" onclick="cm()">×</button></div>
+    <div style="margin-bottom:14px">
+      <div class="fl" style="margin-bottom:6px">Tipo</div>
+      <div class="tgr">
+        <div class="tgo on" id="wt-nota" onclick="selT('wt','nota')">Nota</div>
+        <div class="tgo" id="wt-checklist" onclick="selT('wt','checklist')">Checklist</div>
+        <div class="tgo" id="wt-links" onclick="selT('wt','links')">Links</div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="fl" style="margin-bottom:6px">Título (opcional)</div>
+      <input id="w-titulo" class="inp" placeholder="Ex: Minha lista, Links de trabalho…"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="fl" style="margin-bottom:6px">Cor</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        ${_aviCoresPaleta('w-cor','#5B8AF0')}
+        <input id="w-cor" type="color" value="#5B8AF0" style="width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;padding:0;margin-left:2px"/>
+      </div>
+    </div>
+    <div style="margin-bottom:18px">
+      <div class="fl" style="margin-bottom:6px">Ícone</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${_aviIcoGrid('w-ico','star')}</div>
+      <input id="w-ico" type="hidden" value="star"/>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border);padding-top:14px">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn bg" onclick="_svAddWidget()">Criar widget</button>
+    </div>
+  </div>`);
+}
+
+function _setupTabsDrag(container,cfgKey){
+  let src=null;
+  const items=()=>[...container.querySelectorAll('.cfg-tab-row:not([style*="opacity:.6"])')];
+  container.querySelectorAll('.cfg-tab-row').forEach(item=>{
+    if(item.style.opacity==='0.6'||item.dataset.tabid==='home') return;
+    item.setAttribute('draggable','true');
+    item.addEventListener('dragstart',e=>{src=item;item.classList.add('hsec-dragging');e.dataTransfer.effectAllowed='move';});
+    item.addEventListener('dragend',()=>{item.classList.remove('hsec-dragging');container.querySelectorAll('.cfg-tab-row').forEach(el=>el.classList.remove('hsec-over'));});
+    item.addEventListener('dragover',e=>{e.preventDefault();container.querySelectorAll('.cfg-tab-row').forEach(el=>el.classList.remove('hsec-over'));if(item!==src)item.classList.add('hsec-over');});
+    item.addEventListener('dragleave',()=>item.classList.remove('hsec-over'));
+    item.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(!src||src===item)return;
+      item.classList.remove('hsec-over');
+      const all=[...container.querySelectorAll('.cfg-tab-row')];
+      const si=all.indexOf(src),di=all.indexOf(item);
+      if(si<di)container.insertBefore(src,item.nextSibling);else container.insertBefore(src,item);
+      S.config[cfgKey]=[...container.querySelectorAll('.cfg-tab-row')].map(el=>el.dataset.tabid);
+      save();renderNav();
+    });
+  });
+}
+
+function _setupHomeDrag(container){
+  let src=null;
+  container.querySelectorAll('.hsec').forEach(item=>{
+    // Agrupar sec-tog + X num div para ficarem juntos à direita
+    const tog=item.querySelector('.sec-tog');
+    if(tog&&!item.querySelector('.hsec-x')){
+      const isWidget=item.dataset.sec.startsWith('widget-');
+      tog.title='Minimizar';
+      const xb=document.createElement('button');
+      xb.className='del hsec-x';
+      xb.title='Fechar';
+      xb.style.cssText='flex-shrink:0';
+      xb.textContent='×';
+      xb.onclick=e=>{
+        e.stopPropagation();
+        if(isWidget){_hwDelWidget(item.dataset.sec.replace('widget-',''));}
+        else{_homeHide(item.dataset.sec);}
+      };
+      const grp=document.createElement('div');
+      grp.style.cssText='display:flex;align-items:center;gap:4px;flex-shrink:0';
+      tog.parentNode.insertBefore(grp,tog);
+      grp.appendChild(tog);
+      grp.appendChild(xb);
+    }
+    item.setAttribute('draggable','true');
+    item.addEventListener('dragstart',e=>{src=item;item.classList.add('hsec-dragging');e.dataTransfer.effectAllowed='move';});
+    item.addEventListener('dragend',()=>{item.classList.remove('hsec-dragging');container.querySelectorAll('.hsec').forEach(el=>el.classList.remove('hsec-over'));});
+    item.addEventListener('dragover',e=>{e.preventDefault();container.querySelectorAll('.hsec').forEach(el=>el.classList.remove('hsec-over'));if(item!==src)item.classList.add('hsec-over');});
+    item.addEventListener('dragleave',()=>item.classList.remove('hsec-over'));
+    item.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(!src||src===item)return;
+      item.classList.remove('hsec-over');
+      const all=[...container.querySelectorAll('.hsec')];
+      const si=all.indexOf(src),di=all.indexOf(item);
+      if(si<di)container.insertBefore(src,item.nextSibling);else container.insertBefore(src,item);
+      S.config.homeOrder=[...container.querySelectorAll('.hsec')].map(el=>el.dataset.sec);
+      save();
+    });
+  });
+}
 
 // Helpers de freq para OBE/OBD
 function _obFreq(r){return r.freq||(r.fixa?'mensal':'variavel');}
 function _obMensais(arr){return arr.filter(r=>_obFreq(r)==='mensal');}
 function _obAnuais(arr){return arr.filter(r=>_obFreq(r)==='anual');}
 function _obVariaveis(arr){return arr.filter(r=>_obFreq(r)==='variavel');}
+function _obDirty(){const el=document.getElementById('ob-dirty');if(el)el.style.display='block';}
 
 function rOb(mc){
   const eM=_obMensais(OBE()),eA=_obAnuais(OBE()),eV=_obVariaveis(OBE());
@@ -1713,52 +1964,53 @@ function rOb(mc){
     </div>`;
   }
 
-  // Seção Extras (parcelados da aba Parcelados)
-  const pcAtivos=D().pc.filter(p=>{const ai=p.anoIni||S.anoAtivo;return ai*12+p.ini+p.n-1>=S.anoAtivo*12;});
+  // Seção Extras (despesas parceladas não-cartão)
+  const pdList=D().pd||[];
   const extrasHTML=`<div class="card" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
       <div>
-        <div class="ctit" style="margin:0;color:var(--purple)">🎲 Extras — Parcelamentos Extraordinários</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">Compras parceladas e despesas pontuais — não entram no saldo mensal base</div>
+        <div class="ctit" style="margin:0;color:var(--purple)">Extras — Parcelamentos Extraordinários</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Despesas parceladas não-cartão — não entram no saldo mensal base</div>
       </div>
-      <button class="btn bxs bgh" onclick="gt('parc')">Gerenciar →</button>
+      <button class="btn bxs bgh" onclick="mAddPD()">+ Adicionar</button>
     </div>
-    ${pcAtivos.length===0?`<div style="font-size:12px;color:var(--text3);font-style:italic;padding:4px">Nenhum parcelamento ativo — gerencie na aba Parcelados.</div>`
-    :pcAtivos.map(p=>{
-      const ai=p.anoIni||S.anoAtivo;
-      const fimAbs=ai*12+p.ini+p.n-1;
-      const fimAno=Math.floor(fimAbs/12),fimMes=fimAbs%12;
-      const restantes=fimAbs-(S.anoAtivo*12+new Date().getMonth())+1;
+    ${pdList.length===0?`<div style="font-size:12px;color:var(--text3);font-style:italic;padding:4px">Nenhuma despesa extra cadastrada.</div>`
+    :pdList.map((p,pi)=>{
+      const fim=Math.min(p.ini+p.n-1,11);
       return`<div class="er" style="margin-bottom:6px">
         <div style="width:7px;height:7px;border-radius:50%;background:var(--purple);flex-shrink:0;margin-top:2px"></div>
         <span style="flex:1;font-size:13px">${p.desc}</span>
-        <span class="tag" style="background:rgba(160,117,240,.15);color:var(--purple);border:1px solid rgba(160,117,240,.3)">${p.n-(p.ant||0)}x restantes</span>
-        <span class="ev rv">${fabs(p.vp)}/mês</span>
-        ${fimAno>S.anoAtivo?`<span style="font-size:10px;color:var(--orange)">até ${MONTHS[fimMes]}/${fimAno}</span>`:''}
+        <span class="tag tpa">${MONTHS[p.ini]}→${MONTHS[fim]} ${p.n}×</span>
+        <span class="ev rv">${fabs(p.valor)}/mês</span>
+        <button class="btn bxs bgh" onclick="mEditPd(${pi})" style="display:inline-flex;align-items:center">${_ico('gear',12,'currentColor')}</button>
+        <button class="del" onclick="if(confirm('Remover?')){D().pd.splice(${pi},1);save();render()}">✕</button>
       </div>`;
     }).join('')}
   </div>`;
 
   mc.innerHTML=mobileHeader('Orçamento','Template mensal de contas')+`
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-    <div${isMobile()?' hidden':''}><div style="font-size:18px;font-weight:700">Orçamento Base</div><div style="font-size:12px;color:var(--text2)">Fixas repetem todo mês/ano — Variáveis são só previsão — Extras são parcelamentos pontual</div></div>
+    <div${isMobile()?' hidden':''}><div style="font-size:18px;font-weight:700">Orçamento Base</div><div style="font-size:12px;color:var(--text2)">Fixas repetem todo mês/ano · Variáveis são só previsão · Extras são parcelamentos pontuais</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn bg" onclick="apObFuturo()">→ Aplicar daqui pra frente</button>
+      <button class="btn bg" onclick="apObFuturo();document.getElementById('ob-dirty').style.display='none'">→ Aplicar daqui pra frente</button>
       <button class="btn bgh bsm" onclick="mObE()">+ Entrada</button>
       <button class="btn bgh bsm" onclick="mObD()">+ Despesa</button>
     </div>
   </div>
+  <div id="ob-dirty" style="display:none;background:rgba(240,154,64,.12);border:1px solid var(--orange2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--orange)">
+    ⚠ Orçamento atualizado — clique em <strong>Aplicar daqui pra frente</strong> para refletir nas contas.
+  </div>
   <div class="g4" style="margin-bottom:16px">
+    <div class="met ${saldo>=0?'g':'r'}" style="grid-column:span 2"><div class="mlbl">Saldo mensal base</div><div class="mval" style="font-size:28px;margin-top:2px">${fmt(saldo)}</div></div>
     <div class="met g"><div class="mlbl">Entradas fixas/mês</div><div class="mval">${fmt(tE2)}</div></div>
     <div class="met r"><div class="mlbl">Despesas fixas/mês</div><div class="mval">${fmt(tD2)}</div></div>
-    <div class="met ${saldo>=0?'g':'r'}"><div class="mlbl">Saldo mensal base</div><div class="mval">${fmt(saldo)}</div></div>
     <div class="met b"><div class="mlbl">Total Déb. Aut./mês</div><div class="mval">${fmt(tDA2)}</div><div class="msub">Manter em caixa</div></div>
   </div>
-  ${secCard('🔄 Fixas Mensais','var(--blue)',eM,dM,'')}
-  ${secCard('📅 Fixas Anuais','var(--orange)',eA,dA,'')}
+  ${secCard('Fixas Mensais','var(--blue)',eM,dM,'')}
+  ${secCard('Fixas Anuais','var(--orange)',eA,dA,'')}
   <div class="card" style="margin-bottom:12px;border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.03)">
     <div style="margin-bottom:10px">
-      <div class="ctit" style="margin:0 0 2px;color:var(--green)">📊 Variáveis — Previsão</div>
+      <div class="ctit" style="margin:0 0 2px;color:var(--green)">Variáveis — Previsão</div>
       <div style="font-size:11px;color:var(--text2)">Não entram nos cálculos — servem como referência de gastos esperados</div>
     </div>
     <div class="g2">
@@ -1772,14 +2024,15 @@ function rOb(mc){
       </div>
     </div>
   </div>
-  ${extrasHTML}`;
+  ${extrasHTML}
+  ${_notasHTML('ob')}`;
 }
 
 function _freqTag(r){
   const freq=_obFreq(r);
-  if(freq==='anual'){const mn=r.mes!=null?MONTHS[r.mes].charAt(0).toUpperCase()+MONTHS[r.mes].slice(1,3):'?';return`<span class="tag" style="background:rgba(240,154,64,.15);color:var(--orange);border:1px solid rgba(240,154,64,.3)">📅 ${mn}</span>`;}
-  if(freq==='variavel') return`<span class="tag" style="background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)">📊 Variável</span>`;
-  return`<span class="tag" style="background:rgba(91,138,240,.15);color:var(--blue);border:1px solid rgba(91,138,240,.3)">🔄 Mensal</span>`;
+  if(freq==='anual'){const mn=r.mes!=null?MONTHS[r.mes].charAt(0).toUpperCase()+MONTHS[r.mes].slice(1,3):'?';return`<span class="tag" style="background:rgba(240,154,64,.15);color:var(--orange);border:1px solid rgba(240,154,64,.3)">${mn}</span>`;}
+  if(freq==='variavel') return`<span class="tag" style="background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)">Variável</span>`;
+  return`<span class="tag" style="background:rgba(91,138,240,.15);color:var(--blue);border:1px solid rgba(91,138,240,.3)">Mensal</span>`;
 }
 function obTagE(r){return [r.tag==='freela'?'<span class="tag tfr">Freela</span>':'',_freqTag(r)].filter(Boolean).join('');}
 function obTagD(r){
@@ -1789,8 +2042,8 @@ function obTagD(r){
   return tags.join('');
 }
 
-function obRE(r,i){return`<div class="er"><input class="dia-inp" title="Dia do recebimento" value="${r.dia||''}" placeholder="Dia" onblur="OBE()[${i}].dia=+this.value||null;setDia('e',OBE()[${i}].id,+this.value||null);render()" type="number" min="1" max="31"/><input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="OBE()[${i}].nome=this.value;save()"/><div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0">${obTagE(r)}</div><input class="ev gv" value="${fabs(r.v)}" onblur="OBE()[${i}].v=pv(this.value);this.value=fabs(OBE()[${i}].v);save()"/><button class="btn bxs bgh" onclick="mEditOE(${i})" style="display:inline-flex;align-items:center">${_ico('gear',13,'currentColor')}</button><button class="btn bxs" style="background:var(--red3);color:var(--red);border:1px solid var(--red2)" title="Remover daqui pra frente" onclick="mExcluirOb(${i},'e')">→✕</button></div>`;}
-function obRD(r,i){return`<div class="er"><input class="dia-inp" title="Dia do vencimento" value="${r.dia||''}" placeholder="Dia" onblur="OBD()[${i}].dia=+this.value||null;setDia('d',OBD()[${i}].id,+this.value||null);render()" type="number" min="1" max="31"/><input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="OBD()[${i}].nome=this.value;save()"/><div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0">${obTagD(r)}</div><input class="ev rv" value="${fabs(r.v)}" onblur="OBD()[${i}].v=pv(this.value);this.value=fabs(OBD()[${i}].v);save()"/><button class="btn bxs bgh" onclick="mEditOD(${i})" style="display:inline-flex;align-items:center">${_ico('gear',13,'currentColor')}</button><button class="btn bxs" style="background:var(--orange3);color:var(--orange);border:1px solid var(--orange2)" title="Pausar por meses" onclick="mPausarOb(${i})">⏸</button><button class="btn bxs" style="background:var(--red3);color:var(--red);border:1px solid var(--red2)" title="Remover daqui pra frente" onclick="mExcluirOb(${i},'d')">→✕</button></div>`;}
+function obRE(r,i){return`<div class="er"><input class="dia-inp" title="Dia do recebimento" value="${r.dia||''}" placeholder="Dia" onblur="OBE()[${i}].dia=+this.value||null;setDia('e',OBE()[${i}].id,+this.value||null);_obDirty();render()" type="number" min="1" max="31"/><input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="OBE()[${i}].nome=this.value;save();_obDirty()"/><div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0">${obTagE(r)}</div><input class="ev gv" value="${fabs(r.v)}" onblur="OBE()[${i}].v=pv(this.value);this.value=fabs(OBE()[${i}].v);save();_obDirty()"/><button class="btn bxs bgh" onclick="mEditOE(${i})" style="display:inline-flex;align-items:center">${_ico('gear',13,'currentColor')}</button><button class="btn bxs" style="background:var(--red3);color:var(--red);border:1px solid var(--red2)" title="Remover daqui pra frente" onclick="mExcluirOb(${i},'e')">→✕</button></div>`;}
+function obRD(r,i){return`<div class="er"><input class="dia-inp" title="Dia do vencimento" value="${r.dia||''}" placeholder="Dia" onblur="OBD()[${i}].dia=+this.value||null;setDia('d',OBD()[${i}].id,+this.value||null);_obDirty();render()" type="number" min="1" max="31"/><input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="OBD()[${i}].nome=this.value;save();_obDirty()"/><div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0">${obTagD(r)}</div><input class="ev rv" value="${fabs(r.v)}" onblur="OBD()[${i}].v=pv(this.value);this.value=fabs(OBD()[${i}].v);save();_obDirty()"/><button class="btn bxs bgh" onclick="mEditOD(${i})" style="display:inline-flex;align-items:center">${_ico('gear',13,'currentColor')}</button><button class="btn bxs" style="background:var(--orange3);color:var(--orange);border:1px solid var(--orange2)" title="Pausar por meses" onclick="mPausarOb(${i})">⏸</button><button class="btn bxs" style="background:var(--red3);color:var(--red);border:1px solid var(--red2)" title="Remover daqui pra frente" onclick="mExcluirOb(${i},'d')">→✕</button></div>`;}
 
 function apOb(){
   const d2=D();
@@ -1979,10 +2232,15 @@ function rContas(mc){
       ${sortByDia(d2.entradas.filter(r=>r.vals[i]>0)).map((r)=>{
         const realIdx=d2.entradas.indexOf(r);
         const dia=getDia(r.id,'e');
+        const tp=r.tipo||'mensal';
+        const nextTp=tp==='mensal'?'anual':tp==='anual'?'pontual':'mensal';
+        const tpStyle=tp==='anual'?'background:rgba(240,154,64,.15);color:var(--orange);border-color:rgba(240,154,64,.3)':tp==='pontual'?'background:var(--bg4);color:var(--text3);border-color:var(--border)':'background:rgba(91,138,240,.15);color:var(--blue);border-color:rgba(91,138,240,.3)';
+        const tpLbl=tp==='anual'?'Anual':tp==='pontual'?'Pontual':'Mensal';
         return`<div class="er"><span class="dia-badge" title="Dia do recebimento" onclick="editDiaContas(this,'e',${realIdx})">${dia||'—'}</span>
         ${r.tag==='freela'?'<span class="tag tfr" style="flex-shrink:0">F</span>':''}
         <input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="D().entradas[${realIdx}].nome=this.value;save()"/>
         <input class="ev gv" value="${fabs(r.vals[i]||0)}" onfocus="this.select()" onblur="editContaVal('e',${realIdx},${i},this)"/>
+        <span onclick="D().entradas[${realIdx}].tipo='${nextTp}';save();render()" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid;flex-shrink:0;${tpStyle}">${tpLbl}</span>
         ${togBtn(r.id,'e')}
         <button class="del" onclick="delContaItem('e',${realIdx})">✕</button></div>`;
       }).join('')}
@@ -1997,10 +2255,15 @@ function rContas(mc){
         ...sortByDia(d2.despesas.filter(r=>r.vals[i]>0)).map(r=>{
           const realIdx=d2.despesas.indexOf(r);
           const dia=getDia(r.id,'d');
+          const tp=r.tipo||'mensal';
+          const nextTp=tp==='mensal'?'anual':tp==='anual'?'pontual':'mensal';
+          const tpStyle=tp==='anual'?'background:rgba(240,154,64,.15);color:var(--orange);border-color:rgba(240,154,64,.3)':tp==='pontual'?'background:var(--bg4);color:var(--text3);border-color:var(--border)':'background:rgba(91,138,240,.15);color:var(--blue);border-color:rgba(91,138,240,.3)';
+          const tpLbl=tp==='anual'?'Anual':tp==='pontual'?'Pontual':'Mensal';
           return`<div class="er"><span class="dia-badge" title="Dia do vencimento" onclick="editDiaContas(this,'d',${realIdx})">${dia||'—'}</span>
           ${r.da?'<span class="tag tda" style="flex-shrink:0">Déb. Aut.</span>':''}
           <input class="ed" value="${r.nome.replace(/"/g,'&quot;')}" onblur="D().despesas[${realIdx}].nome=this.value;save()"/>
           <input class="ev rv" value="${fabs(r.vals[i]||0)}" onfocus="this.select()" onblur="editContaVal('d',${realIdx},${i},this)"/>
+          <span onclick="D().despesas[${realIdx}].tipo='${nextTp}';save();render()" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid;flex-shrink:0;${tpStyle}">${tpLbl}</span>
           ${togBtn(r.id,'d')}
           <button class="del" onclick="delContaItem('d',${realIdx})">✕</button></div>`;
         }),
@@ -2605,7 +2868,7 @@ function rParc(mc){
     return;
   }
 
-  mc.innerHTML=mTabs+
+  mc.innerHTML=_notasHTML('parc')+mTabs+
   '<div class="g2" style="margin-bottom:12px">'+
     '<div class="met o"><div class="mlbl">Total parcelado (ano)</div><div class="mval">'+fmt(totalParcAno)+'</div><div class="msub">'+nCompras+' compra(s)</div></div>'+
     '<div class="met o"><div class="mlbl">Parcelado em '+MONTHS[mes]+'</div><div class="mval">'+fmt(totalParcMes)+'</div><div class="msub">'+MONTHS[mes]+'/'+S.anoAtivo+'</div></div>'+
@@ -2692,7 +2955,7 @@ function rParc(mc){
 // ── RESERVAS ──
 function rRes(mc){
   const tot=rTot();const lr=S.config.limiteReserva||3000;const crit=tot<lr;
-  mc.innerHTML=`
+  mc.innerHTML=_notasHTML('res')+`
   ${mobileHeader('Reservas','Controle de economias')}
   <div style="display:flex;${isMobile()?'padding:0 16px 12px;':''}justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
     ${isMobile()?'':'<div style="font-size:18px;font-weight:700">Reservas</div>'}
@@ -2921,7 +3184,8 @@ function rFree(mc){
     <tbody>${fe.map(e=>{const t2=e.vals.reduce((a,b)=>a+b,0);return`<tr><td style="font-weight:500">${e.nome} <span class="tag tfr">Freela</span></td>${e.vals.map(v=>`<td class="rv" style="color:${v>0?'var(--purple)':'var(--text3)'};font-size:11px">${v>0?fabs(v):'—'}</td>`).join('')}<td class="rv" style="font-weight:600;color:var(--purple)">${fmt(t2)}</td></tr>`;}).join('')}
     <tr style="background:var(--bg3)"><td style="font-weight:600">Total</td>${pm.map(v=>`<td class="rv" style="font-weight:600;color:${v>0?'var(--purple)':'var(--text3)'};font-size:11px">${v>0?fmt(v):'—'}</td>`).join('')}<td class="rv" style="font-weight:700;color:var(--purple)">${fmt(tot)}</td></tr>
     </tbody></table></div>
-  </div>`;
+  </div>
+  ${_notasHTML('free')}`;
   const fcEl=document.getElementById('fc-svg');if(fcEl)svgBar(fcEl,MONTHS,[{label:'Freelas',data:pm,color:'#A075F0'}],false);
 }
 
@@ -2979,7 +3243,8 @@ function mConfig(){
   const moeda=cfg.moeda||'BRL',popupAuto=cfg.popupAuto!==false;
   const nomeUsuario=cfg.nomeUsuario||'',metaPoupanca=cfg.metaPoupanca||0,diasLembreteVenc=cfg.diasLembreteVenc||3;
   const tabsOcultas=cfg.tabsOcultas||[],tabsCustom=cfg.tabsCustom||[];
-  const tabInfo=[{id:'home',l:'Home',fixo:true},{id:'ob',l:'Orçamento'},{id:'contas',l:'Contas'},{id:'parc',l:'Parcelados'},{id:'res',l:'Reservas'},{id:'free',l:'Freelas'},{id:'graf',l:'Gráficos'},{id:'avi',l:'Avisos'}];
+  let tabInfo=[{id:'home',l:'Home',fixo:true},{id:'ob',l:'Orçamento'},{id:'contas',l:'Contas'},{id:'parc',l:'Parcelados'},{id:'res',l:'Reservas'},{id:'free',l:'Freelas'},{id:'graf',l:'Gráficos'},{id:'avi',l:'Avisos'}];
+  {const to=cfg.tabsOrder;if(to&&to.length)tabInfo.sort((a,b)=>{const ai=to.indexOf(a.id),bi=to.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi);});}
   om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:580px">
     <div class="mtitle">Configurações<button class="mclose" onclick="cm()">×</button></div>
     <div style="overflow-y:auto;max-height:75vh;padding-right:4px">
@@ -3017,12 +3282,16 @@ function mConfig(){
       <div><div style="font-size:13px;font-weight:500">Popup automático de pagamentos</div><div style="font-size:11px;color:var(--text2)">Abre ao carregar o app quando há contas pendentes</div></div>
     </label></div>
     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:5px">${_ico('files',12)} Abas — Visibilidade</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Home não pode ser ocultada.</div>
-    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
-      ${tabInfo.map(t=>`<label style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer${t.fixo?';opacity:.5;pointer-events:none':''}">
-        <input type="checkbox" data-tabid="${t.id}" class="cfg-tab-chk" ${!tabsOcultas.includes(t.id)?'checked':''} ${t.fixo?'disabled':''} style="width:16px;height:16px;accent-color:var(--green)"/>
-        <span style="font-size:13px;font-weight:500">${t.l}</span>${t.fixo?'<span style="font-size:10px;color:var(--text3);margin-left:auto">obrigatória</span>':''}
-      </label>`).join('')}
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Home não pode ser ocultada. Arraste <strong>⠿</strong> para reordenar.</div>
+    <div id="cfg-tabs-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+      ${tabInfo.map(t=>`<div data-tabid="${t.id}" class="cfg-tab-row" style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px${t.fixo?';opacity:.6':''}">
+        <span class="hgrip" style="${t.fixo?'opacity:.3;cursor:default':'cursor:grab'}" title="${t.fixo?'':'Arrastar para reordenar'}">⠿</span>
+        <label style="display:flex;align-items:center;gap:8px;flex:1;cursor:${t.fixo?'default':'pointer'}">
+          <input type="checkbox" data-tabid="${t.id}" class="cfg-tab-chk" ${!tabsOcultas.includes(t.id)?'checked':''} ${t.fixo?'disabled':''} style="width:16px;height:16px;accent-color:var(--green)"/>
+          <span style="font-size:13px;font-weight:500">${t.l}</span>
+        </label>
+        ${t.fixo?'<span style="font-size:10px;color:var(--text3)">obrigatória</span>':''}
+      </div>`).join('')}
     </div>
     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:5px">${_ico('card',12)} Cartões</div>
     <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Ative/oculte abas. Cartões com faturas aparecem automaticamente.</div>
@@ -3034,10 +3303,11 @@ function mConfig(){
           return `<div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px">
             <label style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer">
               <input type="checkbox" data-cartaoid="${c.id}" class="cfg-cartao-chk" ${!oc.includes(c.id)?'checked':''} style="width:16px;height:16px;accent-color:var(--green)"/>
-              <span style="font-size:16px">${c.emoji}</span>
+              ${_cIco(c,16)}
               <span style="font-size:13px;font-weight:500">${c.nome}</span>
             </label>
             <span style="font-size:10px;color:var(--text3)">${c.faturas.length} fatura(s)</span>
+            <button class="btn bgh bsm" style="padding:2px 8px;font-size:11px;flex-shrink:0" onclick="mEditCartaoCfg('${c.id}')">✏️</button>
             ${isCustom?`<button class="del" title="Remover cartão" onclick="delCartao('${c.id}')">✕</button>`:''}
           </div>`;
         }).join('');
@@ -3045,10 +3315,9 @@ function mConfig(){
     </div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px">
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">+ Adicionar cartão</div>
-      <div class="fr c2" style="margin-bottom:0">
-        <div><div class="fl">Emoji</div><input id="cc-em" class="inp" value="💳" maxlength="2" style="font-size:18px;text-align:center"/></div>
-        <div><div class="fl">Nome do cartão</div><input id="cc-nm" class="inp" placeholder="Ex: Inter, C6, Banco do Brasil"/></div>
-      </div>
+      <div class="fr" style="margin-bottom:8px"><div><div class="fl">Nome do cartão</div><input id="cc-nm" class="inp" placeholder="Ex: Inter, C6, Banco do Brasil"/></div></div>
+      <div class="fr" style="margin-bottom:8px"><div><div class="fl">Cor</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviCoresPaleta('cc-cor','#9B59FC')}<input id="cc-cor" type="color" value="#9B59FC" style="width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;padding:0;margin-left:2px"/></div></div></div>
+      <div class="fr" style="margin-bottom:0"><div><div class="fl">Ícone</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviIcoGrid('cc-ico','card')}</div><input id="cc-ico" type="hidden" value="card"/></div></div>
       <button class="btn bg bsm" style="margin-top:10px" onclick="svAddCartao()">+ Adicionar</button>
     </div>
     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:5px">${_ico('plus',12)} Abas Personalizadas</div>
@@ -3059,6 +3328,18 @@ function mConfig(){
       <div class="fr" style="margin-top:8px;margin-bottom:0"><div><div class="fl">Descrição (opcional)</div><input id="cfg-new-desc" class="inp" placeholder="Subtítulo da aba"/></div></div>
       <button class="btn bg bsm" style="margin-top:10px" onclick="criarAbaCustom()">+ Criar aba</button>
     </div>
+    ${(()=>{
+      const hh=S.config.homeHidden||[];
+      const secLabels={chk:'Contas do mês',qa:'Ações Rápidas',met:'Este Mês',ann:'Visão Anual (tabela)',graf:'Visão Anual (gráfico)',avisos:'Avisos Ativos'};
+      if(!hh.length)return '';
+      return `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:5px">${_ico('home',12)} Seções Ocultas da Home</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+        ${hh.map(id=>`<div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px">
+          <span style="flex:1;font-size:13px;color:var(--text2)">${secLabels[id]||id}</span>
+          <button class="btn bg bsm" onclick="_homeShow('${id}');mConfig()">Reabilitar</button>
+        </div>`).join('')}
+      </div>`;
+    })()}
     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:5px">${_ico('files',12)} Dados</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
       <button class="btn bgh bsm" onclick="cm();exportarDados()">Exportar backup</button>
@@ -3069,8 +3350,33 @@ function mConfig(){
       <button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn bg" onclick="svConfig()">Salvar</button>
     </div>
   </div>`);
+  requestAnimationFrame(()=>{const c=document.getElementById('cfg-tabs-lista');if(c)_setupTabsDrag(c,'tabsOrder');});
 }
 
+function mEditCartaoCfg(cid){
+  const all=getCartoesComFatura();
+  const c=all.find(x=>x.id===cid)||{id:cid,nome:cid,cor:'#9B59FC',ico:'card'};
+  om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
+    <div class="mtitle">${_ico('pencil',15)} Editar Cartão<button class="mclose" onclick="cm()">×</button></div>
+    <div class="fr" style="margin-bottom:8px"><div><div class="fl">Nome</div><input id="ecfg-nm" class="inp" value="${c.nome}"/></div></div>
+    <div class="fr" style="margin-bottom:8px"><div><div class="fl">Cor</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviCoresPaleta('ecfg-cor',c.cor||'#9B59FC')}<input id="ecfg-cor" type="color" value="${c.cor||'#9B59FC'}" style="width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;padding:0;margin-left:2px"/></div></div></div>
+    <div class="fr" style="margin-bottom:0"><div><div class="fl">Ícone</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviIcoGrid('ecfg-ico',c.ico||'card')}</div><input id="ecfg-ico" type="hidden" value="${c.ico||'card'}"/></div></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn bgh" onclick="cm()">Cancelar</button>
+      <button class="btn bg" onclick="
+        const nm=document.getElementById('ecfg-nm').value.trim();
+        const cor=document.getElementById('ecfg-cor').value||'#9B59FC';
+        const ico=document.getElementById('ecfg-ico').value||'card';
+        if(!nm){toast('Informe o nome','orange');return;}
+        if(!S.config.cartoesCustom)S.config.cartoesCustom=[];
+        const idx=S.config.cartoesCustom.findIndex(x=>x.id==='${cid}');
+        if(idx>=0)S.config.cartoesCustom[idx]={...S.config.cartoesCustom[idx],nome:nm,cor,ico,emoji:''};
+        else S.config.cartoesCustom.push({id:'${cid}',nome:nm,cor,ico,emoji:''});
+        save();cm();renderNav();mConfig();toast('Cartão atualizado!','green');
+      ">Salvar</button>
+    </div>
+  </div>`);
+}
 function delCartao(cid){
   const c=(S.config.cartoesCustom||[]).find(x=>x.id===cid);
   const nome=c?c.nome:cid;
@@ -3092,13 +3398,14 @@ function delCartao(cid){
 }
 
 function svAddCartao(){
-  const em=document.getElementById('cc-em').value.trim()||'💳';
   const nm=document.getElementById('cc-nm').value.trim();
+  const cor=document.getElementById('cc-cor').value||'#9B59FC';
+  const ico=document.getElementById('cc-ico').value||'card';
   if(!nm){toast('Informe o nome do cartão','orange');return;}
   if(!S.config.cartoesCustom)S.config.cartoesCustom=[];
   const id=nm.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
   if(getCartoesComFatura().find(c=>c.id===id)){toast('Cartão já existe','orange');return;}
-  S.config.cartoesCustom.push({id,nome:nm,emoji:em});
+  S.config.cartoesCustom.push({id,nome:nm,cor,ico,emoji:''});
   save();renderNav();mConfig();toast('"'+nm+'" adicionado!','green');
 }
 
@@ -3236,6 +3543,7 @@ function mEditDivida(idx){
 function quitarDivida(idx){const d=getDividas()[idx];if(!d)return;om(`<div class="modal" onclick="event.stopPropagation()"><div class="mtitle" style="color:var(--green)">${_ico('check-circle',15,'var(--green)')} Quitar Dívida<button class="mclose" onclick="cm()">×</button></div><div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Confirma quitar <strong>${d.nome}</strong>?</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn bg" onclick="getDividas()[${idx}].quitada=true;getDividas()[${idx}].dataQuitacao=td();save();cm();renderNav();if(!hasDividas()&&tab==='div'){gt('home');}else{render();}toast('Quitada!','green')">${_ico('check',13)} Quitar</button></div></div>`);}
 // ── SIMULADORES ──────────────────────────────────────────────────────────────
 if(!window._simTipo) window._simTipo='calc';
+function _simToggleCollapse(id){if(!S.simCollapsed)S.simCollapsed={};S.simCollapsed[id]=!S.simCollapsed[id];save();render();}
 function _novoSim(tipo,ano){
   if(!S.simuladores)S.simuladores={};
   if(!S.simuladores[ano])S.simuladores[ano]=[];
@@ -3267,14 +3575,17 @@ function rSim(mc){
     const totE=sim.entradas.reduce((a,x)=>a+x.v,0);
     const saldo=totE-Math.abs(totD);
     const pos=saldo>=0;
+    const collapsed=(S.simCollapsed||{})[sim.id];
     return `<div class="card" style="margin-bottom:12px;border-color:${pos?'rgba(16,185,129,.4)':'var(--red2)'}">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;${collapsed?'':'margin-bottom:12px;'}gap:8px;flex-wrap:wrap">
         <input class="inp" style="font-size:15px;font-weight:700;flex:1;min-width:120px" value="${sim.nome}" onblur="S.simuladores[${ano}][${si}].nome=this.value;save()" placeholder="Nome"/>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-          <span style="font-size:20px;font-weight:800;color:${pos?'var(--green)':'var(--red)'}">${pos?'+':''}${fmt(saldo)}</span>
+          <span style="font-size:18px;font-weight:800;color:${pos?'var(--green)':'var(--red)'}">${pos?'+':''}${fmt(saldo)}</span>
+          <button class="btn bxs bgh" onclick="_simToggleCollapse('${sim.id}')" title="${collapsed?'Expandir':'Recolher'}">${collapsed?'▼':'▲'}</button>
           <button class="del" onclick="if(confirm('Remover?')){S.simuladores[${ano}].splice(${si},1);save();render()}">✕</button>
         </div>
       </div>
+      ${collapsed?'':`
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--red);margin-bottom:6px">Despesas · ${fmt(Math.abs(totD))}</div>
@@ -3298,7 +3609,7 @@ function rSim(mc){
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:${pos?'rgba(16,185,129,.06)':'var(--red3)'};margin:-1px -1px -1px;padding:10px 14px;border-radius:0 0 var(--radius) var(--radius)">
         <span style="font-size:11px;color:var(--text2)">Resultado</span>
         <span style="font-size:18px;font-weight:800;color:${pos?'var(--green)':'var(--red)'}">${pos?'Sobra':'Tira da reserva'}: ${fmt(Math.abs(saldo))}</span>
-      </div>
+      </div>`}
     </div>`;
   }
 
@@ -3390,12 +3701,17 @@ function rSim(mc){
     }
     const cruza=fimAbs>ano*12+11;
     const ok=mesesNeg===0;
+    const collapsed=(S.simCollapsed||{})[sim.id];
     return `<div class="card" style="margin-bottom:12px;border-color:${ok?'rgba(91,138,240,.4)':'var(--red2)'}">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;${collapsed?'':'margin-bottom:14px;'}gap:8px;flex-wrap:wrap">
         <input class="inp" style="font-size:15px;font-weight:700;flex:1;min-width:120px" value="${sim.nome}" onblur="S.simuladores[${ano}][${si}].nome=this.value;save()" placeholder="Nome"/>
-        <button class="del" onclick="if(confirm('Remover?')){S.simuladores[${ano}].splice(${si},1);save();render()}">✕</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+          <span style="font-size:13px;font-weight:700;color:var(--blue)">${fmt(vParc)}/mês</span>
+          <button class="btn bxs bgh" onclick="_simToggleCollapse('${sim.id}')">${collapsed?'▼':'▲'}</button>
+          <button class="del" onclick="if(confirm('Remover?')){S.simuladores[${ano}].splice(${si},1);save();render()}">✕</button>
+        </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      ${collapsed?'':`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
         <div><div class="fl">Valor (R$)</div><input class="inp" value="${vTotal?fabs(vTotal):''}" onblur="S.simuladores[${ano}][${si}].vTotal=pv(this.value);save();render()" placeholder="0,00"/></div>
         <div><div class="fl">Parcelas</div><input class="inp" type="number" min="1" value="${n}" onblur="S.simuladores[${ano}][${si}].n=+this.value||1;save();render()"/></div>
         <div><div class="fl">Mês início</div><select class="inp" onchange="S.simuladores[${ano}][${si}].iniM=+this.value;save();render()">${mesOpts}</select></div>
@@ -3416,7 +3732,7 @@ function rSim(mc){
           <th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
-      </table>
+      </table>`}
     </div>`;
   }
 
@@ -3430,12 +3746,17 @@ function rSim(mc){
     const ok=saldoCaixa>=0;
     const d2=D();const m0=new Date().getMonth();
     const pcAtivos=d2.pc.filter(p=>{const ai=p.anoIni||S.anoAtivo;return ai*12+p.ini+p.n-1>=S.anoAtivo*12+m0;});
+    const collapsed=(S.simCollapsed||{})[sim.id];
     return `<div class="card" style="margin-bottom:12px;border-color:${ok?'rgba(240,154,64,.4)':'var(--red2)'}">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;${collapsed?'':'margin-bottom:14px;'}gap:8px;flex-wrap:wrap">
         <input class="inp" style="font-size:15px;font-weight:700;flex:1;min-width:120px" value="${sim.nome}" onblur="S.simuladores[${ano}][${si}].nome=this.value;save()" placeholder="Nome"/>
-        <button class="del" onclick="if(confirm('Remover?')){S.simuladores[${ano}].splice(${si},1);save();render()}">✕</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+          <span style="font-size:13px;font-weight:700;color:${ok?'var(--orange)':'var(--red)'}">${fmt(totAntecipar)}</span>
+          <button class="btn bxs bgh" onclick="_simToggleCollapse('${sim.id}')">${collapsed?'▼':'▲'}</button>
+          <button class="del" onclick="if(confirm('Remover?')){S.simuladores[${ano}].splice(${si},1);save();render()}">✕</button>
+        </div>
       </div>
-      <div style="margin-bottom:12px">
+      ${collapsed?'':`<div style="margin-bottom:12px">
         <div class="fl">Caixa disponível para antecipar (R$)</div>
         <input class="inp" value="${caixa?fabs(caixa):''}" onblur="S.simuladores[${ano}][${si}].caixa=pv(this.value);save();render()" placeholder="0,00"/>
       </div>
@@ -3458,7 +3779,7 @@ function rSim(mc){
         <div><div style="font-size:10px;color:var(--text2)">Caixa restante</div><div style="font-size:16px;font-weight:700;color:${ok?'var(--green)':'var(--red)'}">${fmt(saldoCaixa)}</div></div>
         <div><div style="font-size:10px;color:var(--text2)">Economia/mês (libera)</div><div style="font-size:16px;font-weight:700;color:var(--green)">${fmt(totalEconomia)}</div></div>
       </div>
-      <div style="margin-top:10px;text-align:right;font-size:12px;font-weight:600;color:${ok?'var(--orange)':'var(--red)'}">${ok?`✓ Caixa suficiente — sobram ${fmt(saldoCaixa)} após antecipar`:'✗ Caixa insuficiente — faltam '+fmt(Math.abs(saldoCaixa))}</div>
+      <div style="margin-top:10px;text-align:right;font-size:12px;font-weight:600;color:${ok?'var(--orange)':'var(--red)'}">${ok?`✓ Caixa suficiente — sobram ${fmt(saldoCaixa)} após antecipar`:'✗ Caixa insuficiente — faltam '+fmt(Math.abs(saldoCaixa))}</div>`}
     </div>`;
   }
 
@@ -3583,12 +3904,11 @@ function getCartoesComFatura(){
   (S.config.cartoesCustom||[]).forEach(c=>{
     if(!cartoes[c.nome]) cartoes[c.nome]={id:c.id,nome:c.nome,emoji:c.emoji,faturas:new Set()};
   });
-  const map={'Nubank':{emoji:'🟣',nome:'Nubank'},'Mercado Pago':{emoji:'🟢',nome:'Mercado Pago'}};
+  const map={'Nubank':{nome:'Nubank',cor:'#9B59FC'},'Mercado Pago':{nome:'Mercado Pago',cor:'#2DD4A0'}};
   return Object.values(cartoes).map(c=>{
     const ov=map[c.nome]||{};
-    // Check config override for emoji
     const cfg=(S.config.cartoesCustom||[]).find(x=>x.id===c.id);
-    return{id:c.id,nome:ov.nome||c.nome,emoji:cfg?cfg.emoji:(ov.emoji||c.emoji||'💳'),faturas:[...c.faturas].sort()};
+    return{id:c.id,nome:ov.nome||c.nome,cor:cfg?cfg.cor:(ov.cor||'#5B8AF0'),ico:cfg?cfg.ico:null,faturas:[...c.faturas].sort()};
   });
 }
 
@@ -4814,24 +5134,17 @@ function mEditCartaoParc(i){
   if(!c)return;
   om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
     <div class="mtitle">${_ico('pencil',15)} Editar Cartão<button class="mclose" onclick="mGerenciarCartoesParc()">×</button></div>
-    <div class="fr c2">
-      <div><div class="fl">Emoji</div><input id="ep-em" class="inp" value="${c.emoji||'💳'}" maxlength="2" style="font-size:18px;text-align:center"/></div>
-      <div><div class="fl">Nome</div><input id="ep-nm" class="inp" value="${c.nome}"/></div>
-    </div>
-    <div class="fr">
-      <div><div class="fl">Cor</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">${_cpPaletaHtml('ep-cor')}</div>
-        <input id="ep-cor" class="inp isml" value="${c.cor}" style="margin-top:8px;width:100px" placeholder="#hex"/>
-      </div>
-    </div>
+    <div class="fr" style="margin-bottom:8px"><div><div class="fl">Nome</div><input id="ep-nm" class="inp" value="${c.nome}"/></div></div>
+    <div class="fr" style="margin-bottom:8px"><div><div class="fl">Cor</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviCoresPaleta('ep-cor',c.cor||'#9B59FC')}<input id="ep-cor" type="color" value="${c.cor||'#9B59FC'}" style="width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;padding:0;margin-left:2px"/></div></div></div>
+    <div class="fr" style="margin-bottom:0"><div><div class="fl">Ícone</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviIcoGrid('ep-ico',c.ico||'card')}</div><input id="ep-ico" type="hidden" value="${c.ico||'card'}"/></div></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn bgh" onclick="mGerenciarCartoesParc()">Cancelar</button>
       <button class="btn bb" onclick="
         const nm=document.getElementById('ep-nm').value.trim();
-        const em=document.getElementById('ep-em').value||'💳';
-        const cor=document.getElementById('ep-cor').value||'#5B8AF0';
+        const cor=document.getElementById('ep-cor').value||'#9B59FC';
+        const ico=document.getElementById('ep-ico').value||'card';
         if(!nm){toast('Informe o nome','orange');return;}
-        S.config.cartoesParc[${i}]={id:nm.toLowerCase().replace(/\\s+/g,'_'),nome:nm,cor,emoji:em};
+        S.config.cartoesParc[${i}]={id:nm.toLowerCase().replace(/\\s+/g,'_'),nome:nm,cor,ico,emoji:''};
         save();mGerenciarCartoesParc();toast('Cartão atualizado!','green');
       ">Salvar</button>
     </div>
@@ -4844,7 +5157,7 @@ function mGerenciarCartoesParc(){
     '<div style="font-size:11px;color:var(--text3);margin:10px 0 6px">Cartões de fatura (gerenciados nas Configurações)</div>'+
     fatCartoes.map(c=>`
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);opacity:.75">
-        <span style="font-size:20px">${c.emoji||'💳'}</span>
+        ${_cIco(c,18)}
         <span style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${c.nome}</span>
         <span style="font-size:10px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1px 6px">fatura</span>
       </div>`).join('');
@@ -4852,7 +5165,7 @@ function mGerenciarCartoesParc(){
     ?'<div style="text-align:center;padding:16px;font-size:13px;color:var(--text3)">Nenhum cartão cadastrado ainda.</div>'
     :(cartoes.length===0?'':cartoes.map((c,i)=>`
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-        <span style="font-size:20px">${c.emoji||'💳'}</span>
+        ${_cIco(c,18)}
         <span style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${c.nome}</span>
         <span style="width:16px;height:16px;border-radius:50%;background:${c.cor};display:inline-block;border:1px solid rgba(255,255,255,.2)"></span>
         <button class="btn bgh bsm" style="padding:2px 8px;font-size:11px" onclick="mEditCartaoParc(${i})">✏️</button>
@@ -4863,27 +5176,20 @@ function mGerenciarCartoesParc(){
     <div style="margin-bottom:16px">${listaHtml}</div>
     <div style="border-top:1px solid var(--border);padding-top:14px">
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">Adicionar cartão</div>
-      <div class="fr c2">
-        <div><div class="fl">Emoji</div><input id="cp-em" class="inp" value="💳" maxlength="2" style="font-size:18px;text-align:center"/></div>
-        <div><div class="fl">Nome</div><input id="cp-nm" class="inp" placeholder="Ex: Nubank, Inter..."/></div>
-      </div>
-      <div class="fr">
-        <div><div class="fl">Cor</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">${_cpPaletaHtml('cp-cor')}</div>
-          <input id="cp-cor" class="inp isml" value="#9B59FC" style="margin-top:8px;width:100px" placeholder="#hex"/>
-        </div>
-      </div>
+      <div class="fr" style="margin-bottom:8px"><div><div class="fl">Nome</div><input id="cp-nm" class="inp" placeholder="Ex: Nubank, Inter..."/></div></div>
+      <div class="fr" style="margin-bottom:8px"><div><div class="fl">Cor</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviCoresPaleta('cp-cor','#9B59FC')}<input id="cp-cor" type="color" value="#9B59FC" style="width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;padding:0;margin-left:2px"/></div></div></div>
+      <div class="fr" style="margin-bottom:0"><div><div class="fl">Ícone</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${_aviIcoGrid('cp-ico','card')}</div><input id="cp-ico" type="hidden" value="card"/></div></div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn bgh" onclick="cm()">Fechar</button>
       <button class="btn bb" onclick="
         const nm=document.getElementById('cp-nm').value.trim();
-        const em=document.getElementById('cp-em').value||'💳';
-        const cor=document.getElementById('cp-cor').value||'#5B8AF0';
+        const cor=document.getElementById('cp-cor').value||'#9B59FC';
+        const ico=document.getElementById('cp-ico').value||'card';
         if(!nm){toast('Informe o nome','orange');return;}
         if(!S.config.cartoesParc)S.config.cartoesParc=[];
         if(S.config.cartoesParc.find(x=>x.nome===nm)){toast('Cartão já existe','orange');return;}
-        S.config.cartoesParc.push({id:nm.toLowerCase().replace(/\s+/g,'_'),nome:nm,cor,emoji:em});
+        S.config.cartoesParc.push({id:nm.toLowerCase().replace(/\s+/g,'_'),nome:nm,cor,ico,emoji:''});
         save();mGerenciarCartoesParc();toast('Cartão adicionado!','green');
       ">Adicionar</button>
     </div>
@@ -5261,7 +5567,7 @@ function mEditPd(idx){
   </div>`);
 }
 function mEditOE(idx){
-  const r=S.obE[idx];
+  const r=OBE()[idx];
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">⚙ Configurar Entrada<button class="mclose" onclick="cm()">×</button></div>
     <div class="fr"><div><div class="fl">Nome</div><input id="eoe-n" class="inp" value="${r.nome.replace(/"/g,'&quot;')}"/></div></div>
@@ -5276,14 +5582,14 @@ function mEditOE(idx){
   requestAnimationFrame(()=>{const el=document.getElementById('eoe-pi');if(el)el.value=r.pi||0;});
 }
 function svEditOE(idx){
-  const r=S.obE[idx];
+  const r=OBE()[idx];
   r.nome=document.getElementById('eoe-n').value;r.v=pv(document.getElementById('eoe-v').value);r.tag=document.getElementById('eoe-fr').checked?'freela':'';
   const modo=document.getElementById('eoe-m').value;r.fixa=modo==='fixa';r.parc=modo==='parc';r.sc=document.getElementById('eoe-sc').value;
   r.pi=+document.getElementById('eoe-pi').value||0;r.pn=+document.getElementById('eoe-pn').value||1;
-  save();cm();render();toast('Entrada atualizada!','green');
+  save();cm();render();_obDirty();toast('Entrada atualizada!','green');
 }
 function mEditOD(idx){
-  const r=S.obD[idx];
+  const r=OBD()[idx];
   const modoAtual=r.fixa?'fixa':r.parc?'parc':'none';
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">⚙ Configurar Despesa<button class="mclose" onclick="cm()">×</button></div>
@@ -5317,13 +5623,13 @@ function toggleObdOpts(modo){
   if(pe) pe.style.display=modo==='parc'?'block':'none';
 }
 function svEditOD(idx){
-  const r=S.obD[idx];
+  const r=OBD()[idx];
   r.nome=document.getElementById('eod-n').value;r.v=pv(document.getElementById('eod-v').value);r.da=document.getElementById('eod-da').checked;
   const modo=document.getElementById('eod-m').value;r.fixa=modo==='fixa';r.parc=modo==='parc';
   if(modo==='fixa') r.sc=document.getElementById('eod-sc').value;
   else r.sc='';
   if(modo==='parc'){r.pi=+document.getElementById('eod-pi').value||0;r.pn=+document.getElementById('eod-pn').value||1;}
-  save();cm();render();toast('Despesa atualizada!','green');
+  save();cm();render();_obDirty();toast('Despesa atualizada!','green');
 }
 
 // ── BACKUP ──
