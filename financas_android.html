@@ -521,6 +521,12 @@ const CTAG={Nubank:'tnu','Mercado Pago':'tmp','Itaú':'tit',Outro:'tou'};
 function getCartoesParc(){return S.config.cartoesParc&&S.config.cartoesParc.length>0?S.config.cartoesParc:[];}
 function getCartaoParcCor(nome){const c=getCartoesParc().find(x=>x.nome===nome);return c?c.cor:'#5B8AF0';}
 function getCartaoParcEmoji(nome){const c=getCartoesParc().find(x=>x.nome===nome);return c?c.emoji:'💳';}
+// Retorna todos os cartões disponíveis (parcelados + fatura) para uso em dropdowns
+function getAllCartoesOpcoes(){
+  const parc=getCartoesParc();
+  const fat=(S.config.cartoesCustom||[]).filter(c=>!parc.find(p=>p.nome===c.nome));
+  return [...parc,...fat.map(c=>({nome:c.nome,cor:'#5B8AF0',emoji:c.emoji||'💳'}))];
+}
 const SK='fp_v5';
 
 const DEF={"anos":[2026],"anoAtivo":2026,"config":{"limiteReserva":3000,"limiteParcMensal":800},"dados":{"2026":{"entradas":[{"id":"e1","nome":"Salário","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"fixa":true,"fixaScope":"always","tag":""}],"despesas":[{"id":"d1","nome":"Aluguel","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"fixa":true,"fixaScope":"always","da":false,"tag":""}],"pc":[],"pd":[],"cc":{"nubank":0,"itau":0,"mp":0},"obE":[{"id":"oe1","nome":"Salário","v":0,"fixa":true,"sc":"always","parc":false,"pi":0,"pn":1,"tag":""}],"obD":[{"id":"od1","nome":"Aluguel","v":0,"fixa":true,"sc":"always","parc":false,"pi":0,"pn":1,"da":false}]}},"res":[],"avisos":[],"obE":[{"id":"oe1","nome":"Salário","v":0,"fixa":true,"sc":"always","parc":false,"pi":0,"pn":1,"tag":""}],"obD":[{"id":"od1","nome":"Aluguel","v":0,"fixa":true,"sc":"always","parc":false,"pi":0,"pn":1,"da":false}],"_id":1,"chk":{},"_saveVer":1,"_saveDate":"2026-01-01"};
@@ -1835,7 +1841,39 @@ function excluirObFuturo(i,tipo){
 function rContas(mc){
   const i=mes;const e=tE(i);const d=tD(i);const s=sal(i);const d2=D();
   const m0=new Date().getMonth();
+  const anoAtual=new Date().getFullYear();
   const isPastMes=i<m0;
+
+  // Semáforo do mês
+  function _semMes(){
+    const eM=e,dM=d,sM=s;
+    const tr=rTot();const lr=S.config.limiteReserva||3000;
+    const lp=S.config.limiteParcMensal||0;
+    const tpm2=tPM(i);
+    const disp=eM-dM;
+    const pctDisp=eM>0?disp/eM:0;
+    const parcOk=tpm2<=lp||lp===0,resOk=tr>=lr;
+    let score=2;
+    if(sM<-500||pctDisp<-0.1) score=0;
+    else if(sM<0||pctDisp<0.05||!parcOk||!resOk) score=1;
+    const COR=score===0?'var(--red)':score===1?'var(--orange)':'var(--green)';
+    const BGCOR=score===0?'rgba(240,82,82,.10)':score===1?'rgba(240,154,64,.10)':'rgba(45,212,160,.10)';
+    const DOT=score===0?'🔴':score===1?'🟡':'🟢';
+    const LBL=score===0?'Mês difícil':score===1?'Atenção':'Mês positivo';
+    return `<div style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;border:1px solid ${COR};background:${BGCOR};font-size:12px;font-weight:600;color:${COR}">${DOT} ${LBL}</div>`;
+  }
+
+  // Movimentações de reserva neste mês
+  function _resMov(){
+    const ano=S.anoAtivo;
+    let totalE=0,totalS=0;
+    resDoAno().forEach(r=>{totalE+=rE(r,i,ano);totalS+=rS(r,i,ano);});
+    if(totalE===0&&totalS===0) return '';
+    const parts=[];
+    if(totalE>0) parts.push(`<span style="color:var(--green)">↑ ${fmt(totalE)} em reservas</span>`);
+    if(totalS>0) parts.push(`<span style="color:var(--orange)">↓ ${fmt(totalS)} de reservas</span>`);
+    return `<div style="font-size:11px;color:var(--text2);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">${parts.join('')}</div>`;
+  }
 
   function togBtn(id,tipo){
     const marcado=isChkMes(id,i);
@@ -1846,8 +1884,15 @@ function rContas(mc){
     return `<button id="ctog_${id}_${i}" class="${cls}" data-tipo="${tipo}" onclick="toggleChkMes('${id}',${i})">${label}</button>`;
   }
 
+  if(!d2.notasMes) d2.notasMes=Array(12).fill('');
+  const notaVal=(d2.notasMes[i]||'').replace(/"/g,'&quot;');
+
   mc.innerHTML=`
   <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px">${MONTHS.map((m,j)=>`<button class="mtab${j===i?' on':''}" onclick="mes=${j};render()">${m}${j<m0&&j===i?'<span style="font-size:8px;color:var(--red);margin-left:2px">✓?</span>':''}</button>`).join('')}</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+    ${_semMes()}
+    ${_resMov()}
+  </div>
   <div class="g4" style="margin-bottom:16px">
     <div class="met g"><div class="mlbl">Entradas</div><div class="mval">${fmt(e)}</div></div>
     <div class="met r"><div class="mlbl">Despesas</div><div class="mval">${fmt(d)}</div></div>
@@ -1858,7 +1903,7 @@ function rContas(mc){
     <div class="card">
       <div style="display:flex;justify-content:space-between;margin-bottom:12px">
         <div class="ctit" style="margin:0">↓ Entradas</div>
-        <div style="display:flex;gap:8px;align-items:center"><span style="font-size:13px;font-weight:600;color:var(--green)">${fmt(e)}</span><button class="btn bxs bgh" onclick="mAddE()">+</button></div>
+        <div style="display:flex;gap:8px;align-items:center"><span style="font-size:13px;font-weight:600;color:var(--green)">${fmt(e)}</span><button class="btn bxs bgh" onclick="mAddE(${i})">+</button></div>
       </div>
       ${sortByDia(d2.entradas.filter(r=>r.vals[i]>0)).map((r)=>{
         const realIdx=d2.entradas.indexOf(r);
@@ -1875,7 +1920,7 @@ function rContas(mc){
     <div class="card">
       <div style="display:flex;justify-content:space-between;margin-bottom:12px">
         <div class="ctit" style="margin:0">↑ Despesas</div>
-        <div style="display:flex;gap:8px;align-items:center"><span style="font-size:13px;font-weight:600;color:var(--red)">${fmt(d)}</span><button class="btn bxs bgh" onclick="mAddD()">+</button></div>
+        <div style="display:flex;gap:8px;align-items:center"><span style="font-size:13px;font-weight:600;color:var(--red)">${fmt(d)}</span><button class="btn bxs bgh" onclick="mAddD(${i})">+</button></div>
       </div>
       ${[
         ...sortByDia(d2.despesas.filter(r=>r.vals[i]>0)).map(r=>{
@@ -1898,6 +1943,10 @@ function rContas(mc){
         })
       ].join('')}
     </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="ctit" style="margin-bottom:8px">📝 Notas — ${MONTHS[i]}</div>
+    <textarea id="notas-mes-inp" class="inp" rows="4" style="resize:vertical;width:100%;box-sizing:border-box" placeholder="Observações sobre este mês…" onblur="if(!D().notasMes)D().notasMes=Array(12).fill('');D().notasMes[${i}]=this.value;save();toast('Nota salva','green')">${notaVal}</textarea>
   </div>`;
 }
 
@@ -1978,12 +2027,12 @@ function svgTimeline(el,lightMode){
     const colIni=mIniAbs-ano*12;
     const colFim=mFimAbs-ano*12;
     const quitado=mFimAbs<ano*12+m0&&ano===anoHoje;
-    items.push({label:p.desc,cartao:p.cartao,vp:p.vp,total:p.total||p.vp*p.n,colIni,colFim,quitado,tipo:'pc'});
+    items.push({label:p.desc,cartao:p.cartao,vp:p.vp,total:p.total||p.vp*p.n,colIni,colFim,quitado,tipo:'pc',realIdx:d2.pc.indexOf(p)});
   });
   d2.pd.forEach(function(p){
     const colFim=p.ini+p.n-1;
     const quitado=colFim<m0&&ano===anoHoje;
-    items.push({label:p.desc,cartao:'—',vp:p.valor,total:p.valor*p.n,colIni:p.ini,colFim,quitado,tipo:'pd'});
+    items.push({label:p.desc,cartao:'—',vp:p.valor,total:p.valor*p.n,colIni:p.ini,colFim,quitado,tipo:'pd',realIdx:d2.pd.indexOf(p)});
   });
 
   if(items.length===0){
@@ -2067,7 +2116,7 @@ function svgTimeline(el,lightMode){
     labels+='<text x="'+(PL-8)+'" y="'+(y+rowH/2+4)+'" text-anchor="end" font-size="10" fill="'+labelFill+'" font-weight="500">'+labelText+'</text>';
 
     // barra principal
-    bars+='<rect class="tlHit" data-i="'+i+'" x="'+x1+'" y="'+(y+3)+'" width="'+bW+'" height="'+(rowH-6)+'" fill="'+cor+'" rx="5" opacity="'+(p.quitado?.45:1)+'"/>';
+    bars+='<rect class="tlHit" data-i="'+i+'" data-tipo="'+p.tipo+'" data-idx="'+p.realIdx+'" x="'+x1+'" y="'+(y+3)+'" width="'+bW+'" height="'+(rowH-6)+'" fill="'+cor+'" rx="5" opacity="'+(p.quitado?.45:1)+'" style="cursor:pointer"/>';
 
     // texto dentro da barra
     if(bW>55){
@@ -2152,10 +2201,21 @@ function svgTimeline(el,lightMode){
   // Tooltips
   el.querySelectorAll('.tlHit').forEach(function(r){
     const i=+r.dataset.i;
+    const tipo=r.dataset.tipo;
+    const idx=+r.dataset.idx;
+    let moved=false;
     r.addEventListener('mousemove',function(e){_tip(e,tipData[i]);});
     r.addEventListener('mouseleave',_tipOff);
     r.addEventListener('mouseenter',function(){r.style.filter='brightness(1.3)';});
     r.addEventListener('mouseout',function(){r.style.filter='';});
+    r.addEventListener('mousedown',function(){moved=false;});
+    r.addEventListener('mousemove',function(){moved=true;},{passive:true});
+    r.addEventListener('click',function(){
+      if(moved)return;
+      _tipOff();
+      if(tipo==='pc') mEditPc(idx);
+      else if(tipo==='pd') mEditPd(idx);
+    });
   });
 }
 
@@ -2434,7 +2494,7 @@ function rParc(mc){
         <input class="inp isml" style="flex:1;min-width:0;background:#F8FAFC;border-color:#E2E8F0;color:#1E293B" value="${fabs(lp)}" onblur="setLimP(pv(this.value));this.value=fabs(S.config.limiteParcMensal)"/>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
-        <button class="btn bb bsm" style="flex:1;display:inline-flex;align-items:center;gap:5px;justify-content:center" onclick="${getCartoesParc().length===0?'mGerenciarCartoesParc()':'mAddC()'}">${_ico('card',13,'#fff')} ${getCartoesParc().length===0?'Cadastrar Cartão':'+ Cartão'}</button>
+        <button class="btn bb bsm" style="flex:1;display:inline-flex;align-items:center;gap:5px;justify-content:center" onclick="${getAllCartoesOpcoes().length===0?'mGerenciarCartoesParc()':'mAddC()'}">${_ico('card',13,'#fff')} ${getAllCartoesOpcoes().length===0?'Cadastrar Cartão':'+ Cartão'}</button>
         <button class="btn bgh bsm" style="flex:1;background:#F1F5F9;border-color:#E2E8F0;color:#1E293B" onclick="mAddPD()">+ Parc. Direta</button>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -2471,9 +2531,9 @@ function rParc(mc){
       '<div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">'+
         '<button class="btn bgh bsm" onclick="mSim()">&#129346; Simular</button>'+
         '<button class="btn bgh bsm" onclick="mAnt()">&#9889; Antecipar</button>'+
-        (getCartoesParc().length===0?'<button class="btn bb bsm" style="display:inline-flex;align-items:center;gap:4px" onclick="mGerenciarCartoesParc()">'+_ico('card',13,'#fff')+' Cadastrar Cartão</button>':'<button class="btn bb bsm" onclick="mAddC()">+ Cartão</button>')+
+        (getAllCartoesOpcoes().length===0?'<button class="btn bb bsm" style="display:inline-flex;align-items:center;gap:4px" onclick="mGerenciarCartoesParc()">'+_ico('card',13,'#fff')+' Cadastrar Cartão</button>':'<button class="btn bb bsm" onclick="mAddC()">+ Compra</button>')+
         '<button class="btn bgh bsm" style="display:inline-flex;align-items:center;gap:4px" onclick="mGerenciarCartoesParc()">'+_ico('gear',13)+' Cartões</button>'+
-        '<button class="btn bgh bsm" onclick="mAddPD()">+ Desp. Parc.</button>'+
+        '<button class="btn bsm" style="background:var(--orange);border-color:var(--orange);color:#fff" onclick="mAddPD()">+ Parcelamento</button>'+
       '</div>'+
     '</div>'+
   '</div>'+
@@ -3159,22 +3219,34 @@ function svNewCat(){
 }
 
 function editTxCategoria(txId){
-  const t=TX_DATA.find(x=>x.id===txId);if(!t)return;
+  const t=getAllTx().find(x=>x.id===txId);if(!t)return;
   if(!S.txCats)S.txCats={};
   const cur=(S.txCats&&S.txCats[txId])||t.categoria;
+  const curNome=(S.txNames&&S.txNames[txId])||t.title;
   const cats=getCatsList();
   om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:460px">
-    <div class="mtitle">${_ico('pencil',15)} Editar categoria<button class="mclose" onclick="cm()">×</button></div>
-    <div style="font-size:13px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:14px">${t.date} · R$${t.amount.toLocaleString('pt-BR',{minimumFractionDigits:2})} · Fatura ${t.fatura}</div>
+    <div class="mtitle">${_ico('pencil',15)} Editar lançamento<button class="mclose" onclick="cm()">×</button></div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Nome</div>
+    <input id="etx-nome" class="inp" value="${curNome.replace(/"/g,'&quot;')}" style="margin-bottom:12px"/>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Categoria · <span style="color:var(--text3)">${t.date} · R$${t.amount.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
-      ${cats.map(cat=>{const fg=getCatColorDyn(cat,0),bg=getCatColorDyn(cat,1),sel=cat===cur;return`<button onclick="svTxCat('${txId}','${cat}')" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${sel?fg:'var(--border)'};background:${sel?bg:'var(--bg3)'};color:${sel?fg:'var(--text2)'};font-family:var(--font)">${cat}</button>`;}).join('')}
+      ${cats.map(cat=>{const fg=getCatColorDyn(cat,0),bg=getCatColorDyn(cat,1),sel=cat===cur;return`<button onclick="document.querySelectorAll('.etx-cat-btn').forEach(b=>{b.style.background='var(--bg3)';b.style.color='var(--text2)';b.style.borderColor='var(--border)'});this.style.background='${bg}';this.style.color='${fg}';this.style.borderColor='${fg}';window._etxCat='${cat}'" class="etx-cat-btn" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${sel?fg:'var(--border)'};background:${sel?bg:'var(--bg3)'};color:${sel?fg:'var(--text2)'};font-family:var(--font)">${cat}</button>`;}).join('')}
     </div>
     <div style="display:flex;gap:8px;justify-content:space-between">
-      <button class="btn bgh bsm" style="display:inline-flex;align-items:center;gap:4px" onclick="cm();mGerenciarCats()">${_ico('gear',13)} Gerenciar categorias</button>
-      <button class="btn bgh" onclick="cm()">Fechar</button>
+      <button class="btn bgh bsm" style="display:inline-flex;align-items:center;gap:4px" onclick="cm();mGerenciarCats()">${_ico('gear',13)} Categorias</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn bgh" onclick="cm()">Cancelar</button>
+        <button class="btn bg" onclick="
+          if(!S.txNames)S.txNames={};
+          const nm=document.getElementById('etx-nome').value.trim();
+          if(nm)S.txNames['${txId}']=nm;
+          if(window._etxCat){if(!S.txCats)S.txCats={};S.txCats['${txId}']=window._etxCat;window._etxCat=null;}
+          save();cm();render();
+        ">Salvar</button>
+      </div>
     </div>
   </div>`);
+  window._etxCat=cur;
 }
 function svTxCat(txId,cat){
   if(!S.txCats)S.txCats={};
@@ -3182,6 +3254,7 @@ function svTxCat(txId,cat){
   save();cm();render();
 }
 function getTxCat(t){return (S.txCats&&S.txCats[t.id])||t.categoria;}
+function getTxTitle(t){return (S.txNames&&S.txNames[t.id])||t.title;}
 
 const _CAT_RULES=[
   ["Alimentação",["superm","mercadez","padaria","restaurante","ifood","rappi","burger","pizza","mcdonalds","subway","sushi","açaí","acai","lanche","cafe","café","pao de acucar","extra","carrefou","atacadao","hortifru","feira","mercearia","buffet","chuchu","sambay","mistureba","rock the mount","hoppin","conf santo amaro","zigpay","davidasfrutas","lanchonete","dark store","polar bear","fam producoes","outback","confeitaria","bomboniere","gloria doce","delicatessen","pasta rio","bicho pao","mania de churrasco","analubombonie","vaca profana","prodigy","duty paid","atacarejo","pre atacadista","zig ","zig*"]],
@@ -3663,7 +3736,7 @@ function rCartaoTab(mc, cartaoId){
       const isAntLabel=t.is_antecipada?'<span style="font-size:9px;color:var(--text3);margin-left:2px">antecip.</span>':'';
       return `<div class="tx-row">
         <span class="tx-date">${t.date.slice(8)+"/"+t.date.slice(5,7)}</span>
-        <span class="tx-title" onclick="editTxCategoria('${t.id}')" title="Editar categoria">${t.title.replace(/</g,'&lt;')}</span>
+        <span class="tx-title" onclick="editTxCategoria('${t.id}')" title="Editar nome/categoria">${getTxTitle(t).replace(/</g,'&lt;')}</span>
         ${isParcLabel}${isAntLabel}
         <span class="tx-cat"><span class="cat-pill" onclick="editTxCategoria('${t.id}')" style="background:${bgCol};color:${col};border-color:${col}">${cat}</span></span>
         <span class="tx-val">R$${t.amount.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
@@ -4006,8 +4079,11 @@ function scopeOpts(sel){return `<select id="${sel}" class="inp"><option value="a
 function mIni(id){return `<select id="${id}" class="inp">${MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('')}</select>`;}
 
 // ADD DESPESA
-function mAddD(){
-  _tipo.adT='fixa';
+function mAddD(defaultMes){
+  const fromMes=defaultMes!=null;
+  const initT=fromMes?'unica':'fixa';
+  _tipo.adT=initT;
+  const mIniSel=(id,sel)=>`<select id="${id}" class="inp">${MONTHS.map((m,i)=>`<option value="${i}"${i===sel?' selected':''}>${m}</option>`).join('')}</select>`;
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">${_ico('export',15)} Adicionar Despesa<button class="mclose" onclick="cm()">×</button></div>
     <div class="fr"><div><div class="fl">Nome</div><input id="ad-n" class="inp" placeholder="Ex: Academia"/></div></div>
@@ -4018,12 +4094,12 @@ function mAddD(){
       </div></div>
     </div>
     <div class="fr"><div><div class="fl">Tipo</div>
-      <div class="tgr"><div class="tgo on" id="ad-fixa" onclick="selT('ad','fixa')">🔒 Fixa</div><div class="tgo" id="ad-parc" onclick="selT('ad','parc')"> Parcelada</div><div class="tgo" id="ad-unica" onclick="selT('ad','unica')">1× Única</div></div>
+      <div class="tgr"><div class="tgo${initT==='fixa'?' on':''}" id="ad-fixa" onclick="selT('ad','fixa')">🔒 Fixa</div><div class="tgo" id="ad-parc" onclick="selT('ad','parc')"> Parcelada</div><div class="tgo${initT==='unica'?' on':''}" id="ad-unica" onclick="selT('ad','unica')">1× Única</div></div>
     </div></div>
-    <div id="ad_fixa"><div class="fr"><div><div class="fl">Válida em</div>${scopeOpts('ad-sc')}</div></div></div>
-    <div id="ad_parc" style="display:none"><div class="fr c2"><div><div class="fl">Mês início</div>${mIni('ad-pi')}</div><div><div class="fl">Nº meses</div><input id="ad-pn" class="inp" type="number" min="1" max="12" value="1"/></div></div>
+    <div id="ad_fixa"${initT!=='fixa'?' style="display:none"':''}><div class="fr"><div><div class="fl">Válida em</div>${scopeOpts('ad-sc')}</div></div></div>
+    <div id="ad_parc" style="display:none"><div class="fr c2"><div><div class="fl">Mês início</div>${mIniSel('ad-pi',defaultMes??new Date().getMonth())}</div><div><div class="fl">Nº meses</div><input id="ad-pn" class="inp" type="number" min="1" max="12" value="1"/></div></div>
     <div style="font-size:11px;color:var(--text2);margin-top:-4px;margin-bottom:6px">💡 O valor acima é o valor <strong>por mês</strong>. Total = valor × nº meses.</div></div>
-    <div id="ad_unica" style="display:none"><div class="fr"><div><div class="fl">Mês</div>${mIni('ad-um')}</div></div></div>
+    <div id="ad_unica"${initT==='unica'?' ':'style="display:none"'}><div class="fr"><div><div class="fl">Mês</div>${mIniSel('ad-um',defaultMes??new Date().getMonth())}</div></div></div>
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
       <button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn br" onclick="svAddD()">Adicionar</button>
     </div>
@@ -4100,21 +4176,55 @@ function svAddE(){
 
 // ADD CARTÃO
 function mAddC(){
+  const cartoesHtml=getAllCartoesOpcoes().length===0?'<option value="" disabled selected>Nenhum cartão cadastrado</option>':getAllCartoesOpcoes().map(c=>`<option>${c.nome}</option>`).join('');
   om(`<div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle">${_ico('card',15)} Compra no Cartão<button class="mclose" onclick="cm()">×</button></div>
     <div class="fr"><div><div class="fl">Descrição</div><input id="ac-d" class="inp" placeholder="Ex: iPhone 16"/></div></div>
-    <div class="fr c2"><div><div class="fl">Cartão</div><select id="ac-c" class="inp">${getCartoesParc().length===0?'<option value="" disabled selected>Nenhum cartão cadastrado</option>':getCartoesParc().map(c=>`<option>${c.nome}</option>`).join('')}</select></div><div><div class="fl">Valor Total (R$)</div><input id="ac-v" class="inp" placeholder="1.200,00"/></div></div>
-    <div class="fr c2"><div><div class="fl">Nº Parcelas</div><input id="ac-n" class="inp" type="number" min="1" value="12"/></div><div><div class="fl">Mês início</div>${mIni('ac-i')}</div></div>
+    <div class="fr c2"><div><div class="fl">Cartão</div><select id="ac-c" class="inp">${cartoesHtml}</select></div><div><div class="fl">Nº Parcelas</div><input id="ac-n" class="inp" type="number" min="1" value="12" oninput="_acCalc()"/></div></div>
+    <div style="display:flex;gap:8px;align-items:flex-start" class="fr">
+      <div style="flex:1">
+        <div class="fl">Valor Total (R$)</div>
+        <input id="ac-vt" class="inp" placeholder="1.200,00" oninput="_acFromTotal()"/>
+        <div id="ac-vt-hint" style="font-size:11px;color:var(--text3);margin-top:3px;min-height:16px"></div>
+      </div>
+      <div style="padding-top:26px;color:var(--text3);font-size:13px;flex-shrink:0">ou</div>
+      <div style="flex:1">
+        <div class="fl">Valor/parcela (R$)</div>
+        <input id="ac-vp" class="inp" placeholder="100,00" oninput="_acFromParc()"/>
+        <div id="ac-vp-hint" style="font-size:11px;color:var(--text3);margin-top:3px;min-height:16px"></div>
+      </div>
+    </div>
+    <div class="fr"><div><div class="fl">Mês início</div>${mIni('ac-i')}</div></div>
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
       <button class="btn bgh" onclick="cm()">Cancelar</button><button class="btn bb" onclick="svAddC()">Adicionar</button>
     </div>
   </div>`);
 }
+function _acCalc(){
+  const n=+document.getElementById('ac-n').value||1;
+  const vt=pv(document.getElementById('ac-vt').value);
+  const vp=pv(document.getElementById('ac-vp').value);
+  if(vt>0){document.getElementById('ac-vt-hint').textContent=n+'x de R$'+(vt/n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  if(vp>0){document.getElementById('ac-vp-hint').textContent='Total: R$'+(vp*n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+}
+function _acFromTotal(){
+  document.getElementById('ac-vp').value='';
+  document.getElementById('ac-vp-hint').textContent='';
+  _acCalc();
+}
+function _acFromParc(){
+  document.getElementById('ac-vt').value='';
+  document.getElementById('ac-vt-hint').textContent='';
+  _acCalc();
+}
 function svAddC(){
   const desc=document.getElementById('ac-d').value.trim();const cartao=document.getElementById('ac-c').value;
-  const total=pv(document.getElementById('ac-v').value);const n=+document.getElementById('ac-n').value||1;const ini=+document.getElementById('ac-i').value||0;
-  if(!desc||!total){toast('Preencha descrição e valor','orange');return;}
+  const n=+document.getElementById('ac-n').value||1;const ini=+document.getElementById('ac-i').value||0;
+  const vtRaw=pv(document.getElementById('ac-vt').value);
+  const vpRaw=pv(document.getElementById('ac-vp').value);
+  const total=vtRaw>0?vtRaw:Math.round(vpRaw*n*100)/100;
   const vp=Math.round((total/n)*100)/100;
+  if(!desc||!total){toast('Preencha descrição e valor','orange');return;}
   D().pc.push({id:nid(),desc,cartao,total,n,vp,ini,ant:0});save();cm();
   const m0=new Date().getMonth();if(tPM(m0)>S.config.limiteParcMensal) showAlert(`⚠️ Limite de parcelamentos atingido!\nEste mês: ${fmt(tPM(m0))} / limite: ${fmt(S.config.limiteParcMensal)}`,'orange');
   render();toast(`"${desc}" adicionado!`,'green');
@@ -4154,16 +4264,25 @@ function mEditCartaoParc(i){
 }
 function mGerenciarCartoesParc(){
   const cartoes=getCartoesParc();
-  const listaHtml=cartoes.length===0
+  const fatCartoes=(S.config.cartoesCustom||[]).filter(c=>!cartoes.find(p=>p.nome===c.nome));
+  const fatHtml=fatCartoes.length===0?'':
+    '<div style="font-size:11px;color:var(--text3);margin:10px 0 6px">Cartões de fatura (gerenciados nas Configurações)</div>'+
+    fatCartoes.map(c=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);opacity:.75">
+        <span style="font-size:20px">${c.emoji||'💳'}</span>
+        <span style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${c.nome}</span>
+        <span style="font-size:10px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1px 6px">fatura</span>
+      </div>`).join('');
+  const listaHtml=(cartoes.length===0&&fatCartoes.length===0)
     ?'<div style="text-align:center;padding:16px;font-size:13px;color:var(--text3)">Nenhum cartão cadastrado ainda.</div>'
-    :cartoes.map((c,i)=>`
+    :(cartoes.length===0?'':cartoes.map((c,i)=>`
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:20px">${c.emoji||'💳'}</span>
         <span style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${c.nome}</span>
         <span style="width:16px;height:16px;border-radius:50%;background:${c.cor};display:inline-block;border:1px solid rgba(255,255,255,.2)"></span>
         <button class="btn bgh bsm" style="padding:2px 8px;font-size:11px" onclick="mEditCartaoParc(${i})">✏️</button>
         <button class="del" onclick="if(confirm('Excluir cartão ${c.nome}?')){S.config.cartoesParc.splice(${i},1);save();mGerenciarCartoesParc();}">✕</button>
-      </div>`).join('');
+      </div>`).join(''))+fatHtml;
   om(`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
     <div class="mtitle">${_ico('card',15)} Cartões de Parcelamento<button class="mclose" onclick="cm()">×</button></div>
     <div style="margin-bottom:16px">${listaHtml}</div>
@@ -4480,7 +4599,7 @@ function mEditPc(realIdx){
       </div>
       <div class="g2">
         <div><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Cartão</div>
-          <select id="epc-cart" class="inp">${getCartoesParc().map(c=>`<option value="${c.nome}"${c.nome===p.cartao?' selected':''}>${c.nome}</option>`).join('')}</select></div>
+          <select id="epc-cart" class="inp">${getAllCartoesOpcoes().length===0?`<option value="${p.cartao||''}">${p.cartao||'—'}</option>`:getAllCartoesOpcoes().map(c=>`<option value="${c.nome}"${c.nome===p.cartao?' selected':''}>${c.nome}</option>`).join('')}</select></div>
         <div><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Dia venc.</div>
           <input id="epc-dia" class="inp" value="${p.dia||''}" type="number" min="1" max="31" placeholder="—"/></div>
       </div>
