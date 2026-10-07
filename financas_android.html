@@ -777,6 +777,8 @@ function tPDM(i){
 }
 function tPM(i){return tPCM(i)+tPDM(i);}
 function tPA(){return MONTHS.reduce((s,_,i)=>s+tPM(i),0);}
+// total ainda a pagar de hoje em diante (mesmo valor que o popup Antecipar mostra com tudo selecionado)
+function tPAFut(){const d=D();return d.pc.reduce((s,p)=>s+_antRest(p,'pc')*p.vp,0)+d.pd.reduce((s,p)=>s+_antRest(p,'pd')*p.valor,0);}
 function rSiAno(r,ano){
   ano=ano||S.anoAtivo;
   return rSiAnoCalc(r,ano);
@@ -944,7 +946,7 @@ function render(){
 
 function checkAlerts(){
   const tr=rTot();const lr=S.config.limiteReserva||3000;const lp=S.config.limiteParcMensal||800;
-  const tpa=tPA();
+  const tpa=tPAFut();
   const anoHoje=new Date().getFullYear();
   const anoEncerradoChk=S.anoAtivo<anoHoje;
   const m0=anoEncerradoChk?11:new Date().getMonth();
@@ -952,7 +954,7 @@ function checkAlerts(){
   const al=[];
   const temDados=tr>0||tpa>0||tpm>0;
   if(temDados&&tr<lr) al.push(`Reservas (${fmt(tr)}) abaixo do limite crítico de ${fmt(lr)}!`);
-  if(temDados&&tpa>tr&&tr>0) al.push(`Parcelamentos anuais (${fmt(tpa)}) superam suas reservas (${fmt(tr)}).`);
+  if(temDados&&tpa>tr&&tr>0) al.push(`Parcelamentos restantes (${fmt(tpa)}) superam suas reservas (${fmt(tr)}).`);
   if(temDados&&tpm>lp) al.push(`Parcelas de ${MONTHS[m0]} (${fmt(tpm)}) ultrapassam o limite de ${fmt(lp)}.`);
   if(al.length){
     document.getElementById('AR').innerHTML=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px" onclick="this.remove()"><div style="background:var(--red3);border:2px solid var(--red);border-radius:var(--radius);padding:24px;max-width:440px;width:100%;text-align:center" onclick="event.stopPropagation()"><div style="font-size:36px;margin-bottom:10px">🚨</div><div style="font-size:15px;font-weight:700;color:var(--red);margin-bottom:10px">Atenção!</div><div style="font-size:13px;line-height:1.7;margin-bottom:16px">${al.join('<br><br>')}</div><button class="btn br" onclick="document.getElementById('AR').innerHTML=''">Entendido</button></div></div>`;
@@ -1581,7 +1583,7 @@ function rHome(mc){
   const tr=rTot();const lr=S.config.limiteReserva||3000;
   const tpm=tPM(m0);const lp=S.config.limiteParcMensal||800;
   const eM=tE(m0);const dM=tD(m0);const sM=sal(m0);const daM=tDA(m0);
-  const tpa=tPA();
+  const tpa=tPAFut();
   const despF=D().despesas.filter(d=>d.da||d.fixa).reduce((s,d)=>s+(d.vals[m0]||0),0);
   const disp=eM-despF-tpm;const pct=eM>0?Math.max(0,Math.min(100,disp/eM*100)):0;
 
@@ -5529,49 +5531,98 @@ function cnfSim(desc,total,n,ini){
   D().pc.push({id:nid(),desc,cartao,total,n,vp,ini,ant:0});save();cm();render();toast(`"${desc}" adicionado!`,'green');
 }
 
-// ANTECIPAR
+// ANTECIPAR — simulador: marque as contas e veja o total para quitar de hoje em diante
+function _antHoje(){return new Date().getFullYear()*12+new Date().getMonth();}
+// parcelas restantes (de hoje em diante) de uma conta; kind: 'pc' cartão | 'pd' não-cartão
+function _antRest(p,kind){
+  const ini=(p.anoIni||S.anoAtivo)*12+p.ini;
+  const ef=kind==='pd'?p.n:p.n-(p._origemId?0:(p.ant||0));
+  return Math.max(0,Math.min(ef,ini+ef-1-_antHoje()+1));
+}
+function _antLista(){
+  const d2=D();const out=[];
+  d2.pc.forEach(function(p,i){const r=_antRest(p,'pc');if(r>0)out.push({k:'pc:'+i,kind:'pc',p:p,rest:r,v:p.vp,sub:(p.cartao||'—')});});
+  d2.pd.forEach(function(p,i){const r=_antRest(p,'pd');if(r>0)out.push({k:'pd:'+i,kind:'pd',p:p,rest:r,v:p.valor,sub:'Não cartão'});});
+  return out;
+}
+function _antItem(k){const t=k.split(':');const d2=D();return t[0]==='pc'?{kind:'pc',p:d2.pc[+t[1]],v:(d2.pc[+t[1]]||{}).vp}:{kind:'pd',p:d2.pd[+t[1]],v:(d2.pd[+t[1]]||{}).valor};}
 function mAnt(){
-  const d2=D();const ativos=d2.pc.filter(p=>p.n-(p.ant||0)>0);
+  const lista=_antLista();
   om(`<div class="modal" onclick="event.stopPropagation()">
-    <div class="mtitle">⚡ Antecipar Parcelado<button class="mclose" onclick="cm()">×</button></div>
-    ${ativos.length===0?`<div style="color:var(--text2);font-size:13px">Nenhum parcelado ativo.</div>`:`
-    <div class="fr"><div><div class="fl">Compra</div>
-      <select id="an-i" class="inp" onchange="antDet()">
-        ${ativos.map(p=>{const idx=d2.pc.indexOf(p);return`<option value="${idx}">${p.desc} — ${p.n-(p.ant||0)} rest. @ ${fmt(p.vp)}/mês</option>`;}).join('')}
-      </select>
-    </div></div>
-    <div id="AD"></div>`}
-    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+    <div class="mtitle">⚡ Antecipar Parcelados<button class="mclose" onclick="cm()">×</button></div>
+    ${lista.length===0?`<div style="color:var(--text2);font-size:13px">Nenhum parcelado ativo.</div>`:`
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--text2)">Parcelas de hoje em diante. Marque para somar o valor de quitação.</div>
+      <button class="btn bgh bsm" id="ant-all" onclick="antToggleAll()" style="flex-shrink:0">Selecionar tudo</button>
+    </div>
+    <div style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+      ${lista.map(function(x){return`<label style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer">
+        <input type="checkbox" class="ant-chk" data-k="${x.k}" onchange="antCalc()" style="width:18px;height:18px;flex-shrink:0"/>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.p.desc}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${x.sub} · ${x.rest}× de ${fmt(x.v)}</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--orange);flex-shrink:0">${fmt(x.rest*x.v)}</div>
+      </label>`;}).join('')}
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:11px;color:var(--text2)" id="ant-cnt">Nenhuma selecionada</div><div style="font-size:11px;color:var(--text2)">Total para quitar</div></div>
+      <div id="ant-tot" style="font-size:22px;font-weight:800;color:var(--orange)">${fmt(0)}</div>
+    </div>`}
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap">
+      ${lista.length>0?`<button class="btn bo" id="ant-quit" onclick="antQuitar()" disabled style="opacity:.5">Quitar selecionadas</button>`:''}
       <button class="btn bgh" onclick="cm()">Fechar</button>
-      ${ativos.length>0?`<button class="btn bo" onclick="svAnt()">⚡ Confirmar</button>`:''}
     </div>
   </div>`);
-  if(ativos.length>0) antDet();
 }
-function antDet(){
-  const d2=D();const idx=+document.getElementById('an-i').value;const p=d2.pc[idx];if(!p)return;
-  const ef=p.n-(p.ant||0);
-  document.getElementById('AD').innerHTML=`
-    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin:10px 0;border:1px solid var(--border)">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px">${p.desc}</div>
-      <div class="g2">
-        <div><div style="font-size:11px;color:var(--text2)">Parcela</div><div style="font-size:15px;font-weight:700;color:var(--orange)">${fmt(p.vp)}</div></div>
-        <div><div style="font-size:11px;color:var(--text2)">Restantes</div><div style="font-size:15px;font-weight:700">${ef}×</div></div>
-        <div><div style="font-size:11px;color:var(--text2)">Valor restante</div><div style="font-size:15px;font-weight:700;color:var(--red)">${fmt(ef*p.vp)}</div></div>
-        <div><div style="font-size:11px;color:var(--text2)">Cartão</div><span class="tag ${CTAG[p.cartao]||'tou'}">${p.cartao}</span></div>
-      </div>
-    </div>
-    <div class="fr c2">
-      <div><div class="fl">Quantas antecipar?</div><input id="an-n" class="inp" type="number" min="1" max="${ef}" value="${ef}"/></div>
-      <div style="display:flex;align-items:flex-end;padding-bottom:4px"><div style="font-size:11px;color:var(--text2)">Se todas: ${fmt(ef*p.vp)}<br>A compra será removida.</div></div>
-    </div>`;
+function antCalc(){
+  const chks=[].slice.call(document.querySelectorAll('.ant-chk'));
+  let tot=0,n=0;
+  chks.forEach(function(c){if(c.checked){const it=_antItem(c.dataset.k);if(it.p){tot+=_antRest(it.p,it.kind)*it.v;n++;}}});
+  document.getElementById('ant-tot').textContent=fmt(tot);
+  document.getElementById('ant-cnt').textContent=n===0?'Nenhuma selecionada':n+' de '+chks.length+' selecionada'+(n>1?'s':'');
+  const b=document.getElementById('ant-all');if(b)b.textContent=(n===chks.length&&n>0)?'Limpar seleção':'Selecionar tudo';
+  const q=document.getElementById('ant-quit');if(q){delete q.dataset.ok;q.textContent='Quitar selecionadas';q.disabled=n===0;q.style.opacity=n===0?'.5':'1';}
 }
-function svAnt(){
-  const d2=D();const idx=+document.getElementById('an-i').value;const p=d2.pc[idx];if(!p)return;
-  const ef=p.n-(p.ant||0);const n=+document.getElementById('an-n').value||1;
-  if(n>=ef){d2.pc.splice(idx,1);toast(`"${p.desc}" quitado!`,'green');}
-  else{p.ant=(p.ant||0)+n;toast(`${n} parcela(s) antecipada(s)!`,'green');}
-  save();cm();render();
+function antToggleAll(){
+  const chks=[].slice.call(document.querySelectorAll('.ant-chk'));
+  const all=chks.length>0&&chks.every(function(c){return c.checked;});
+  chks.forEach(function(c){c.checked=!all;});
+  antCalc();
+}
+// Quita as marcadas: mantém as parcelas já pagas (antes de hoje) e remove as de hoje em diante
+function antQuitar(){
+  const chks=[].slice.call(document.querySelectorAll('.ant-chk')).filter(function(c){return c.checked;});
+  if(!chks.length)return;
+  const q=document.getElementById('ant-quit');
+  if(q&&!q.dataset.ok){
+    q.dataset.ok='1';q.textContent='Confirmar quitação de '+document.getElementById('ant-tot').textContent;
+    setTimeout(function(){const b=document.getElementById('ant-quit');if(b&&b.dataset.ok){delete b.dataset.ok;b.textContent='Quitar selecionadas';}},5000);
+    return;
+  }
+  const d2=D();
+  const itens=chks.map(function(c){return _antItem(c.dataset.k);});
+  const rem={pc:[],pd:[]};
+  itens.forEach(function(it){
+    const p=it.p;if(!p)return;
+    const paga=Math.max(0,_antHoje()-((p.anoIni||S.anoAtivo)*12+p.ini));
+    // compra que veio de ano anterior: encerra também o registro de origem
+    if(it.kind==='pc'&&p._origemId){
+      Object.keys(S.dados||{}).forEach(function(yr){
+        (S.dados[yr].pc||[]).forEach(function(o){
+          if(o.id!==p._origemId)return;
+          const pg=Math.max(0,_antHoje()-((o.anoIni||+yr)*12+o.ini));
+          o.n=pg;o.ant=0;if(o.total)o.total=o.vp*pg;
+        });
+      });
+    }
+    if(paga<=0){rem[it.kind].push(p);return;}
+    p.n=paga;p.ant=0;
+    if(it.kind==='pc'&&p.total)p.total=p.vp*paga;
+  });
+  d2.pc=d2.pc.filter(function(p){return rem.pc.indexOf(p)<0;});
+  d2.pd=d2.pd.filter(function(p){return rem.pd.indexOf(p)<0;});
+  save();cm();render();toast(chks.length+' conta(s) quitada(s)!','green');
 }
 
 // ADD RESERVA
@@ -6478,7 +6529,7 @@ function rMobileHero(mesIdx){
   const eM2=tE(mesIdx),dM2=tD(mesIdx),sM2=sal(mesIdx);
   const tr2=rTot(),lr2=S.config.limiteReserva||3000;
   const tpm2=tPM(mesIdx),lp2=S.config.limiteParcMensal||800;
-  const tpa2=tPA();
+  const tpa2=tPAFut();
   const despF2=D().despesas.filter(d=>d.da||d.fixa).reduce((s,d)=>s+(d.vals[mesIdx]||0),0);
   const disp2=eM2-despF2-tpm2;
   const anoEnc2=S.anoAtivo<new Date().getFullYear();
