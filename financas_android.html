@@ -45,12 +45,16 @@ body.vr .nav-menu{min-width:260px}
 #vr-btn.on{background:#fff!important;color:#059669!important}
 /* modo VR: sem barra do topo; menu lateral em duas colunas */
 body.vr .topbar{display:none!important}
-body.vr #app-root{padding-left:176px}
 #vr-side{display:none}
 body.vr #vr-side{display:block}
-#vr-side .vs-col1{position:fixed;left:0;top:0;bottom:0;width:176px;box-sizing:border-box;background:var(--bg2);border-right:1px solid var(--border);padding:12px 10px;overflow-y:auto;z-index:700;display:flex;flex-direction:column;gap:6px}
+#vr-side .vs-col1{display:none!important;position:fixed;left:0;top:0;bottom:0;width:176px;box-sizing:border-box;background:var(--bg2);border-right:1px solid var(--border);padding:12px 10px;overflow-y:auto;z-index:700;display:flex;flex-direction:column;gap:6px}
 #vr-side .vs-col2{position:fixed;left:176px;top:0;bottom:0;width:236px;box-sizing:border-box;background:var(--bg2);border-right:1px solid var(--border);box-shadow:10px 0 28px rgba(0,0,0,.4);padding:12px 10px;overflow-y:auto;z-index:699;display:none;flex-direction:column;gap:6px}
+#vr-side.open .vs-col1{display:flex!important;padding-bottom:90px}
 #vr-side .vs-col2.open{display:flex}
+#vr-side .vs-bk{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:698;background:rgba(0,0,0,.35)}
+#vr-side.open .vs-bk{display:block}
+#vr-side .vs-fab{position:fixed;left:16px;bottom:16px;width:58px;height:58px;border-radius:50%;border:none;background:var(--green);color:#06140f;font-size:34px;font-weight:700;line-height:1;cursor:pointer;z-index:710;box-shadow:0 8px 24px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-family:var(--font);transition:transform .15s}
+#vr-side.open .vs-fab{transform:rotate(45deg);background:#fff}
 #vr-side .vs-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;font-weight:600;text-align:left;padding:10px 12px;border-radius:12px;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;gap:8px}
 #vr-side .vs-btn:hover{background:var(--bg4,var(--bg3));border-color:var(--border2)}
 #vr-side .vs-btn.on{background:var(--green);border-color:var(--green);color:#06140f}
@@ -976,7 +980,7 @@ function renderNav(){
     cartoesComFatura.forEach(c=>{if(!tabsOcultasCartoes.includes(c.id))tabs.push({id:'card_'+c.id,l:c.nome,cor:c.cor});});
   }
   // Se tab atual ficou oculta, volta pra home
-  if(!tabs.find(t=>t.id===tab)) tab='home';
+  if(!_vr&&!tabs.find(t=>t.id===tab)) tab='home';
   document.querySelectorAll('body > .nav-menu').forEach(function(m){m.remove();});
   if(!isBasico()&&!isMobile()){nav.innerHTML=_navAgrupado(tabs);return;}
   nav.innerHTML=tabs.map(t=>{const cor=t.cor;return`<button class="nbtn${tab===t.id?' on':''}${t.id==='div'?' div-tab':''}"${cor?` style="color:${cor};border-bottom-color:${cor}"`:''}  onclick="gt('${t.id}')">${t.l}</button>`;}).join('');
@@ -1025,33 +1029,37 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')navFechar();
 
 // ── menu lateral do modo VR (no lugar da barra do topo) ──
 let _vrGrp=null; // índice do grupo cujo submenu está aberto
+let _vrMenuOpen=false; // menu lateral do modo VR (abre pelo botão +)
 function _vrSideRender(){
   let el=document.getElementById('vr-side');
-  if(!_vr){if(el)el.remove();_vrGrp=null;return;}
+  if(!_vr){if(el)el.remove();_vrGrp=null;_vrMenuOpen=false;return;}
   if(!el){el=document.createElement('div');el.id='vr-side';document.body.appendChild(el);}
   const itens=_vrNavEstrutura().filter(function(g){return g.t||(g.items&&g.items.length);});
   const grpOn=function(g){return g.t?g.t.id===tab:g.items.some(function(i){return i.id===tab;});};
   const open=_vrGrp!==null&&itens[_vrGrp]&&itens[_vrGrp].items;
   const anos=S.anos.map(function(a){return '<option value="'+a+'"'+(a===S.anoAtivo?' selected':'')+'>'+a+'</option>';}).join('');
-  el.innerHTML='<div class="vs-col1'+(open?' dim':'')+'">'
+  el.classList.toggle('open',_vrMenuOpen);
+  el.innerHTML='<div class="vs-bk" onclick="vrMenuToggle()"></div><button class="vs-fab" onclick="vrMenuToggle()" title="Menu">+</button><div class="vs-col1'+(open?' dim':'')+'">'
     +'<select class="vs-sel" onchange="setAno(+this.value)" title="Ano">'+anos+'</select>'
     +itens.map(function(g,k){
       const on=grpOn(g),sel=open&&_vrGrp===k;
       return '<button class="vs-btn'+(on?' on':'')+(sel?' sel':'')+'" onclick="vrSideGrupo('+k+')">'+(g.t?g.t.l:g.l)+(g.items?'<span class="vs-arr">▸</span>':'')+'</button>';
     }).join('')
     +'<div class="vs-sep"></div>'
-    +'<button class="vs-btn vs-util" onclick="gdToken?driveSalvar():driveAction()">Salvar no Drive</button>'
-    +'<button class="vs-btn vs-util" onclick="importarDados()">Importar</button>'
-    +'<button class="vs-btn vs-util" onclick="exportarDados()">Exportar</button>'
-    +'<button class="vs-btn vs-util" onclick="entrarVR(false)">Entrar em VR 3D</button>'
-    +'<button class="vs-btn vs-util" onclick="entrarVR(true)">Prévia 3D</button>'
-    +'<button class="vs-btn vs-util" onclick="toggleVR()">Sair do modo VR</button>'
+    +'<button class="vs-btn vs-util" onclick="vrMenuClose();gdToken?driveSalvar():driveAction()">Salvar no Drive</button>'
+    +'<button class="vs-btn vs-util" onclick="vrMenuClose();importarDados()">Importar</button>'
+    +'<button class="vs-btn vs-util" onclick="vrMenuClose();exportarDados()">Exportar</button>'
+    +'<button class="vs-btn vs-util" onclick="vrMenuClose();entrarVR(false)">Entrar em VR 3D</button>'
+    +'<button class="vs-btn vs-util" onclick="vrMenuClose();entrarVR(true)">Prévia 3D</button>'
+    +'<button class="vs-btn vs-util" onclick="vrMenuClose();toggleVR()">Sair do modo VR</button>'
     +'</div>'
     +'<div class="vs-col2'+(open?' open':'')+'">'
     +(open?itens[_vrGrp].items.map(function(i){return '<button class="vs-btn'+(i.id===tab?' on':'')+'" onclick="gt(\''+i.id+'\')">'+(i.cor?'<span class="vs-dot" style="--c:'+i.cor+'"></span>':'')+i.l+'</button>';}).join(''):'')
     +'</div>';
   if(open)el.querySelector('.vs-col2').dataset.g=_vrGrp;
 }
+function vrMenuToggle(){_vrMenuOpen=!_vrMenuOpen;_vrGrp=null;_vrSideRender();}
+function vrMenuClose(){_vrMenuOpen=false;_vrGrp=null;_vrSideRender();}
 function vrSideGrupo(k){
   const itens=_vrNavEstrutura().filter(function(g){return g.t||(g.items&&g.items.length);});
   const g=itens[k];if(!g)return;
@@ -1060,7 +1068,7 @@ function vrSideGrupo(k){
 }
 
 function gt(id){
-  tab=id;_vrGrp=null;dc();renderNav();
+  tab=id;_vrGrp=null;_vrMenuOpen=false;dc();renderNav();
   // limpa alerta ao sair de home/parc
   if(id!=='home'&&id!=='parc') document.getElementById('AR').innerHTML='';
   render();
@@ -7849,6 +7857,7 @@ async function _vrIniciar(THREE,preview){
   const tabOrig=tab;
   x.restore=function(){
     try{x.mo.disconnect();}catch(e){}
+    try{document.removeEventListener('focusout',x.edit,true);document.removeEventListener('change',x.edit,true);}catch(e){}
     mc.style.cssText=mcCss;if(hadVr)document.body.classList.add('vr');
     if(x.raf)window.requestAnimationFrame=x.raf;
     try{tab=tabOrig;renderNav();render();}catch(e){}
@@ -7933,6 +7942,7 @@ async function _vrIniciar(THREE,preview){
   // captura (uma aba "ao vivo" por vez; todas as janelas da mesma aba se atualizam juntas)
   const captureAll=async function(){
     if(_vrx!==x)return;
+    if(!preview){const ae=document.activeElement;if(ae&&/^(INPUT|TEXTAREA)$/.test(ae.tagName)&&(mc.contains(ae)||mr.contains(ae))){markDirty(1200);return;}}
     busy=true;stat.redraw();
     let guard=0,w;
     while(_vrx===x&&(w=wins.find(function(z){return z.stale;}))&&guard++<12){
@@ -7968,6 +7978,9 @@ async function _vrIniciar(THREE,preview){
       withLive(captureAll).then(function(){capQ=false;if(_vrx===x&&wins.some(function(z){return z.stale;}))markDirty(50);});
     },Math.max(0,capDue-Date.now()));
   };
+  const onEdit=function(){markDirty(500);};
+  document.addEventListener('focusout',onEdit,true);document.addEventListener('change',onEdit,true);
+  x.edit=onEdit;
   x.mo=new MutationObserver(function(){wins.forEach(function(z){if(z.tab===liveTab)z.stale=true;});markDirty(300);});
   x.mo.observe(mc,{childList:true,subtree:true,attributes:true,characterData:true});
   x.mo.observe(mr,{childList:true,subtree:true,attributes:true});
@@ -8033,6 +8046,8 @@ async function _vrIniciar(THREE,preview){
   };
   const kbOpen=function(el){
     kbClose();
+    // no Quest o campo recebe foco e o teclado nativo do sistema abre; o teclado 3D só existe na prévia
+    if(!preview){try{el.focus();el.select&&el.select();}catch(e){}return;}
     kb={mode:'text',el:el,buf:el.value||'',fresh:true,shift:false,sym:false};
     try{el.focus({preventScroll:true});}catch(e){}
     kbMesh.visible=true;kbDraw();
@@ -8108,6 +8123,7 @@ async function _vrIniciar(THREE,preview){
     else if(a==='Usar no campo'){
       const v=cRes!==''?cRes:(cEval()!==null?cFmt(cEval()):'');
       if(v&&kb&&kb.mode==='text'){kb.buf=v;kb.fresh=false;kbApply();kbDraw();}
+      else if(v){const ae=document.activeElement;if(ae&&/^(INPUT|TEXTAREA)$/.test(ae.tagName)&&mc.contains(ae)){ae.value=v;ae.dispatchEvent(new Event('input',{bubbles:true}));markDirty(500);}}
     }
     else{
       if(cRes!==''&&/[0-9,]/.test(a))cExpr='';
