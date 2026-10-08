@@ -43,6 +43,7 @@ body.vr input,body.vr select,body.vr textarea{font-size:16px;min-height:42px}
 body.vr .del{min-width:40px;min-height:40px}
 body.vr .nav-menu{min-width:260px}
 #vr-btn.on{background:#fff!important;color:#059669!important}
+body.vr #xr-btn,body.vr #xr-prev{display:inline-block!important}
 .nbtn{background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:500;padding:6px 14px;cursor:pointer;transition:.15s;white-space:nowrap;font-family:var(--font)}
 .nbtn:hover{background:var(--bg3);color:var(--text)}
 .nbtn.on{background:var(--bg3);color:var(--green);border-bottom-color:var(--green)}
@@ -628,6 +629,8 @@ body.desktop ::-webkit-scrollbar-thumb:hover{background:#4A5568}
       <button class="nbtn" onclick="voltarSplash()" title="Trocar modo Mobile/Desktop" style="font-size:13px;padding:4px 8px">
         <span id="modo-badge" class="modo-badge mobile"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
       </button>
+      <button class="nbtn" id="xr-btn" onclick="entrarVR(false)" title="Entrar no VR imersivo (Meta Quest)" style="display:none;font-size:11px;font-weight:700;padding:4px 8px">Entrar em VR</button>
+      <button class="nbtn" id="xr-prev" onclick="entrarVR(true)" title="Prévia 3D no navegador" style="display:none;font-size:11px;font-weight:700;padding:4px 8px">Prévia 3D</button>
       <button class="nbtn" id="vr-btn" onclick="toggleVR()" title="Modo VR / Meta Quest (interface ampliada)" style="font-size:11px;font-weight:700;padding:4px 8px">VR</button>
       <button class="nbtn" onclick="alternarComplexidade()" title="Alternar Básico / Avançado" style="font-size:9px;padding:4px 6px">
         <span id="complexidade-badge" class="modo-badge complexidade-badge basico">BÁSICO</span>
@@ -7285,6 +7288,7 @@ function setModoEComplexidade(m){
 let _vr=false; // modo VR / Meta Quest = desktop com interface ampliada
 function setModo(m){
   _vr=m==='vr';if(_vr)m='desktop';
+  if(_vr)try{_vrCarregar();}catch(e){}
   document.body.classList.toggle('vr',_vr);
   _modo=m;
   document.body.classList.toggle('desktop',m==='desktop');
@@ -7305,6 +7309,7 @@ function toggleVR(){
   if(isMobile()){setModo('vr');return;}
   _vr=!_vr;
   document.body.classList.toggle('vr',_vr);
+  if(_vr)try{_vrCarregar();}catch(e){}
   const b=document.getElementById('vr-btn');if(b)b.classList.toggle('on',_vr);
   navFechar();
   toast(_vr?'Modo VR ativado':'Modo VR desativado','green');
@@ -7663,6 +7668,234 @@ function mInsights(){
       <button class="btn bgh" onclick="cm()">Fechar</button>
     </div>
   </div>`);
+}
+
+// ══════════════════════════════════════════════════
+// ── VR IMERSIVO (WebXR) — painel somente leitura ──
+// Painéis 3D com os dados do app, gráfico anual em barras 3D e laser dos controles.
+// "Prévia 3D" mostra a mesma cena no navegador comum (arraste para olhar, clique nos botões).
+// ══════════════════════════════════════════════════
+const _THREE_URL='https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+let _threeP=null,_vrx=null;
+function _vrCarregar(){if(!_threeP){_threeP=import(_THREE_URL);_threeP.catch(function(){_threeP=null;});}return _threeP;}
+async function entrarVR(preview){
+  if(_vrx)return;
+  if(!preview){
+    let ok=false;try{ok=!!(navigator.xr&&await navigator.xr.isSessionSupported('immersive-vr'));}catch(e){}
+    if(!ok){toast('VR imersivo indisponível neste navegador. Abra no Meta Quest ou use a Prévia 3D.','orange');return;}
+  }
+  let THREE;
+  try{THREE=await _vrCarregar();}catch(e){toast('Não foi possível carregar a biblioteca 3D (precisa de internet).','red');return;}
+  try{await _vrIniciar(THREE,!!preview);}catch(e){_vrFechar();toast('Erro ao iniciar o VR: '+e.message,'red');}
+}
+function _vrFechar(){
+  const x=_vrx;if(!x)return;_vrx=null;
+  try{x.renderer.setAnimationLoop(null);}catch(e){}
+  try{if(x.session)x.session.end();}catch(e){}
+  try{x.renderer.dispose();}catch(e){}
+  try{window.removeEventListener('resize',x.onResize);}catch(e){}
+  if(x.ov)x.ov.remove();
+}
+async function _vrIniciar(THREE,preview){
+  const ano=S.anoAtivo,hoje=new Date();
+  const anoEnc=ano<hoje.getFullYear();
+  let mes=anoEnc?11:hoje.getMonth();
+  const C={bg:'#161b2a',bd:'#2a3250',tx:'#e8eaf0',t2:'#9aa3bd',gr:'#2DD4A0',rd:'#F05252',or:'#F09A40',bl:'#5B8AF0',pu:'#A075F0'};
+  const FONT='"Inter",system-ui,-apple-system,sans-serif';
+
+  // overlay + renderer
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:9500;background:#090c14;zoom:1';
+  const renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.domElement.style.cssText='display:block;width:100%;height:100%;touch-action:none';
+  ov.appendChild(renderer.domElement);
+  const bar=document.createElement('div');
+  bar.style.cssText='position:absolute;top:12px;right:12px;display:flex;gap:8px;align-items:center;font:600 13px '+FONT+';color:#9aa3bd';
+  bar.innerHTML=(preview?'<span>Arraste para olhar · clique nos botões</span>':'')+'<button style="background:#F05252;color:#fff;border:none;border-radius:10px;padding:8px 14px;font:700 13px '+FONT+';cursor:pointer">Sair</button>';
+  bar.querySelector('button').onclick=_vrFechar;
+  ov.appendChild(bar);
+  document.body.appendChild(ov);
+  const x=_vrx={renderer:renderer,ov:ov,session:null,onResize:null};
+
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x090c14);
+  const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.05,60);
+  camera.position.set(0,1.6,0);x.camera=camera;
+  scene.add(new THREE.GridHelper(24,48,0x1b2236,0x111626));
+  const buttons=[];
+
+  // ── helpers de desenho (canvas 2D → textura) ──
+  const rr=function(c,px,py,w,h,r,fill,stroke){c.beginPath();c.moveTo(px+r,py);c.arcTo(px+w,py,px+w,py+h,r);c.arcTo(px+w,py+h,px,py+h,r);c.arcTo(px,py+h,px,py,r);c.arcTo(px,py,px+w,py,r);c.closePath();if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=3;c.stroke();}};
+  const T=function(c,txt,px,py,size,color,weight,align){c.font=(weight||500)+' '+size+'px '+FONT;c.fillStyle=color||C.tx;c.textAlign=align||'left';c.textBaseline='alphabetic';c.fillText(txt,px,py);};
+  const wrap=function(c,txt,maxW){const ws=String(txt).split(' ');const out=[];let cur='';ws.forEach(function(w){const t=cur?cur+' '+w:w;if(c.measureText(t).width>maxW&&cur){out.push(cur);cur=w;}else cur=t;});if(cur)out.push(cur);return out;};
+  const tex=function(cv){const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;};
+  const panel=function(w,h,draw){
+    const cv=document.createElement('canvas');cv.width=1024;cv.height=Math.round(1024*h/w);
+    const c=cv.getContext('2d');const t=tex(cv);
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:t,transparent:true}));
+    const api={mesh:mesh,redraw:function(){c.clearRect(0,0,cv.width,cv.height);rr(c,4,4,cv.width-8,cv.height-8,36,C.bg,C.bd);draw(c,cv.width,cv.height);t.needsUpdate=true;}};
+    api.redraw();return api;
+  };
+  const button=function(label,w,h,fn,color){
+    const cv=document.createElement('canvas');cv.width=512;cv.height=Math.round(512*h/w);
+    const c=cv.getContext('2d');rr(c,4,4,cv.width-8,cv.height-8,cv.height/2.4,color||'#2a3250','#3b4670');
+    T(c,label,cv.width/2,cv.height/2+cv.height*0.13,cv.height*0.42,'#fff',700,'center');
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex(cv),transparent:true}));
+    m.userData={fn:fn};buttons.push(m);return m;
+  };
+
+  // ── dados ──
+  const dMes=function(i){
+    const e=tE(i),d=D();
+    const fixas=d.despesas.filter(z=>z.da||z.fixa).reduce((a,z)=>a+(z.vals[i]||0),0);
+    const tpm=tPM(i),disp=e-fixas-tpm;
+    const dias=new Date(ano,i+1,0).getDate();
+    const cur=!anoEnc&&i===hoje.getMonth();
+    const rest=cur?Math.max(1,dias-hoje.getDate()+1):dias;
+    return {e:e,desp:tD(i),sd:sal(i),fixas:fixas,tpm:tpm,disp:disp,pct:e>0?Math.max(0,Math.min(100,disp/e*100)):0,porDia:Math.max(0,disp/rest),porFds:Math.max(0,disp/4),rest:rest};
+  };
+
+  // ── painéis ──
+  const pResumo=panel(1.5,1.0,function(c,W,H){
+    const m=dMes(mes);
+    T(c,'Resumo · '+MONTHS[mes]+'/'+ano,48,84,44,C.t2,700);
+    T(c,'Saldo do mês',48,190,34,C.t2);
+    T(c,fmt(m.sd),48,290,110,m.sd>=0?C.gr:C.rd,800);
+    rr(c,48,330,W-96,2,1,C.bd);
+    T(c,'Entradas',48,410,38,C.t2);T(c,fmt(m.e),W-48,410,44,C.gr,700,'right');
+    T(c,'Despesas',48,480,38,C.t2);T(c,fmt(m.desp),W-48,480,44,C.rd,700,'right');
+    T(c,'Parcelas do mês',48,550,38,C.t2);T(c,fmt(m.tpm),W-48,550,44,C.or,700,'right');
+    T(c,'Reservas',48,620,38,C.t2);T(c,fmt(rTot()),W-48,620,44,C.bl,700,'right');
+  });
+  const pLimite=panel(1.5,1.0,function(c,W,H){
+    const m=dMes(mes);const cor=m.disp<0?C.rd:m.pct>50?C.gr:m.pct>20?C.or:C.rd;
+    T(c,'Limite de consumo · '+MONTHS[mes],48,84,44,C.t2,700);
+    T(c,'Disponível para consumo',48,170,32,C.t2);
+    T(c,fmt(m.disp),48,270,104,cor,800);
+    rr(c,48,305,W-96,22,11,'#232a42');if(m.pct>0)rr(c,48,305,(W-96)*m.pct/100,22,11,cor);
+    T(c,'Fixas + Déb. Aut.',48,372,32,C.t2,500);T(c,fmt(m.fixas),W-48,372,34,C.rd,700,'right');
+    T(c,'Parcelas do mês',48,418,32,C.t2,500);T(c,fmt(m.tpm),W-48,418,34,C.or,700,'right');
+    T(c,'SUGESTÕES DE GASTO',48,478,28,C.t2,700);
+    const bx=function(px,t1,v1,col){rr(c,px,498,(W-96-40)/3,150,22,'#1d2338');T(c,t1,px+20,543,26,C.t2);T(c,v1,px+20,608,44,col,700);};
+    const bw=(W-96-40)/3;
+    bx(48,'Por dia',fmt(m.porDia),C.gr);bx(48+bw+20,'Fim de semana',fmt(m.porFds),C.or);
+    const pcCom=m.e<2000?0.30:m.e<4000?0.25:m.e<7000?0.20:0.15;
+    bx(48+(bw+20)*2,'Alimentação/dia',fmt(m.e*pcCom/30),C.bl);
+  });
+  const pInsights=panel(1.5,1.0,function(c,W,H){
+    const r=_insightsCalc();
+    const cor={bad:C.rd,warn:C.or,ok:C.gr,info:C.bl};
+    const st=r.vazio?['Sem dados',C.t2]:r.nivel==='bad'?['Atenção',C.rd]:r.nivel==='warn'?['Cuidado',C.or]:['Tudo certo',C.gr];
+    T(c,'Insights',48,84,44,C.t2,700);T(c,st[0],W-48,84,48,st[1],800,'right');
+    let y=150;
+    (r.it||[]).slice(0,4).forEach(function(it){
+      rr(c,48,y,W-96,118,20,'#1d2338');rr(c,48,y,10,118,5,cor[it.nv]);
+      T(c,it.titulo,80,y+42,34,C.tx,700);
+      c.font='500 26px '+FONT;c.fillStyle=C.t2;
+      wrap(c,it.texto,W-170).slice(0,2).forEach(function(l,k){T(c,l,80,y+80+k*32,26,C.t2);});
+      y+=132;
+    });
+    if(r.vazio)T(c,'Lance entradas e despesas para ver o resumo.',48,200,32,C.t2);
+  });
+  const pParc=panel(1.5,1.0,function(c,W,H){
+    T(c,'Parcelados a pagar',48,84,44,C.t2,700);
+    const lista=_antLista();let y=150;
+    lista.slice(0,6).forEach(function(it){
+      rr(c,48,y,W-96,80,18,'#1d2338');
+      T(c,it.p.desc.slice(0,22),72,y+52,32,C.tx,600);
+      T(c,it.rest+'× '+fmt(it.v),W/2+80,y+52,28,C.t2,500,'right');
+      T(c,fmt(it.rest*it.v),W-72,y+52,32,C.or,700,'right');
+      y+=92;
+    });
+    if(!lista.length)T(c,'Nenhum parcelado ativo.',48,200,34,C.t2);
+    if(lista.length>6)T(c,'+ '+(lista.length-6)+' outros',48,y+36,26,C.t2);
+    rr(c,48,H-110,W-96,2,1,C.bd);
+    T(c,'Total para quitar',48,H-48,34,C.t2);T(c,fmt(tPAFut()),W-48,H-48,52,C.or,800,'right');
+  });
+  const panels=[pResumo,pLimite,pInsights,pParc];
+  const ui=new THREE.Group();scene.add(ui);
+  const R=2.3,gap=0.58;
+  panels.forEach(function(p,k){
+    const a=(k-(panels.length-1)/2)*gap;
+    p.mesh.position.set(Math.sin(a)*R,1.9,-Math.cos(a)*R);
+    p.mesh.lookAt(0,1.9,0);ui.add(p.mesh);
+  });
+
+  // ── gráfico anual 3D ──
+  const ch=new THREE.Group();ch.position.set(0,0.5,-1.2);ui.add(ch);
+  const ents=MONTHS.map((_,i)=>tE(i)),desps=MONTHS.map((_,i)=>tD(i));
+  const mx=Math.max(1,...ents,...desps);
+  const base=new THREE.Mesh(new THREE.BoxGeometry(1.34,0.02,0.2),new THREE.MeshBasicMaterial({color:0x1d2338}));base.position.y=-0.011;ch.add(base);
+  const mkBar=function(px,v,col){const h=Math.max(0.004,v/mx*0.3);const m=new THREE.Mesh(new THREE.BoxGeometry(0.038,h,0.07),new THREE.MeshBasicMaterial({color:col}));m.position.set(px,h/2,0);ch.add(m);};
+  const labs=[];
+  MONTHS.forEach(function(nm,i){
+    const cx=(i-5.5)*0.11;
+    mkBar(cx-0.025,ents[i],0x2DD4A0);mkBar(cx+0.025,desps[i],0xF05252);
+    const cv=document.createElement('canvas');cv.width=128;cv.height=64;const t=tex(cv);
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(0.1,0.05),new THREE.MeshBasicMaterial({map:t,transparent:true}));
+    m.position.set(cx,0.045,0.13);m.rotation.x=-0.5;ch.add(m);labs.push({cv:cv,t:t,i:i,nm:nm});
+  });
+  const updLabs=function(){labs.forEach(function(l){const c=l.cv.getContext('2d');c.clearRect(0,0,128,64);T(c,l.nm,64,44,34,l.i===mes?C.gr:C.t2,l.i===mes?800:600,'center');l.t.needsUpdate=true;});};
+  updLabs();
+  const ct=panel(1.0,0.16,function(c,W,H){T(c,'Entradas × Despesas · '+ano,W/2,H/2+16,46,C.tx,700,'center');});
+  ct.mesh.position.set(0,0.98,-1.3);ui.add(ct.mesh);
+  const leg=panel(0.6,0.12,function(c,W,H){T(c,'■ Entradas',30,H/2+14,40,C.gr,700);T(c,'■ Despesas',W/2+10,H/2+14,40,C.rd,700);});
+  leg.mesh.position.set(0,0.42,-1.0);leg.mesh.rotation.x=-0.5;ui.add(leg.mesh);
+
+  // ── controles: mês anterior/próximo e sair ──
+  const refresh=function(){panels.forEach(function(p){p.redraw();});updLabs();navLbl.redraw();};
+  const navLbl=panel(0.5,0.13,function(c,W,H){T(c,MONTHS[mes]+'/'+ano,W/2,H/2+18,54,C.tx,800,'center');});
+  const bPrev=button('◀',0.16,0.13,function(){mes=(mes+11)%12;refresh();},'#2a3250');
+  const bNext=button('▶',0.16,0.13,function(){mes=(mes+1)%12;refresh();},'#2a3250');
+  const bSair=button('Sair do VR',0.42,0.13,_vrFechar,'#7a2a35');
+  const ny=1.2,nz=-1.7;
+  navLbl.mesh.position.set(0,ny,nz);bPrev.position.set(-0.36,ny,nz);bNext.position.set(0.36,ny,nz);bSair.position.set(1.2,ny,-1.5);bSair.lookAt(0,ny,0);
+  [navLbl.mesh,bPrev,bNext,bSair].forEach(function(o){ui.add(o);});
+
+  // ── interação ──
+  const ray=new THREE.Raycaster();const hov=new Set();
+  const setHover=function(list){buttons.forEach(function(b){b.scale.setScalar(list.has(b)?1.12:1);});};
+  const controllers=[];
+  const pickFrom=function(c){
+    const mt=new THREE.Matrix4().extractRotation(c.matrixWorld);
+    ray.set(new THREE.Vector3().setFromMatrixPosition(c.matrixWorld),new THREE.Vector3(0,0,-1).applyMatrix4(mt));
+    const h=ray.intersectObjects(buttons,false);return h.length?h[0].object:null;
+  };
+  for(let i=0;i<2;i++){
+    const c=renderer.xr.getController(i);scene.add(c);
+    c.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,0,-3)]),new THREE.LineBasicMaterial({color:0x2DD4A0})));
+    c.addEventListener('selectstart',function(){const b=pickFrom(c);if(b&&b.userData.fn)b.userData.fn();});
+    controllers.push(c);
+  }
+  // prévia no navegador: arrastar = olhar, clique = botão
+  let yaw=0,pitch=0,down=null,moved=0;
+  const dom=renderer.domElement;
+  const ndc=function(e){const r=dom.getBoundingClientRect();return new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);};
+  if(preview){
+    dom.addEventListener('pointerdown',function(e){down={x:e.clientX,y:e.clientY};moved=0;dom.setPointerCapture(e.pointerId);});
+    dom.addEventListener('pointermove',function(e){
+      if(down){const dx=e.clientX-down.x,dy=e.clientY-down.y;moved+=Math.abs(dx)+Math.abs(dy);yaw-=dx*0.004;pitch=Math.max(-1,Math.min(1,pitch-dy*0.004));down={x:e.clientX,y:e.clientY};camera.rotation.set(pitch,yaw,0,'YXZ');}
+      ray.setFromCamera(ndc(e),camera);const h=ray.intersectObjects(buttons,false);hov.clear();if(h.length)hov.add(h[0].object);setHover(hov);dom.style.cursor=h.length?'pointer':'grab';
+    });
+    dom.addEventListener('pointerup',function(e){
+      if(down&&moved<6){ray.setFromCamera(ndc(e),camera);const h=ray.intersectObjects(buttons,false);if(h.length&&h[0].object.userData.fn)h[0].object.userData.fn();}
+      down=null;
+    });
+  }
+  x.onResize=function(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();};
+  window.addEventListener('resize',x.onResize);
+
+  if(!preview){
+    renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local-floor');
+    const sess=await navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor']});
+    x.session=sess;sess.addEventListener('end',function(){x.session=null;_vrFechar();});
+    await renderer.xr.setSession(sess);
+  }
+  renderer.setAnimationLoop(function(){
+    if(renderer.xr.isPresenting){hov.clear();controllers.forEach(function(c){const b=pickFrom(c);if(b)hov.add(b);});setHover(hov);}
+    renderer.render(scene,camera);
+  });
 }
 
 // ── INIT ──
